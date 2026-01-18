@@ -1,0 +1,23 @@
+CID,Source File and Line Number
+41248,/tpa-backend_2.6.21/src/tariff/tariff.service.ts:2762
+41249,/tpa-backend_2.6.21/src/balancing/balancing.service.ts:5116
+41295,/tpa-backend_2.6.21/src/balancing/balancing.service.ts:9376
+41303,/tpa-backend_2.6.21/src/balancing/balancing.service.ts:3977
+41367,/tpa-backend_2.6.21/src/capacity-v2/capacity-middle.service.ts:1330
+41376,/tpa-backend_2.6.21/src/balancing/balancing.service.ts:5117
+41395,/tpa-backend_2.6.21/src/export-files/export-files.service.ts:15376
+41429,/tpa-backend_2.6.21/src/export-files/export-files.service.ts:15376
+41436,/tpa-backend_2.6.21/src/balancing/balancing.service.ts:9521
+41443,/tpa-backend_2.6.21/src/astos/astos.service.ts:351
+41463,/tpa-backend_2.6.21/src/balancing/balancing.service.ts:5141
+41505,/tpa-backend_2.6.21/src/export-files/export-files.service.ts:11301
+41522,/tpa-backend_2.6.21/src/export-files/export-file-tariff-commodity-a2.service.ts:106
+41535,/tpa-backend_2.6.21/src/capacity-v2/capacity-middle.service.ts:1926
+41548,/tpa-backend_2.6.21/src/balancing/balancing.service.ts:5140
+41568,/tpa-backend_2.6.21/src/capacity-v2/capacity-v2.service.ts:949
+41582,/tpa-backend_2.6.21/src/astos/astos.service.ts:351
+41593,/tpa-backend_2.6.21/src/capacity-v2/capacity-v2.service.ts:1177
+41635,/tpa-backend_2.6.21/src/capacity-v2/capacity-v2.service.ts:3941
+41671,/tpa-backend_2.6.21/src/export-files/export-files.service.ts:11301
+41681,/tpa-backend_2.6.21/src/export-files/export-file-tariff-commodity-a2.service.ts:104
+41704,/tpa-backend_2.6.21/src/balancing/balancing.service.ts:8818

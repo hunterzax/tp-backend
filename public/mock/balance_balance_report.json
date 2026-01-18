@@ -1,0 +1,138 @@
+{
+  "total_record": 10,
+  "status_code": 0,
+  "data": [
+    {
+      "request_number": 2,
+      "execute_timestamp": 0,
+      "gas_day": "2024-01-01",
+      "values": [
+        {
+          "tag": "dailyImb_west_withoutAdjust",
+          "value": 0.0
+        }
+      ],
+      "shipper_data": [
+        {
+          "shipper": "",
+          "values": [
+            {
+              "tag": "",
+              "value": 0.0
+            }
+          ],
+          "contract_data": [
+            {
+              "contract": "",
+              "values": [
+                {
+                  "tag": "",
+                  "value": 0.0
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "request_number": 5,
+      "execute_timestamp": 0,
+      "gas_day": "2024-01-01",
+      "values": [
+        {
+          "tag": "dailyImb_east_withoutAdjust",
+          "value": 0.0
+        }
+      ],
+      "shipper_data": [
+        {
+          "shipper": "",
+          "values": [
+            {
+              "tag": "",
+              "value": 0.0
+            }
+          ],
+          "contract_data": [
+            {
+              "contract": "",
+              "values": [
+                {
+                  "tag": "",
+                  "value": 0.0
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "request_number": 2,
+      "execute_timestamp": 0,
+      "gas_day": "2024-01-02",
+      "values": [
+        {
+          "tag": "",
+          "value": 0.0
+        }
+      ],
+      "shipper_data": [
+        {
+          "shipper": "",
+          "values": [
+            {
+              "tag": "",
+              "value": 0.0
+            }
+          ],
+          "contract_data": [
+            {
+              "contract": "",
+              "values": [
+                {
+                  "tag": "",
+                  "value": 0.0
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "request_number": 5,
+      "execute_timestamp": 0,
+      "gas_day": "2024-01-02",
+      "values": [
+        {
+          "tag": "",
+          "value": 0.0
+        }
+      ],
+      "shipper_data": [
+        {
+          "shipper": "",
+          "values": [
+            {
+              "tag": "",
+              "value": 0.0
+            }
+          ],
+          "contract_data": [
+            {
+              "contract": "",
+              "values": [
+                {
+                  "tag": "",
+                  "value": 0.0
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
