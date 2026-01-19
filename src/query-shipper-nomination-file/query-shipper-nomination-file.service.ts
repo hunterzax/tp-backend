@@ -429,9 +429,7 @@ export class QueryShipperNominationFileService {
                 ? 3
                 : userType?.id === 3
                   ? 1
-                  : userType?.id === 2
-                    ? 2
-                    : 2,
+                  : 2,
             },
           },
           query_shipper_nomination_status: {

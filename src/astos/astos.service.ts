@@ -29,31 +29,7 @@ export class AstosService {
     }
   }
 
-  // ===== NOTIC =====
-  private async providerNotiInapp(type: string, message: string, email: string[]) {
-    // basic safety: ensure configured endpoint uses http/https
-    try {
-      const u = new URL(String(process.env.IN_APP_URL));
-      if (!['http:', 'https:'].includes(u.protocol)) {
-        throw new Error('IN_APP_URL must use http/https');
-      }
-    } catch (e) {
-      throw new Error(`Invalid IN_APP_URL: ${e?.message || 'unknown'}`);
-    }
 
-    await axios.post(`${process.env.IN_APP_URL}`, {
-      extras: { email }, message: message || '', priority: 1, title: type || '',
-    }, {
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.IN_APP_TOKEN}` },
-      maxBodyLength: Infinity,
-    });
-  }
-
-  private async executeNotiInapp(type: string, message: string) {
-    const accounts = await this.repo.getInAppNotiRecipients(82);
-    const emailArr = (accounts || []).map((a: any) => a.email).filter(Boolean);
-    await this.providerNotiInapp(type, message, emailArr);
-  }
 
   // ===== PUT UPDATE STATUS =====
   async execute_updateStatus_eod(payload: { request_number: any; execute_timestamp: any; finish_timestamp: any; status: string; msg?: string; }) {
@@ -73,21 +49,21 @@ export class AstosService {
           console.log(`[DEBUG] status is ok`)
           await this.repo.updateReviewStatus(Number(execute_timestamp));
           const message = `The allocation and balancing process for all shippers and the following period of time: {${getTodayNow(find?.start_date).format('DD/MM/YYYY')} to ${getTodayNow(find?.end_date).format('DD/MM/YYYY')}} {has finished OK} {(process executed on ${nowAt.format('DD/MM/YYYY')})}.`;
-          // await this.executeNotiInapp('Execute EOD', message);
+
           return { request_number, execute_timestamp, finish_timestamp, status_code: 200 };
         } else {
           const message = `The allocation and balancing process for all shippers and the following period of time: {${getTodayNow(find?.start_date).format('DD/MM/YYYY')} to ${getTodayNow(find?.end_date).format('DD/MM/YYYY')}} has failed {(process executed on ${nowAt.format('DD/MM/YYYY')})}.`;
-          // await this.executeNotiInapp('Execute EOD', message);
+
           return { request_number, execute_timestamp, finish_timestamp, status_code: 200 };
         }
       } else {
         const message = `The allocation and balancing process for all shippers for the following time has failed due to data inconsistency. {(process executed on ${nowAt.format('DD/MM/YYYY')})}.`;
-        // await this.executeNotiInapp('Execute EOD', message);
+
         return { request_number, execute_timestamp, finish_timestamp, status_code: 500 };
       }
     } catch (error) {
       const message = `The allocation and balancing process for all shippers for the following time has failed due to data inconsistency. {(process executed on ${nowAt.format('DD/MM/YYYY')})}.`;
-      // await this.executeNotiInapp('Execute EOD', message);
+
       return { request_number, execute_timestamp, finish_timestamp, status_code: 500 };
     }
   }
@@ -106,21 +82,21 @@ export class AstosService {
         await this.repo.updateExecuteIntraday(updateUnique, updateInfo);
         if (status === 'OK') {
           const message = `The allocation and balancing process for all shippers and the following time: {${getTodayNow(find?.gas_day).format('DD/MM/YYYY')}} {has finished OK} {(process executed on ${nowAt.format('DD/MM/YYYY')})}.`;
-          // await this.executeNotiInapp('Execute Intraday', message);
+
           return { request_number, execute_timestamp, finish_timestamp, status_code: 200 };
         } else {
           const message = `The allocation and balancing process for all shippers and the following time: {${getTodayNow(find?.gas_day).format('DD/MM/YYYY')}} has failed {(process executed on ${nowAt.format('DD/MM/YYYY')})}.`;
-          // await this.executeNotiInapp('Execute Intraday', message);
+
           return { request_number, execute_timestamp, finish_timestamp, status_code: 200 };
         }
       } else {
         const message = `The allocation and balancing process for all shippers during the following period has failed due to data mismatch. {(process executed on ${nowAt.format('DD/MM/YYYY')})}.`;
-        // await this.executeNotiInapp('Execute Intraday', message);
+
         return { request_number, execute_timestamp, finish_timestamp, status_code: 500 };
       }
     } catch (error) {
       const message = `The allocation and balancing process for all shippers during the following period has failed due to data mismatch. {(process executed on ${nowAt.format('DD/MM/YYYY')})}.`;
-      // await this.executeNotiInapp('Execute Intraday', message);
+
       return { request_number, execute_timestamp, finish_timestamp, status_code: 500 };
     }
   }

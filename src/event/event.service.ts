@@ -1315,6 +1315,9 @@ export class EventService {
           },
         },
       });
+      if (!group) {
+        throw new HttpException('Group not found', HttpStatus.BAD_REQUEST);
+      }
       const userTypeId = group.user_type?.id;
       const groupId = group?.id;
 
@@ -1464,9 +1467,9 @@ export class EventService {
       },
     });
     console.log('docId : ', docId);
-    const shipperCreate = await this.prisma.account.findFirst({
+    const shipperCreate = docId?.create_by ? await this.prisma.account.findFirst({
       where: {
-        id: Number(docId?.create_by),
+        id: Number(docId.create_by),
         account_manage: {
           some: {
             user_type_id: 3,
@@ -1502,7 +1505,7 @@ export class EventService {
           },
         },
       },
-    });
+    }) : null;
 
     const shipperEmailArr = [
       docId?.group?.email ?? null,
@@ -1684,9 +1687,7 @@ export class EventService {
         : '';
     const fromCompany =
       (event_document_action[event_document_action.length - 1]?.group
-        ?.company_name &&
-        event_document_action[event_document_action.length - 1]?.group
-          ?.company_name) ||
+        ?.company_name) ||
       '………………………………………………………………';
     const fromDate = dayjs(
       event_document_action[event_document_action.length - 1]?.create_date,

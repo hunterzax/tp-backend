@@ -217,7 +217,6 @@ export class CapacityV2Service {
     token: any,
   ) {
     const resultTranform = this.safeParseJSON(data?.json_data);
-    // console.log('resultTranform : ', resultTranform);
     const headerEntry = resultTranform?.headerEntry || {};
     const entryValue = resultTranform?.entryValue || [];
     const headerExit = resultTranform?.headerExit || {};
@@ -338,8 +337,6 @@ export class CapacityV2Service {
 
 
     // ... check head
-    console.log('headerEntry : ', headerEntry);
-    console.log('headerExit : ', headerExit);
 
     const requiredEntry = [
       "Capacity Daily Booking (MMBTU/d)",
@@ -467,7 +464,6 @@ export class CapacityV2Service {
         });
       }
     }
-    console.log('--exitValue : ', exitValue);
     // Populate checkValueSum.exit
     for (const key in checkValueSum.exit) {
       if (headerExit[key]) {
@@ -479,10 +475,7 @@ export class CapacityV2Service {
 
             exitValue.forEach((exit) => {
               if (exit[exitKey] !== undefined) {
-                // console.log(parseFloat(exit[exitKey].replace(/,/g, '')) || 0);
                 // sum += parseFloat(exit[exitKey]) || 0;
-                // console.log('--- : ', exit[exitKey]?.replace(/,/g, ''));
-                // console.log('--- : ', Number(exit[exitKey]?.replace(/,/g, '')));
                 // sum += Number(exit[exitKey]?.replace(/,/g, '')) || 0;
                 sum =
                   Math.round(
@@ -492,9 +485,6 @@ export class CapacityV2Service {
                 // sum += Math.round(parseFloat(exit[exitKey]) * factor) / factor || 0;
               }
             });
-            // console.log('exitValue : ', exitValue);
-            // console.log('sum : ', sum);
-            // console.log('----');
             checkValueSum.exit[key].push({
               key: exitKey,
               sum,
@@ -517,20 +507,10 @@ export class CapacityV2Service {
         // const decimalPart = calculatedSum.toString().split('.')[1]; // ดึงทศนิยมมาเช็ค
         // let newNum = !!decimalPart && decimalPart.length > 3 ? Number(calculatedSum).toFixed(3) : calculatedSum
         if (String(calculatedSum) !== String(expectedSum)) {
-          console.log('1');
           if (String(calculatedSum.toFixed(3)) !== String(expectedSum)) {
             const diff = Math.abs(calculatedSum - expectedSum);
-            // console.log('diff : ', diff);
-            // console.log(0.001 + Number.EPSILON);
-            // console.log(diff > (0.001 + Number.EPSILON));
             if (diff > 0.001 + Number.EPSILON) {
-              console.log('calculatedSum : ', calculatedSum);
-              console.log(Math.abs(calculatedSum - expectedSum));
-              console.log(
-                'String(calculatedSum.toFixed(3)) : ',
-                String(calculatedSum.toFixed(3)),
-              );
-              console.log('String(expectedSum) : ', String(expectedSum));
+
               entryCompareNotMatch.push({
                 headerKey, // This will be the date, such as "01/11/2024"
                 key: entryKey,
@@ -555,12 +535,8 @@ export class CapacityV2Service {
         // const decimalPart = calculatedSum.toString().split('.')[1]; // ดึงทศนิยมมาเช็ค
         // let newNum = !!decimalPart && decimalPart.length > 3 ? Number(calculatedSum).toFixed(3) : calculatedSum
         if (String(calculatedSum) !== String(expectedSum)) {
-          console.log('2');
           if (String(calculatedSum.toFixed(3)) !== String(expectedSum)) {
             const diff = Math.abs(calculatedSum - expectedSum);
-            // console.log('diff : ', diff);
-            // console.log(0.001 + Number.EPSILON);
-            // console.log(diff > (0.001 + Number.EPSILON));
             if (diff > 0.001 + Number.EPSILON) {
               exitCompareNotMatch.push({
                 headerKey, // This will be the date, such as "01/11/2024"
@@ -587,8 +563,6 @@ export class CapacityV2Service {
         );
 
         if (exitItem) {
-          // console.log('checkValueSum : ', checkValueSum);
-          // console.log('exitItem.sum : ', exitItem.sum);
           const exitSum = exitItem.sum;
           if (entrySum !== exitSum) {
             compareEntryExit[key].push({
@@ -667,7 +641,6 @@ export class CapacityV2Service {
     });
     if (checkContractCode) {
       // ck type
-      console.log('checkContractCode : ', checkContractCode);
       if (checkContractCode?.term_type_id !== typeOfContractText) {
         throw new HttpException(
           {
@@ -752,7 +725,6 @@ export class CapacityV2Service {
         const isCheckMoreDate = useStart.isAfter(newStartDayPlus);
         let checkMinMax = false;
         if (!isCheckMoreDate) {
-          console.log('1');
           throw new HttpException(
             {
               status: HttpStatus.BAD_REQUEST,
@@ -783,7 +755,6 @@ export class CapacityV2Service {
         );
 
         if (!checkMinMax) {
-          console.log('Date is NOT match 1.1');
           throw new HttpException(
             {
               status: HttpStatus.BAD_REQUEST,
@@ -820,7 +791,6 @@ export class CapacityV2Service {
                     modeDayAndMonth === 2 &&
                     dayjs(dateKey, 'DD/MM/YYYY').format('DD') !== '01'
                   ) {
-                    console.log('2');
                     throw new HttpException(
                       {
                         status: HttpStatus.BAD_REQUEST,
@@ -831,7 +801,6 @@ export class CapacityV2Service {
                   }
 
                   if (!isInRangeZero || e[keyValue] < 0) {
-                    console.log('3');
                     throw new HttpException(
                       {
                         status: HttpStatus.BAD_REQUEST,
@@ -971,6 +940,9 @@ export class CapacityV2Service {
 
     const newExit = await Promise.all(
       exitValue.map(async (e: any, i: any) => {
+        const todayStart = getTodayStartAdd7().toDate();
+        const todayEnd = getTodayEndAdd7().toDate();
+        let typeSuccess = 1;
         const exitPointName = e[keyExitPoint];
 
         const newStartDayPlus = dayjs(todayStart);
@@ -991,11 +963,6 @@ export class CapacityV2Service {
         let checkMinMax = false;
 
         if (!isCheckMoreDate) {
-          // console.log('keyExitFrom : ', keyExitFrom);
-          // console.log('e[keyExitFrom] : ', e[keyExitFrom]);
-          // console.log('newStartDayPlus : ', newStartDayPlus);
-          // console.log('useStart : ', useStart);
-          // console.log('isCheckMoreDate : ', isCheckMoreDate);
           throw new HttpException(
             {
               status: HttpStatus.BAD_REQUEST,
@@ -1025,7 +992,6 @@ export class CapacityV2Service {
           bookingTemplate?.max,
         );
         if (!checkMinMax) {
-          console.log('---4');
 
           throw new HttpException(
             {
@@ -1061,7 +1027,6 @@ export class CapacityV2Service {
                     modeDayAndMonth === 2 &&
                     dayjs(dateKey, 'DD/MM/YYYY').format('DD') !== '01'
                   ) {
-                    console.log('5');
                     throw new HttpException(
                       {
                         status: HttpStatus.BAD_REQUEST,
@@ -1146,7 +1111,7 @@ export class CapacityV2Service {
           }
         }
 
-        const contractPoints = await this.prisma.contract_point.findFirst({
+        const contractPoints = await this.prisma?.contract_point?.findFirst({
           where: {
             contract_point: e['0'],
             entry_exit_id: 2,
@@ -1192,7 +1157,6 @@ export class CapacityV2Service {
       }),
     );
 
-    // console.log('warningData : ', warningData);
 
     const minDate = dateStartAll.reduce((min, current) => {
       return dayjs(current, 'DD/MM/YYYY').isBefore(dayjs(min, 'DD/MM/YYYY'))
@@ -1249,8 +1213,6 @@ export class CapacityV2Service {
         });
 
         if (findCalcEntry.length > 0) {
-          console.log('---1');
-          console.log('findCalcEntry : ', findCalcEntry);
           throw new HttpException(
             {
               status: HttpStatus.BAD_REQUEST,
@@ -1312,7 +1274,6 @@ export class CapacityV2Service {
             minDate,
             maxDate,
           );
-        console.log('calcCheckEntry : ', calcCheckEntry);
         const objCalcEntry =
           this.capacityMiddleService.extractValidationResults(
             calcCheckEntry?.date,
@@ -1322,8 +1283,6 @@ export class CapacityV2Service {
         });
 
         if (findCalcEntry.length > 0) {
-          console.log('---2');
-          console.log('findCalcEntry : ', findCalcEntry);
           throw new HttpException(
             {
               status: HttpStatus.BAD_REQUEST,
@@ -1364,8 +1323,6 @@ export class CapacityV2Service {
     }
 
     if (entryCompareNotMatch.length > 0) {
-      console.log('entryCompareNotMatch : ', entryCompareNotMatch);
-      console.log('Total Entry & Total Exit is NOT match. 1');
 
       throw new HttpException(
         {
@@ -1377,8 +1334,6 @@ export class CapacityV2Service {
       );
     }
     if (exitCompareNotMatch.length > 0) {
-      console.log('exitCompareNotMatch : ', exitCompareNotMatch);
-      console.log('Total Entry & Total Exit is NOT match. 2');
 
       throw new HttpException(
         {
@@ -1394,8 +1349,6 @@ export class CapacityV2Service {
       compareEntryExit['Maximum Hour Booking (MMBTU/h)'].length > 0
     ) {
       // exitSum
-      console.log('compareEntryExit : ', compareEntryExit);
-      console.log('Total Entry & Total Exit is NOT match. 3');
 
       throw new HttpException(
         {
@@ -1406,7 +1359,6 @@ export class CapacityV2Service {
         HttpStatus.BAD_REQUEST,
       );
     }
-    console.log(' - - - 1 - - - ');
     const checkContractCodeCheckLast = checkContractCode?.id
       ? await this.prisma.contract_code.findFirst({
         select: {
@@ -1543,13 +1495,10 @@ export class CapacityV2Service {
         HttpStatus.BAD_REQUEST,
       );
     }
-    console.log(' - - - 2 - - - ');
-    // console.log('process...');
     // console.time('status');
     // console.timeEnd('status');
 
     if (newCreate) {
-      console.log('--- create ---');
       const shadowPeriod = this.capacityMiddleService.genMD(
         minDate,
         dayjs(maxDate, 'DD/MM/YYYY').subtract(1, 'day').format('DD/MM/YYYY'),
@@ -1749,7 +1698,6 @@ export class CapacityV2Service {
         createContractCode?.id,
         userId,
       );
-      console.log(' - - - 3 - - - ');
       // warningData.length <= 0
       // เช็ค contract point ผิด/ไม่ถูกไม่ให้ tso เปลี่ยนเป็น approved
       if (ckUserType?.id === 2 && !notApproved) {
@@ -1765,22 +1713,17 @@ export class CapacityV2Service {
               null,
             );
           } catch (error) {
-            console.log('1');
-            console.log(error);
             console.warn('⚠️ ละเว้น Error:', error.message); // แสดงเฉพาะ Warning แต่ไม่ให้โปรแกรมหยุด
           }
         }
       }
     } else {
-      console.log('--- edit ---');
       if (versionFlag) {
-        console.log('v');
         const shadowPeriod = this.capacityMiddleService.genMD(
           minDate,
           dayjs(maxDate, 'DD/MM/YYYY').subtract(1, 'day').format('DD/MM/YYYY'),
           modeDayAndMonth,
         );
-        console.log(' - - - c0');
         await this.prisma.contract_code.update({
           where: {
             id: checkContractCodeCheckLast?.id,
@@ -1949,11 +1892,9 @@ export class CapacityV2Service {
             create_date_num: getTodayNowAdd7().unix(),
           });
         }
-        console.log(' - - - c1');
         await this.prisma.booking_row_json.createMany({
           data: mapDataRowJson,
         });
-        console.log(' - - - c1.5');
 
         await this.prisma.submission_comment_capacity_request_management.createMany(
           {
@@ -1968,7 +1909,6 @@ export class CapacityV2Service {
             }),
           },
         );
-        console.log(' - - - c1.6');
 
         const responseUpFile = await uploadFilsTemp(file);
         await this.capacityMiddleService.fileCapacityBooking(
@@ -1976,7 +1916,6 @@ export class CapacityV2Service {
           checkContractCodeCheckLast?.id,
           userId,
         );
-        console.log(' - - - c2');
 
         if (ckUserType?.id === 2 && !notApproved) {
           if (typeSuccess === 1) {
@@ -1995,13 +1934,11 @@ export class CapacityV2Service {
                 true,
               );
             } catch (error) {
-              console.log('2');
               console.warn('⚠️ ละเว้น Error:', error.message); // แสดงเฉพาะ Warning แต่ไม่ให้โปรแกรมหยุด
             }
           }
         }
       } else if (amdFlag) {
-        console.log('amd');
         const shadowPeriod = this.capacityMiddleService.genMD(
           minDate,
           dayjs(maxDate, 'DD/MM/YYYY').subtract(1, 'day').format('DD/MM/YYYY'),
@@ -2034,11 +1971,8 @@ export class CapacityV2Service {
           endDate: maxDate,
           shadow_period: checkContractCodeCheckLast?.shadow_period,
         });
-        console.log('resCk : ', resCk);
 
         if (resCk) {
-          // console.log('--amd');
-          console.log('---1');
 
           const createContractCodeAmd = await this.prisma.contract_code.create({
             data: {
@@ -2246,7 +2180,6 @@ export class CapacityV2Service {
             //terminate เก่า
             // ยังไม่ได้รองรับจากปุ่ม amd เพิ่ม field termidate
             // ละเว้น Error: Cannot read properties of null (reading 'booking_row_json')
-            console.log('minDate : ', minDate);
             let newTerminateDate = null;
             if (minDate) {
               const terminateDate = getTodayNowDDMMYYYYDfaultAdd7(minDate);
@@ -2264,8 +2197,6 @@ export class CapacityV2Service {
                 newTerminateDate = terminateDate.toDate();
               }
             }
-            console.log('===  newTerminateDate; ', newTerminateDate);
-            console.log('===  checkContractCodeCheckLast; ', checkContractCodeCheckLast);
             await this.updateStatusCapacityRequestManagement(
               checkContractCodeCheckLast?.id,
               {
@@ -2280,12 +2211,10 @@ export class CapacityV2Service {
               null,
             );
           } catch (error) {
-            console.log('3');
             console.warn('⚠️ ละเว้น Error:', error.message); // แสดงเฉพาะ Warning แต่ไม่ให้โปรแกรมหยุด
           }
 
           try {
-            console.log('createContractCodeAmd : ', createContractCodeAmd);
             await this.updateStatusCapacityRequestManagement(
               createContractCodeAmd?.id,
               {
@@ -2299,11 +2228,9 @@ export class CapacityV2Service {
               null,
             );
           } catch (error) {
-            console.log('4');
             console.warn('⚠️ ละเว้น Error:', error.message); // แสดงเฉพาะ Warning แต่ไม่ให้โปรแกรมหยุด
           }
         } else {
-          console.log('---2');
           throw new HttpException(
             {
               status: HttpStatus.BAD_REQUEST,
@@ -2339,7 +2266,6 @@ export class CapacityV2Service {
   }
 
   async restorePreviousVersion(id: any, terminateDate?: any, userId?: any) {
-    console.log('คืนค่าเก่า----');
     const specificVersion = await this.prisma.booking_version.findFirst({
       where: {
         contract_code_id: Number(id),
@@ -2364,7 +2290,6 @@ export class CapacityV2Service {
       // @@@
       let tsetDataUse = []
       if (terminateDate) {
-        console.log('******* terminateDate Day : ', dayjs(terminateDate).format("YYYY-MM-DD"));
         tsetDataUse = setDataUse?.map((sd: any) => {
           const { resCalcNew, ...nSd } = sd
           const nresCalcNew = resCalcNew?.map((rCn: any) => {
@@ -2390,7 +2315,6 @@ export class CapacityV2Service {
         tsetDataUse = setDataUse
       }
 
-      console.log('คืน ---- tsetDataUse : ', tsetDataUse);
       await this.capacityMiddleService.processGenPublicData(tsetDataUse, true);
 
       // await this.capacityMiddleService.processGenPublicData(setDataUse, true);
@@ -2415,7 +2339,6 @@ export class CapacityV2Service {
     const todayStart = getTodayStartAdd7().toDate();
     const todayEnd = getTodayEndAdd7().toDate();
 
-    console.log('process...');
     console.time('status');
     if (status_capacity_request_management_id === 2) {
       useData = {
@@ -2434,7 +2357,6 @@ export class CapacityV2Service {
           },
         },
       };
-      console.log('useData --- : ', useData);
     } else if (status_capacity_request_management_id === 3) {
       useData = {
         ...(status_capacity_request_management_id !== null && {
@@ -2460,7 +2382,6 @@ export class CapacityV2Service {
         todayDay,
         'day',
       );
-      console.log('terminate_date : ', terminate_date);
       const checkContractCodeCheckLast =
         await this.prisma.contract_code.findFirst({
           where: { id: Number(id) },
@@ -2520,7 +2441,6 @@ export class CapacityV2Service {
     }
     console.timeEnd('status');
 
-    console.log('process 2...');
 
     if (
       status_capacity_request_management_id === 2 ||
@@ -2540,10 +2460,6 @@ export class CapacityV2Service {
 
       console.timeEnd('middleBooking process...');
 
-      console.log('---> pnmatchData : ', pnmatchData);
-      console.log('---> setDataUse : ', setDataUse);
-      // console.log('---> logWarnings : ', logWarnings);
-      console.log('public date process...'); // 4468.201904296875 ms
       console.time('public date.');
       if (status_capacity_request_management_id === 2) {
         await this.capacityMiddleService.processGenPublicData(
@@ -2555,7 +2471,6 @@ export class CapacityV2Service {
 
       // -----
 
-      console.log('create warning process...');
       console.time('create warning');
       if (logWarnings.length > 0) {
         await this.capacityMiddleService.capacityPublicationWarning(
@@ -2566,7 +2481,6 @@ export class CapacityV2Service {
       }
       console.timeEnd('create warning');
 
-      console.log('path detail process...');
       console.time('path detail');
       if (
         status_capacity_request_management_id === 2 ||
@@ -2589,9 +2503,6 @@ export class CapacityV2Service {
           status_capacity_request_management_id: true,
         },
       });
-      console.log('terminate.........');
-      console.log('id : ', id);
-      console.log('contractCodePeriod?.status_capacity_request_management_id : ', contractCodePeriod?.status_capacity_request_management_id);
       if (contractCodePeriod?.status_capacity_request_management_id === 2) {
         // คืนค่าเก่า
         // terminate_date
@@ -2606,13 +2517,11 @@ export class CapacityV2Service {
             terminate_date,
           );
 
-        console.log('public date process...');
         console.time('public date');
         // await this.capacityMiddleService.processGenPublicData(setDataUse, true);
         await this.capacityMiddleService.processGenPublicData(setDataUse, false);
         console.timeEnd('public date');
 
-        console.log('path detail process...');
         console.time('path detail');
         await this.capacityMiddleService.genPathDetail(
           oldsetDataUse,
@@ -2777,7 +2686,6 @@ export class CapacityV2Service {
               //   // );
               // }
               if (updates.length > 0) {
-                // console.log('updates : ', updates);
                 await this.prisma.capacity_publication_date.deleteMany({
                   where: {
                     id: {
@@ -2854,7 +2762,6 @@ export class CapacityV2Service {
       });
     }
 
-    console.log('process 3...');
     // terminate_date
     const resData = await this.prisma.contract_code.update({
       where: {
@@ -3171,7 +3078,6 @@ export class CapacityV2Service {
         bookingTemplate?.max,
       );
       if (!checkMinMax) {
-        console.log('1');
         throw new HttpException(
           {
             status: HttpStatus.BAD_REQUEST,
@@ -3326,15 +3232,11 @@ export class CapacityV2Service {
           startDate,
           bookingTemplate?.fixdayday,
         );
-        console.log('startDate : ', startDate);
-        console.log('endDateDate : ', endDateDate);
         resultDate = this.capacityMiddleService.generateMonthArray(
           startDate,
           endDateDate,
           bookingTemplate?.fixdayday,
         );
-        console.log('resultDate : ', resultDate);
-        console.log('keySDate : ', keySDate);
       }
 
       // เรียง key ตามวันที่และเพิ่ม entry
@@ -3654,7 +3556,6 @@ export class CapacityV2Service {
         console.warn('⚠️ ละเว้น Error:', error.message); // แสดงเฉพาะ Warning แต่ไม่ให้โปรแกรมหยุด
       }
     } else {
-      console.log('else ......');
       flagAmd = false;
       contract_code = contractCode?.contract_code;
       const fCPn = await this.capacityMiddleService.capacityPublicationDateAll();
@@ -3739,7 +3640,6 @@ export class CapacityV2Service {
       );
 
       if (!checkMinMax) {
-        console.log('checkMinMax Date is NOT match');
         throw new HttpException(
           {
             status: HttpStatus.BAD_REQUEST,
@@ -3833,11 +3733,7 @@ export class CapacityV2Service {
       const newVExit =
         await this.capacityMiddleService.transformToKeyArrayHValue(headerExit);
 
-      console.log('+++ newVEntry : ', newVEntry);
-      console.log(
-        `---- jsonFull['data_temp']['entryValue']`,
-        jsonFull['data_temp']['entryValue'],
-      );
+
 
       const filteredDataEntry = jsonFull['data_temp']['entryValue'].map(
         (entry: any) => {
@@ -3852,7 +3748,6 @@ export class CapacityV2Service {
               ([key]) => Number(key) >= Number(keySDate),
             ),
           );
-          // console.log('rowValueOld : ', rowValueOld);
           // const valueNew = this.capacityMiddleService.mapKeyOldWithClosestValueNew(
           // const valueNew = this.capacityMiddleService.mapKeyOldWithClosestValue(
           const valueNew =
@@ -3864,7 +3759,6 @@ export class CapacityV2Service {
               // contract_end_date,
               // entry,
             );
-          console.log('valueNew : ', valueNew);
 
           // rowOld['34'] = contract_end_date;
           rowOld['5'] = contract_start_date;
@@ -3911,8 +3805,6 @@ export class CapacityV2Service {
         sumExits: null,
       };
 
-      console.log('headerEntry : ', headerEntry);
-      console.log('headerExit : ', headerExit);
 
       data_temp['shipperInfo'] = jsonFull['data_temp']['shipperInfo'];
       data_temp['headerEntry'] = headerEntry;
@@ -3929,14 +3821,6 @@ export class CapacityV2Service {
         Number(keyEDate),
       );
 
-      console.log('filteredDataEntry : ', filteredDataEntry);
-      console.log('keySDate : ', keySDate);
-      console.log('- - - -');
-      console.log('filteredDataExit : ', filteredDataExit);
-      console.log('keyEDate : ', keyEDate);
-      console.log('- - - -');
-      console.log('sumEntries : ', sumEntries);
-      console.log('sumEntsumExitsries : ', sumEntsumExitsries);
 
       data_temp['sumEntries'] = { '0': 'Sum Entry', ...sumEntries };
       data_temp['sumExits'] = { '0': 'Sum Exit', ...sumEntsumExitsries };
@@ -3944,8 +3828,6 @@ export class CapacityV2Service {
       const newEntry = data_temp['entryValue'];
       const newExit = data_temp['exitValue'];
 
-      console.log('-newEntry : ', newEntry);
-      console.log('-newExit : ', newExit);
 
       // เพิ่ม version ------------------------------------------
 
@@ -4065,7 +3947,6 @@ export class CapacityV2Service {
         });
       }
 
-      console.log('mapDataRowJson : ', mapDataRowJson);
 
       await this.prisma.booking_row_json.createMany({
         data: mapDataRowJson,
@@ -4088,13 +3969,11 @@ export class CapacityV2Service {
       // ปรับใหม่ ------------------------------------------
       // valueExtend
 
-      console.log('คืนค่าเก่า');
       await this.restorePreviousVersion(id);
 
       const { pnmatchData, setDataUse, logWarnings } =
         await this.capacityMiddleService.middleBooking(id, false);
 
-      console.log('path detail process...');
       console.time('path detail');
       await this.capacityMiddleService.genPathDetail(
         setDataUse,
@@ -4216,10 +4095,6 @@ export class CapacityV2Service {
   updateRow(mode: 'FROM' | 'TO', new_header: any, old_header: any, example_data: any, entryExit: number) {
     if (mode !== 'FROM' && mode !== 'TO') return;
 
-    // console.log('mode', mode)
-    // console.log('new_header', new_header)
-    // console.log('old_header', old_header)
-    // console.log('example_data', example_data)
 
     // mode: 'FROM' | 'TO' คือแก้วันที่ FROM หรือ TO
 
@@ -4273,7 +4148,6 @@ export class CapacityV2Service {
 
     const addedMonths = this.getMonthCountDiff(newHeaders, oldHeaders, mode);
 
-    // console.log('addedMonths', addedMonths)
     // const example_data = [
     //     {
     //         "0": "Entry-X1-PTT",
@@ -4345,11 +4219,7 @@ export class CapacityV2Service {
         example_data,
         entryExit
       );
-      console.log('n oldHeaders : ', oldHeaders);
-      console.log('n newHeaders : ', newHeaders);
-      console.log('n example_data : ', example_data);
 
-      console.log('✅ updatedExampleData ----->', updatedExampleData)
       return updatedExampleData
     } else {
       // case นี้เพิ่มช่วงเวลา period from, to
@@ -4428,7 +4298,6 @@ export class CapacityV2Service {
         //       return row[key] ?? '0';
         //     })
         //   );
-        console.log('-- groupData : ', groupData);
 
 
         if (mode === 'FROM') {
@@ -4456,7 +4325,6 @@ export class CapacityV2Service {
         return newRow;
       });
 
-      // console.log("✅ Updated Data:", updatedData);
       return updatedData
     }
 
@@ -4471,7 +4339,6 @@ export class CapacityV2Service {
       startDate,
       endDateDate,
     } = payload
-    console.log('...fnExtendDateJSONNew');
     let oresultDate = []
     let nresultDateStep1 = []
     let nresultDate = []
@@ -4525,19 +4392,12 @@ export class CapacityV2Service {
       );
     }
 
-    // console.log('startDate : ', startDate);
-    // console.log('endDateDate : ', endDateDate);
-    // console.log('oresultDate : ', oresultDate);
-    // console.log('nresultDate : ', nresultDate);
 
     // oldHeaders = [ "01/05/2025", "01/06/2025", "01/07/2025","01/08/2025"]
     // newHeaders = ["01/07/2025", "01/08/2025"]
     const oldHeaders = oresultDate
     const newHeadersStep1 = nresultDateStep1
     const newHeaders = nresultDate
-    // console.log('oldHeaders : ', oldHeaders);
-    // console.log('newHeadersStep1 : ', newHeadersStep1);
-    // console.log('newHeaders : ', newHeaders);
     const entryOld = jsonFull?.data_temp?.entryValue
     const exitOld = jsonFull?.data_temp?.exitValue
     const updateRowEntryFROM = this.updateRow("FROM", newHeadersStep1, oldHeaders, entryOld, 1)
@@ -4808,7 +4668,6 @@ export class CapacityV2Service {
         bookingTemplate?.max,
       );
       if (!checkMinMax) {
-        console.log('1');
         throw new HttpException(
           {
             status: HttpStatus.BAD_REQUEST,
@@ -5180,7 +5039,6 @@ export class CapacityV2Service {
         console.warn('⚠️ ละเว้น Error:', error.message); // แสดงเฉพาะ Warning แต่ไม่ให้โปรแกรมหยุด
       }
     } else {
-      console.log('version extend');
       flagAmd = false;
       contract_code = contractCode?.contract_code;
       if (contractCode.status_capacity_request_management_id === 2) {
@@ -5244,7 +5102,6 @@ export class CapacityV2Service {
       );
 
       if (!checkMinMax) {
-        console.log('checkMinMax Date is NOT match');
         throw new HttpException(
           {
             status: HttpStatus.BAD_REQUEST,
@@ -5291,9 +5148,6 @@ export class CapacityV2Service {
       const newEntry = data_temp['entryValue'];
       const newExit = data_temp['exitValue'];
 
-      console.log('data_temp : ', data_temp);
-      console.log('newEntry : ', newEntry);
-      console.log('newExit : ', newExit);
 
       // เพิ่ม version ------------------------------------------
 
@@ -5445,7 +5299,6 @@ export class CapacityV2Service {
           false,
         );
 
-        console.log('path detail process...');
         console.time('path detail');
         await this.capacityMiddleService.genPathDetail(
           setDataUse,
@@ -5516,11 +5369,8 @@ export class CapacityV2Service {
     const ckAreaDup = [...newEntry, ...newExit]?.map(
       (ar: any) => ar?.area_text,
     );
-    console.log('ckAreaDup : ', ckAreaDup);
     const hasDuplicate = new Set(ckAreaDup).size !== ckAreaDup.length;
-    // console.log('- ckAreaDup : ', ckAreaDup);
     if (hasDuplicate) {
-      // console.log('ckAreaDup : ', ckAreaDup);
       throw new HttpException(
         {
           status: HttpStatus.BAD_REQUEST,
@@ -5535,7 +5385,6 @@ export class CapacityV2Service {
       let contract_code: any = null;
       let amdVersion: any = null;
       // amd
-      console.log('amd');
       const contractCode = await this.prisma.contract_code.findFirst({
         where: {
           id: bookingVersion?.contract_code?.ref_contract_code_by_main_id,
@@ -5673,7 +5522,6 @@ export class CapacityV2Service {
           null,
         );
       } catch (error) {
-        console.log('3');
         console.warn('⚠️ ละเว้น Error:', error.message); // แสดงเฉพาะ Warning แต่ไม่ให้โปรแกรมหยุด
       }
 
@@ -5786,18 +5634,12 @@ export class CapacityV2Service {
           null,
         );
       } catch (error) {
-        console.log('4');
         console.warn('⚠️ ละเว้น Error:', error.message); // แสดงเฉพาะ Warning แต่ไม่ให้โปรแกรมหยุด
       }
 
       // path detail
     } else {
-      console.log('ver');
-      console.log('fromDate : ', fromDate);
-      console.log(
-        'getTodayNowDDMMYYYYDfault(fromDate).toDate() : ',
-        getTodayNowDDMMYYYYDfault(fromDate).toDate(),
-      );
+
       // getTodayNowYYYYMMDDDfaultAdd7
       // if (flagFromTo) {
 
@@ -5831,8 +5673,6 @@ export class CapacityV2Service {
             contract_code_id: bookingVersion?.contract_code?.id,
           },
         });
-      // console.log(status === 2 && getTodayNowYYYYMMDDDfaultAdd7(fromDate).isSameOrBefore(getTodayNowAdd7()));
-      console.log('bookingVersion : ', bookingVersion);
       const versId = await this.prisma.booking_version.create({
         data: {
           version: `v.${checkContractCodeCheckLength + 1}`,
@@ -5873,8 +5713,6 @@ export class CapacityV2Service {
         },
       });
 
-      console.log('newEntry : ', newEntry);
-      console.log('newExit : ', newExit);
 
       await this.prisma.booking_full_json.create({
         data: {
@@ -5930,16 +5768,12 @@ export class CapacityV2Service {
           create_date_num: getTodayNowAdd7().unix(),
         });
       }
-      console.log('mapDataRowJson : ', mapDataRowJson);
       await this.prisma.booking_row_json.createMany({
         data: mapDataRowJson,
       });
       //
-      console.log('status : ', status);
-      console.log('bookingVersion?.contract_code?.id : ', bookingVersion?.contract_code?.id);
       if (status === 2) {
         // คืนค่า
-        console.log('คืนค่า');
         const specificVersion = await this.prisma.booking_version.findFirst({
           where: {
             contract_code_id: Number(bookingVersion?.contract_code?.id),
@@ -5959,18 +5793,13 @@ export class CapacityV2Service {
           );
         await this.capacityMiddleService.processGenPublicData(resetDataUse, true);
 
-        console.log('ค่าใหม่');
 
         const { pnmatchData, setDataUse, logWarnings } =
           await this.capacityMiddleService.middleBooking(bookingVersion?.contract_code?.id, false);
-        console.log('edit v setDataUse : ', setDataUse);
-        console.log('edit v pnmatchData : ', pnmatchData);
         await this.capacityMiddleService.processGenPublicData(
           setDataUse,
           false,
         );
-        console.log('- - - - - -');
-        console.log('path detail process...');
         console.time('path detail');
         await this.capacityMiddleService.genPathDetail(
           setDataUse,
@@ -6238,7 +6067,6 @@ export class CapacityV2Service {
       arrayResultExit,
     ];
 
-    // console.log('data : ', data);
     // สร้าง workbook และ worksheet
     const worksheet = XLSX.utils.aoa_to_sheet(data); // สร้าง sheet จาก array ของ array
     const workbook = XLSX.utils.book_new(); // สร้าง workbook ใหม่
@@ -6326,7 +6154,6 @@ export class CapacityV2Service {
       },
     ];
 
-    console.log('newEntry.length : ', newEntry.length);
 
     // Merge cells สำหรับ resultDate กับ row อันล่าง
     const resultDateCount = headerEntryArr1.length;
@@ -6737,7 +6564,6 @@ export class CapacityV2Service {
     let resData = [];
     let skip = 0;
     let hasMore = true;
-    console.log('get');
     console.time('start');
     while (hasMore) {
       const resDataBatch =
@@ -6840,11 +6666,9 @@ export class CapacityV2Service {
           skip: skip,
           take: pageSize,
         });
-      // console.log('resDataBatch : ', resDataBatch);
       // processBatch
       resData = resData.concat(resDataBatch);
       skip += pageSize;
-      // console.log('skip : ', skip);
       if (resDataBatch.length < pageSize) {
         hasMore = false; // ถ้าดึงมาไม่เต็ม batch แปลว่าไม่มีข้อมูลต่อแล้ว
       }
@@ -6868,13 +6692,11 @@ export class CapacityV2Service {
       },
     });
 
-    // console.log('pathManage : ', pathManage);
 
     if (resData.length > 0) {
       const newResData = resData.map((e: any) => {
         return { ...e };
       });
-      // console.log('2 newResData : ', newResData);
 
       const groupByPeriod = (data) => {
         return data.reduce((acc, curr) => {
@@ -6894,7 +6716,6 @@ export class CapacityV2Service {
 
       // เรียกใช้ฟังก์ชัน
       const resultPeriod = groupByPeriod(newResData);
-      // console.log('resultPeriod : ', resultPeriod);
 
       const addStartDate = (data) => {
         return data.map((group) => {
@@ -6912,7 +6733,6 @@ export class CapacityV2Service {
 
       // เรียกใช้งานฟังก์ชัน
       const resultStartDate = addStartDate(resultPeriod);
-      // console.log('resultStartDate : ', resultStartDate);
 
       // ฟังก์ชันเพิ่ม endDate โดยดูจาก startDate ของ period ถัดไป
       const addEndDates = (data) => {
@@ -6935,7 +6755,6 @@ export class CapacityV2Service {
 
       // เรียกใช้ฟังก์ชัน
       const resultEndDate = addEndDates(resultStartDate);
-      // console.log('resultEndDate : ', resultEndDate);
 
       // ฟังก์ชัน group data ตาม area_id
       const groupDataByArea = (data) => {
@@ -6963,7 +6782,6 @@ export class CapacityV2Service {
 
       // เรียกใช้ฟังก์ชัน
       const resultAreaGroup = groupDataByArea(resultEndDate);
-      // console.log('resultAreaGroup : ', resultAreaGroup);
 
       // ฟังก์ชันจัดกลุ่มตาม capacity_detail_point_id
       const groupByCapacityDetailPointId = (data) => {
@@ -6990,7 +6808,6 @@ export class CapacityV2Service {
       };
 
       const resultGroupPoint = groupByCapacityDetailPointId(resultAreaGroup);
-      // console.log('resultGroupPoint : ', resultGroupPoint);
       // return resultGroupPoint;
       return {
         data: resultGroupPoint,
@@ -7168,7 +6985,6 @@ export class CapacityV2Service {
     let resData = [];
     let skip = 0;
     let hasMore = true;
-    console.log('get');
     console.time('start');
     while (hasMore) {
       const resDataBatch =
@@ -7271,11 +7087,9 @@ export class CapacityV2Service {
           skip: skip,
           take: pageSize,
         });
-      // console.log('resDataBatch : ', resDataBatch);
       // processBatch
       resData = resData.concat(resDataBatch);
       skip += pageSize;
-      // console.log('skip : ', skip);
       if (resDataBatch.length < pageSize) {
         hasMore = false; // ถ้าดึงมาไม่เต็ม batch แปลว่าไม่มีข้อมูลต่อแล้ว
       }
@@ -7335,13 +7149,11 @@ export class CapacityV2Service {
       }
     })
 
-    // console.log('pathManage : ', pathManage);
 
     if (resData.length > 0) {
       const newResData = resData.map((e: any) => {
         return { ...e };
       });
-      // console.log('2 newResData : ', newResData);
 
       const groupByPeriod = (data) => {
         return data.reduce((acc, curr) => {
@@ -7361,7 +7173,6 @@ export class CapacityV2Service {
 
       // เรียกใช้ฟังก์ชัน
       const resultPeriod = groupByPeriod(newResData);
-      // console.log('resultPeriod : ', resultPeriod);
 
       const addStartDate = (data) => {
         return data.map((group) => {
@@ -7379,7 +7190,6 @@ export class CapacityV2Service {
 
       // เรียกใช้งานฟังก์ชัน
       const resultStartDate = addStartDate(resultPeriod);
-      // console.log('resultStartDate : ', resultStartDate);
 
       // ฟังก์ชันเพิ่ม endDate โดยดูจาก startDate ของ period ถัดไป
       const addEndDates = (data) => {
@@ -7402,7 +7212,6 @@ export class CapacityV2Service {
 
       // เรียกใช้ฟังก์ชัน
       const resultEndDate = addEndDates(resultStartDate);
-      // console.log('resultEndDate : ', resultEndDate);
 
       // ฟังก์ชัน group data ตาม area_id
       const groupDataByArea = (data) => {
@@ -7505,7 +7314,6 @@ export class CapacityV2Service {
 
       // เรียกใช้ฟังก์ชัน
       const resultAreaGroup = groupDataByArea(resultEndDate);
-      // console.log('resultAreaGroup : ', resultAreaGroup);
 
       // ฟังก์ชันจัดกลุ่มตาม capacity_detail_point_id
       const groupByCapacityDetailPointId = (data) => {
@@ -7532,7 +7340,6 @@ export class CapacityV2Service {
       };
 
       const resultGroupPoint = groupByCapacityDetailPointId(resultAreaGroup);
-      // console.log('resultGroupPoint : ', resultGroupPoint);
       // return resultGroupPoint;
       return {
         data: resultGroupPoint,

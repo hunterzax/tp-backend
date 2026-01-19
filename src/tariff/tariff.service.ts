@@ -804,8 +804,7 @@ export class TariffService {
       const monthEnd =
         monthEndDayjs?.tz('Asia/Bangkok')?.format('YYYY-MM-DD') ?? '';
 
-      console.log('monthStart : ', monthStart);
-      console.log('monthEnd : ', monthEnd);
+
 
       // 1 System คือยังไม่มีการ Edit
       // 2 Manual คือ มีการ edit ค่าแล้ว

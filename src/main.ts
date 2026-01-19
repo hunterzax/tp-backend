@@ -43,13 +43,8 @@ async function bootstrap() {
 
   // Resolve SSL paths based on environment
   const isDev = process.env.NODE_ENV === 'development';
-  const sslKeyPath = isDev
-    ? path.resolve(process.cwd(), 'src', 'ssl', 'ssl_private.key')
-    : path.resolve(__dirname, process.env.SSL_KEY_PATH);
-
-  const sslCertPath = isDev
-    ? path.resolve(process.cwd(), 'src', 'ssl', 'ssl.crt')
-    : path.resolve(__dirname, process.env.SSL_CERT_PATH);
+  const sslKeyPath = process.env.SSL_KEY_PATH || path.resolve(process.cwd(), 'src', 'ssl', 'ssl_private.key');
+  const sslCertPath = process.env.SSL_CERT_PATH || path.resolve(process.cwd(), 'src', 'ssl', 'ssl.crt');
 
 
   if (!fs.existsSync(sslKeyPath) || !fs.existsSync(sslCertPath)) {
@@ -111,7 +106,15 @@ async function bootstrap() {
 
   // Security headers
   app.use(helmet({
-    contentSecurityPolicy: false, // APIs rarely need CSP; disable to avoid breaking clients
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'", "data:", "blob:"],
+        connectSrc: ["'self'"],
+      },
+    },
     xPoweredBy: false,
   }));
   if (process.env.NODE_ENV === 'production') {

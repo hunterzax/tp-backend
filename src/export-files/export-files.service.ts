@@ -15193,35 +15193,7 @@ export class ExportFilesService {
   // new
   async epAllocationAllocationReport(response: Response, payload: any) {
     const { bodys, filter } = payload;
-    // let total_record = undefined;
-    // const evidenApi =
-    //   bodys?.tab === '1'
-    //     ? await this.allocationService.evidenApiAllocationContractPoint(
-    //       {
-    //         start_date: bodys?.start_date,
-    //         end_date: bodys?.end_date,
-    //         skip: 0,
-    //         limit: 1,
-    //       },
-    //       (totalRecord) => {
-    //         total_record = totalRecord;
-    //       },
-    //     )
-    //     : await this.allocationService.evidenApiAllocationContractPointIntraday(
-    //       {
-    //         start_date: bodys?.start_date,
-    //         end_date: bodys?.end_date,
-    //         skip: 0,
-    //         limit: 1,
-    //       },
-    //       (totalRecord) => {
-    //         total_record = totalRecord;
-    //       },
-    //     );
-    // if (total_record) {
-    //   bodys.skip = 0;
-    //   bodys.limit = total_record;
-    // }
+
     const resData = await this.allocationService.allocationReport(bodys, 99999);
     const idArray = bodys?.idAr;
     //  tab
@@ -15278,21 +15250,7 @@ export class ExportFilesService {
 
     // sort header
     const filterHeader = filter || [];
-    // const filterHeader = [
-    //     "Publication",
-    //     "Entry / Exit",
-    //     "Gas Day",
-    //     "Gas Hour",
-    //     "Timestamp",
-    //     "Shipper Name",
-    //     "Contract Code",
-    //     "Contract Point",
-    //     "Capacity Right (MMBTU/D)",
-    //     "Nominated Value (MMBTU/D)",
-    //     "Intraday System Allocation (MMBTU/D)",
-    //     "System Allocation (MMBTU/D)",
-    //     "Overusage (MMBTU/D)"
-    // ]
+
 
     // header color
     const headerColorMap = {
@@ -15321,9 +15279,7 @@ export class ExportFilesService {
       for (const key of keys) {
         result[key] = {};
         for (let i = 0; i < data.length; i++) {
-          // if (data[i]?.['grees']) {
-          //   result[key][i] = 'e8ffee'; //#e8ffee
-          // }
+
         }
       }
 

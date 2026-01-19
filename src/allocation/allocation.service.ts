@@ -148,7 +148,7 @@ export class AllocationService {
       let evidenData = [];
       if (resEviden?.status === 200 && !!resEviden?.data) {
         if (Array.isArray(resEviden.data) && resEviden.data.length > 0) {
-          let total_record = undefined;
+          let total_record = 0;
           resEviden?.data?.map((resEvidenData: any) => {
             if (
               resEvidenData?.data &&
@@ -156,11 +156,7 @@ export class AllocationService {
               resEvidenData.data.length > 0
             ) {
               if (resEvidenData?.total_record) {
-                if (total_record) {
-                  total_record += resEvidenData?.total_record;
-                } else {
-                  total_record = resEvidenData?.total_record;
-                }
+                total_record += resEvidenData.total_record;
               }
               evidenData.push(...resEvidenData.data);
             }
@@ -1604,7 +1600,7 @@ export class AllocationService {
         return f?.nomination_point?.nomination_point === eod['point'];
       });
       const meterName = [
-        ...new Set([...meterFil?.map((mF: any) => mF?.metered_point_name)]),
+        ...new Set([...(meterFil?.map((mF: any) => mF?.metered_point_name) || [])]),
       ];
 
       const area_obj = areaMaster.find((f: any) => {
@@ -2251,7 +2247,7 @@ export class AllocationService {
           return f?.nomination_point?.nomination_point === eod['point'];
         });
         meterName = [
-          ...new Set([...meterFil?.map((mF: any) => mF?.metered_point_name)]),
+          ...new Set([...(meterFil?.map((mF: any) => mF?.metered_point_name) || [])]),
         ];
       }
 

@@ -407,7 +407,6 @@ export class SubmissionFileRefactoredService {
 
     } else {
       console.log('ภายใน deadline');
-      nowAts
       if (startDateExConv.isSame(allowedDate, 'day')) {
         console.log(
           '--วันตรง deadline เช็ค hour, minute ไม่ให้เกิน deadline ถ้าเกินไป renom ไม่เกินให้ผ่านได้  --',
