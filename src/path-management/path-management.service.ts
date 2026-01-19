@@ -23,7 +23,7 @@ export class PathManagementService {
     private prisma: PrismaService,
     // @Inject(CACHE_MANAGER) private cacheService: Cache,
     private readonly capacityService: CapacityService,
-  ) {}
+  ) { }
 
   groupByExitIdTemp = (arr: any) => {
     return arr.reduce((acc: any, item: any) => {
@@ -37,7 +37,7 @@ export class PathManagementService {
   };
 
   async useReqs(req: any) {
-    const ip = req.headers['x-forwarded-for'] || req.ip;
+    const ip = req?.headers?.['x-forwarded-for'] || req?.ip;
     return {
       ip: ip,
       sub: req?.user?.sub,
@@ -259,7 +259,7 @@ export class PathManagementService {
       return acc;
     }, {});
 
-    const objToArray = this.capacityService.objToArray(groupedExits); 
+    const objToArray = this.capacityService.objToArray(groupedExits);
 
     const groupedResult = objToArray.map((e: any, i: any) => {
       const { config_master_path_id, ...newObjToArray } =
@@ -329,7 +329,8 @@ export class PathManagementService {
     // entry_exit_id === 1
     const exitArrId: any = [];
     const pathConfigs = configPath.map((e: any) => {
-      for (let iex = 0; iex < e?.revised_capacity_path.length; iex++) {
+      const length = e?.revised_capacity_path?.length || 0;
+      for (let iex = 0; iex < length; iex++) {
         if (e?.revised_capacity_path[iex]?.area?.entry_exit_id === 2) {
           const area = e?.revised_capacity_path[iex]?.area;
           if (!exitArrId.find((item) => item.id === area?.id)) {
@@ -380,7 +381,7 @@ export class PathManagementService {
     console.log('path_management_config : ', path_management_config);
     const checkSE = await this.prisma.path_management.findFirst({
       where: {
-      
+
         start_date: start_date ? getTodayNowAdd7(start_date).toDate() : null,
       },
     });
@@ -400,7 +401,7 @@ export class PathManagementService {
       );
     } else {
       const useStartDate = start_date ? getTodayNowAdd7(start_date).toDate() : null
-     
+
 
       const pathManagement = await this.prisma.path_management.findMany({});
       const pathManagementCreate = await this.prisma.path_management.create({
@@ -448,9 +449,9 @@ export class PathManagementService {
       // exit_name_temp        String?
       // exit_id_temp          Int?
       const useDataArr = [];
-      const configPathArr = path_management_config.map(
+      const configPathArr = path_management_config ? path_management_config.map(
         (e: any) => e?.config_master_path_id,
-      );
+      ) : [];
       const configPath = await this.prisma.config_master_path.findMany({
         include: {
           revised_capacity_path: {
@@ -520,7 +521,7 @@ export class PathManagementService {
 
   async pathManagementEdit(payload: any, userId: any, id: any) {
     const { start_date, path_management_config, ...dataWithout } = payload;
-   
+
 
     const checkMidDate = await this.prisma.path_management.findFirst({
       where: {
@@ -584,7 +585,7 @@ export class PathManagementService {
 
     const old = (oldCN || []).map((e: any) => `${e?.config_master_path_id}${e?.exit_name_temp}`);
     const arrNew = (path_management_config || []).map(
-      (e: any) => { return { temp:`${e?.config_master_path_id}${e?.exit_name_temp}`, exit_name_temp: e?.exit_name_temp, config_master_path_id: e?.config_master_path_id, } },
+      (e: any) => { return { temp: `${e?.config_master_path_id}${e?.exit_name_temp}`, exit_name_temp: e?.exit_name_temp, config_master_path_id: e?.config_master_path_id, } },
     );
     console.log('old : ', old);
     console.log('arrNew : ', arrNew);
@@ -608,12 +609,12 @@ export class PathManagementService {
     console.log('path_management_config : ', path_management_config);
 
     const filteredData = path_management_config.filter((item: any) =>
-      addedItems.map((ea:any) => ea?.temp).includes(`${item.config_master_path_id}${item.exit_name_temp}`),
+      addedItems.map((ea: any) => ea?.temp).includes(`${item.config_master_path_id}${item.exit_name_temp}`),
       // addedItems.includes(item.config_master_path_id),
     );
 
     const findLast = await this.prisma.path_management.findFirst({
-      where:{
+      where: {
         id: Number(id)
       },
       orderBy: { id: 'desc' },
@@ -624,9 +625,9 @@ export class PathManagementService {
       flag_use = true;
     }
     // console.log('filteredData : ', filteredData);
-    const configPathArr = filteredData.map(
+    const configPathArr = filteredData ? filteredData.map(
       (e: any) => e?.config_master_path_id,
-    );
+    ) : [];
     // console.log('configPathArr : ', configPathArr);
     const configPath = await this.prisma.config_master_path.findMany({
       include: {
@@ -702,7 +703,7 @@ export class PathManagementService {
     //   (e: any) => e?.config_master_path_id,
     // );
 
-   
+
     // await this.prisma.path_management_config.updateMany({
     //   where: {
     //     path_management_id: Number(id),
@@ -763,7 +764,7 @@ export class PathManagementService {
       },
     });
     const resultGroup = result.map((e: any) => {
-      const paths = JSON.parse(e?.temps);
+      const paths = e?.temps ? JSON.parse(e.temps) : null;
       const { temps, ...newE } = e;
       return { ...newE, paths: paths };
     });

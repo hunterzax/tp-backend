@@ -44,6 +44,16 @@ export class DailyAdjustmentService {
     private readonly astosService: AstosService,
   ) { }
 
+  private safeParseJSON(data: any, defaultValue: any = null) {
+    if (!data) return defaultValue;
+    try {
+      return typeof data === 'string' ? JSON.parse(data) : data;
+    } catch (e) {
+      console.error('JSON parse error:', e);
+      return defaultValue;
+    }
+  }
+
   async shipperData() {
     const statusShow = [2, 5];
     const groups = await this.prisma.group.findMany({
@@ -194,7 +204,7 @@ export class DailyAdjustmentService {
         },
         group: {
           id: {
-            in: (JSON.parse(shipper_id) || []).map((e: any) => Number(e)),
+            in: (this.safeParseJSON(shipper_id) || []).map((e: any) => Number(e)),
           },
         },
         AND: [
@@ -231,7 +241,7 @@ export class DailyAdjustmentService {
       const nomination_version = e['nomination_version'].map((eN: any) => {
         const nomination_row_json = eN['nomination_row_json'].map(
           (eRj: any) => {
-            const data_temp = JSON.parse(eRj['data_temp']);
+            const data_temp = this.safeParseJSON(eRj['data_temp']);
             const nomPoint = data_temp['3'];
             return { ...eRj, data_temp, nomPoint };
           },
@@ -333,7 +343,7 @@ export class DailyAdjustmentService {
       }
     );
     const dataConvert =
-      (!!meteredMicroData?.reply && JSON.parse(meteredMicroData?.reply)) ||
+      (!!meteredMicroData?.reply && this.safeParseJSON(meteredMicroData?.reply)) ||
       null;
 
     // console.log('dataConvert : ', dataConvert);
@@ -584,6 +594,9 @@ export class DailyAdjustmentService {
   }
 
   async create(payload: any, userId: any) {
+    if (payload === undefined || payload === null) {
+      throw new HttpException('Missing payload', HttpStatus.BAD_REQUEST);
+    }
     const { gas_day, time, shipper_id, area_id, entry_exit_id, nom } = payload;
 
     const todayStart = getTodayStartAdd7().toDate();
@@ -855,6 +868,9 @@ export class DailyAdjustmentService {
   }
 
   async updateStatus(id: any, payload: any, userId: any) {
+    if (id === undefined || id === null || payload === undefined || payload === null) {
+      throw new HttpException('Missing id or payload', HttpStatus.BAD_REQUEST);
+    }
     const { status, reason } = payload;
     const dailyAdjustment = await this.prisma.daily_adjustment.updateMany({
       where: {
@@ -1042,14 +1058,18 @@ export class DailyAdjustmentService {
             eDataNom['nomination_full_json'] = eDataNom[
               'nomination_full_json'
             ]?.map((eDataNomJson: any) => {
-              eDataNomJson['data_temp'] = JSON.parse(eDataNomJson['data_temp']);
+              if (!!eDataNomJson && eDataNomJson?.['data_temp']) {
+                eDataNomJson['data_temp'] = this.safeParseJSON(eDataNomJson['data_temp']);
+              }
               return { ...eDataNomJson };
             });
 
             eDataNom['nomination_row_json'] = eDataNom[
               'nomination_row_json'
             ]?.map((eDataNomJson: any) => {
-              eDataNomJson['data_temp'] = JSON.parse(eDataNomJson['data_temp']);
+              if (eDataNomJson?.['data_temp']) {
+                eDataNomJson['data_temp'] = this.safeParseJSON(eDataNomJson['data_temp']);
+              }
               return { ...eDataNomJson };
             });
             return { ...eDataNom };
@@ -1848,7 +1868,7 @@ export class DailyAdjustmentService {
             eDataNom['nomination_full_json'] = eDataNom[
               'nomination_full_json'
             ]?.map((eDataNomJson: any) => {
-              eDataNomJson['data_temp'] = JSON.parse(eDataNomJson['data_temp']);
+              eDataNomJson['data_temp'] = this.safeParseJSON(eDataNomJson['data_temp']);
               return { ...eDataNomJson };
             });
             // eDataNom["nomination_full_json_sheet2"] = eDataNom["nomination_full_json_sheet2"]?.map((eDataNomJson:any) => {
@@ -1858,7 +1878,7 @@ export class DailyAdjustmentService {
             eDataNom['nomination_row_json'] = eDataNom[
               'nomination_row_json'
             ]?.map((eDataNomJson: any) => {
-              eDataNomJson['data_temp'] = JSON.parse(eDataNomJson['data_temp']);
+              eDataNomJson['data_temp'] = this.safeParseJSON(eDataNomJson['data_temp']);
               return { ...eDataNomJson };
             });
             return { ...eDataNom };
@@ -2211,7 +2231,7 @@ export class DailyAdjustmentService {
       return f?.unit === 'MMBTU/D';
     });
 
-    const dataConvert = !!meteredMicroData?.reply && JSON.parse(meteredMicroData?.reply) || null
+    const dataConvert = !!meteredMicroData?.reply && this.safeParseJSON(meteredMicroData?.reply) || null
 
     const hvFn = (eValue: any, hour: any) => {
       const hvDefault = 1005
@@ -3070,7 +3090,7 @@ export class DailyAdjustmentService {
             eDataNom['nomination_full_json'] = eDataNom[
               'nomination_full_json'
             ]?.map((eDataNomJson: any) => {
-              eDataNomJson['data_temp'] = JSON.parse(eDataNomJson['data_temp']);
+              eDataNomJson['data_temp'] = this.safeParseJSON(eDataNomJson['data_temp']);
               return { ...eDataNomJson };
             });
             // eDataNom["nomination_full_json_sheet2"] = eDataNom["nomination_full_json_sheet2"]?.map((eDataNomJson:any) => {
@@ -3080,7 +3100,7 @@ export class DailyAdjustmentService {
             eDataNom['nomination_row_json'] = eDataNom[
               'nomination_row_json'
             ]?.map((eDataNomJson: any) => {
-              eDataNomJson['data_temp'] = JSON.parse(eDataNomJson['data_temp']);
+              eDataNomJson['data_temp'] = this.safeParseJSON(eDataNomJson['data_temp']);
               return { ...eDataNomJson };
             });
             return { ...eDataNom };
@@ -3475,7 +3495,7 @@ export class DailyAdjustmentService {
     });
 
     // console.log('meterData : ', meterData);
-    const dataConvert = !!meteredMicroData?.reply && JSON.parse(meteredMicroData?.reply) || null
+    const dataConvert = !!meteredMicroData?.reply && this.safeParseJSON(meteredMicroData?.reply) || null
     // console.log('dataConvert : ', dataConvert);
 
     //   datasource =
@@ -4279,8 +4299,9 @@ export class DailyAdjustmentService {
         const dailyNominationVersion = dailyNomination.nomination_version.map(nominationVersion => {
           // ประมวลผลข้อมูลในแต่ละแถวของการ nomination
           nominationVersion.nomination_row_json.map(nominationRowJson => {
-            // แปลงข้อมูล JSON เป็น object
-            const nominationRowJsonDataTemp = JSON.parse(nominationRowJson.data_temp)
+            // ประมวลผลข้อมูลในแต่ละแถวของการ nomination
+            const nominationRowJsonDataTemp = this.safeParseJSON(nominationRowJson?.['data_temp'])
+            if (!nominationRowJsonDataTemp) return;
 
             // ดึงข้อมูลจาก JSON ตาม index
             const zone = nominationRowJsonDataTemp['0']
@@ -4293,7 +4314,6 @@ export class DailyAdjustmentService {
 
             // ตรวจสอบเงื่อนไข: ต้องเป็นหน่วย MMBTU/D และมีโซนและพื้นที่ (เป็น nomination point)
             if (unit !== 'MMBTU/D' || !zone || !area) { return; }
-
 
             const entryExitId = entryExit === 'Entry' ? 1 : 2;
             const entryExitObj = entryExitMaster?.find((f: any) => {
@@ -4308,20 +4328,6 @@ export class DailyAdjustmentService {
                 && startDate.isValid() && startDate.isSameOrBefore(currentDate)
                 && (endDate == null || (endDate.isValid() && endDate.isAfter(currentDate)));
             }) : null;
-
-            // "dailyAdjustFindPoint": [
-            //     {
-            //         "create_date": "2025-09-04T11:06:21.811Z",
-            //         "timeUse": "18:30",
-            //         "gas_day": "04/09/2025",
-            //         "heating_value": "1047.52",
-            //         "hour": 18,
-            //         "minute": 30,
-            //         "hourTime": "H19",
-            //         "adjustH": 26188,
-            //         "djustHFlag": true
-            //     }
-            // ],
 
             // สร้างข้อมูลพื้นฐานสำหรับแต่ละแถว
             const baseAttribute = {
@@ -4460,13 +4466,9 @@ export class DailyAdjustmentService {
         }) ?? []
 
         const weeklyNominationVersion = weeklyNomination.nomination_version.map(nominationVersion => {
-          // nominationVersion.nomination_full_json.map(nominationFullJson => {
-          //   const nominationFullJsonDataTemp = JSON.parse(nominationFullJson.data_temp)
-          //   return { ...nominationFullJsonDataTemp }
-          // })
-
           nominationVersion.nomination_row_json.map(nominationRowJson => {
-            const nominationRowJsonDataTemp = JSON.parse(nominationRowJson.data_temp)
+            const nominationRowJsonDataTemp = this.safeParseJSON(nominationRowJson?.['data_temp'])
+            if (!nominationRowJsonDataTemp) return;
 
             const zone = nominationRowJsonDataTemp['0']
             const area = nominationRowJsonDataTemp['2']
@@ -4475,9 +4477,7 @@ export class DailyAdjustmentService {
             const entryExit = nominationRowJsonDataTemp['10']
             const hv = parseToNumber(nominationRowJsonDataTemp['12'])
 
-
             if (unit !== 'MMBTU/D' || !zone || !area) { return; }
-
 
             const entryExitId = entryExit === 'Entry' ? 1 : 2;
             const entryExitObj = entryExitMaster?.find((f: any) => {
@@ -4805,7 +4805,7 @@ export class DailyAdjustmentService {
           gas_day: currentDate.format('YYYY-MM-DD'),
         }),
       );
-      const meterData = (!!meteredMicroData?.reply && JSON.parse(meteredMicroData?.reply)) || null;
+      const meterData = (!!meteredMicroData?.reply && this.safeParseJSON(meteredMicroData?.reply)) || null;
       if (meterData && Array.isArray(meterData)) {
         meterDataList.push(...meterData);
       }
@@ -4831,7 +4831,8 @@ export class DailyAdjustmentService {
         const dailyNominationVersion = dailyNomination.nomination_version.map(nominationVersion => {
           nominationVersion.nomination_row_json.map(nominationRowJson => {
             // แปลง JSON string เป็น object
-            const nominationRowJsonDataTemp = JSON.parse(nominationRowJson.data_temp)
+            const nominationRowJsonDataTemp = this.safeParseJSON(nominationRowJson?.['data_temp'])
+            if (!nominationRowJsonDataTemp) return;
 
             // อ่านข้อมูลจาก JSON ตามตำแหน่งที่กำหนด
             const zone = nominationRowJsonDataTemp['0']
@@ -5017,7 +5018,7 @@ export class DailyAdjustmentService {
         const weeklyNominationVersion = weeklyNomination.nomination_version.map(nominationVersion => {
           nominationVersion.nomination_row_json.map(nominationRowJson => {
             // แปลง JSON string เป็น object
-            const nominationRowJsonDataTemp = JSON.parse(nominationRowJson.data_temp)
+            const nominationRowJsonDataTemp = this.safeParseJSON(nominationRowJson.data_temp)
 
             // อ่านข้อมูลจาก JSON
             const zone = nominationRowJsonDataTemp['0']
@@ -5527,12 +5528,12 @@ export class DailyAdjustmentService {
         // Use the value from latest entry before missing time
         timeShow.push({
           time: missingTime,
-          value: latestBeforeMissing.value,
-          valueMmscfd: latestBeforeMissing.valueMmscfd,
-          heatingValueFromMeter: latestBeforeMissing.heatingValueFromMeter,
-          heatingValueFromAdjust: latestBeforeMissing.heatingValueFromAdjust,
-          volumeFromMeter: latestBeforeMissing.volumeFromMeter,
-          volumeFromAdjust: latestBeforeMissing.volumeFromAdjust
+          value: latestBeforeMissing?.value ?? null,
+          valueMmscfd: latestBeforeMissing?.valueMmscfd ?? null,
+          heatingValueFromMeter: latestBeforeMissing?.heatingValueFromMeter ?? null,
+          heatingValueFromAdjust: latestBeforeMissing?.heatingValueFromAdjust ?? null,
+          volumeFromMeter: latestBeforeMissing?.volumeFromMeter ?? null,
+          volumeFromAdjust: latestBeforeMissing?.volumeFromAdjust ?? null
         });
       });
 

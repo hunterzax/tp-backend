@@ -43,7 +43,17 @@ export class CapacityMiddleService {
     private readonly uploadTemplateForShipperService: UploadTemplateForShipperService,
     private readonly fileUploadService: FileUploadService,
     // @Inject(CACHE_MANAGER) private cacheService: Cache,
-  ) {}
+  ) { }
+
+  private safeParseJSON(data: any, defaultValue: any = null) {
+    if (!data) return defaultValue;
+    try {
+      return typeof data === 'string' ? JSON.parse(data) : data;
+    } catch (e) {
+      console.error('JSON parse error:', e);
+      return defaultValue;
+    }
+  }
 
   genMD(startDate: string, endDate: string, mode: number): boolean {
     const starts = startDate ? getTodayNowDDMMYYYYAdd7(startDate) : null;
@@ -313,11 +323,11 @@ export class CapacityMiddleService {
           );
           const closestDiff = closestDate
             ? Math.abs(
-                dayjs(closestDate, 'DD/MM/YYYY').diff(
-                  dayjs(targetDate, 'DD/MM/YYYY'),
-                  'day',
-                ),
-              )
+              dayjs(closestDate, 'DD/MM/YYYY').diff(
+                dayjs(targetDate, 'DD/MM/YYYY'),
+                'day',
+              ),
+            )
             : Infinity;
 
           if (currentDiff < closestDiff) {
@@ -401,11 +411,11 @@ export class CapacityMiddleService {
           );
           const closestDiff = closestDate
             ? Math.abs(
-                dayjs(closestDate, 'DD/MM/YYYY').diff(
-                  dayjs(targetDate, 'DD/MM/YYYY'),
-                  'day',
-                ),
-              )
+              dayjs(closestDate, 'DD/MM/YYYY').diff(
+                dayjs(targetDate, 'DD/MM/YYYY'),
+                'day',
+              ),
+            )
             : Infinity;
 
           if (currentDiff < closestDiff) {
@@ -457,17 +467,17 @@ export class CapacityMiddleService {
     return result;
   }
 
-  mapKeyOldWithClosestValueNewNotuse(arg1: any, headerEntry: any, rowValueOld: any, startNew:any, endNew:any, old:any) {
+  mapKeyOldWithClosestValueNewNotuse(arg1: any, headerEntry: any, rowValueOld: any, startNew: any, endNew: any, old: any) {
     const result: any = {};
 
 
     function addSequentialKeys(obj: Record<string, any>, start: number, count: number, value: any) {
-        const out = { ...obj };
-        for (let i = 0; i < count; i++) {
-          out[String(start + i)] = value; // เขียนทับถ้ามีอยู่แล้ว
-        }
-        return out;
+      const out = { ...obj };
+      for (let i = 0; i < count; i++) {
+        out[String(start + i)] = value; // เขียนทับถ้ามีอยู่แล้ว
       }
+      return out;
+    }
 
     //  newVEntry,
     //   jsonFull['data_temp']['headerEntry'],
@@ -481,7 +491,7 @@ export class CapacityMiddleService {
     // console.log('startNew : ', startNew);
     // console.log('endNew : ', endNew);
     // console.log('old : ', old);
-    
+
     const startOld = old["5"]
     const endOld = old["6"]
     const valstartOld = old["7"] // use start new pre
@@ -491,7 +501,7 @@ export class CapacityMiddleService {
     // console.log('valstartOld : ', valstartOld);
 
     const newValue = old
-    if(dayjs(startOld, "DD/MM/YYYY").isAfter(dayjs(startNew, "DD/MM/YYYY"))){
+    if (dayjs(startOld, "DD/MM/YYYY").isAfter(dayjs(startNew, "DD/MM/YYYY"))) {
       console.log('เพิ่ม start new');
       // start ใหม่ น้อยกว่า
       const startNewDates = this.generateMonthlyArrayNew(startNew, startOld)
@@ -504,19 +514,19 @@ export class CapacityMiddleService {
       console.log('shifted : ', shifted);
       // newValue = addSequentialKeys(shifted, 7, useStartNew, valstartOld);
       // newValue = addSequentialKeys(shifted, 7, useStartNew, "0");
-    }else if(dayjs(startOld, "DD/MM/YYYY").isBefore(dayjs(startNew, "DD/MM/YYYY"))){
+    } else if (dayjs(startOld, "DD/MM/YYYY").isBefore(dayjs(startNew, "DD/MM/YYYY"))) {
       console.log('ตัด start');
       const startNewDates = this.generateMonthlyArrayNew(startOld, startNew)
       const useStartNew = startNewDates.length > 0 ? startNewDates?.length : 0
       console.log('useStartNew : ', useStartNew);
       console.log('old : ', old);
       const pruned = old ? Object.fromEntries(
-          Object.entries(old).filter(([k]) => {
-            const n = Number(k);
-            return !(n >= 7 && n <= (10)); // ตัด 7..N
-            // return !(n >= 7 && n <= (useStartNew + 7)); // ตัด 7..N
-          })
-        ) : {}
+        Object.entries(old).filter(([k]) => {
+          const n = Number(k);
+          return !(n >= 7 && n <= (10)); // ตัด 7..N
+          // return !(n >= 7 && n <= (useStartNew + 7)); // ตัด 7..N
+        })
+      ) : {}
       console.log('pruned : ', pruned);
       // const shifted = Object.fromEntries(
       //   Object.entries(pruned).map(([k, v]) => [String(Number(k) - useStartNew), v])
@@ -524,10 +534,10 @@ export class CapacityMiddleService {
       // console.log('shifted : ', shifted);
     }
 
-    if(dayjs(endOld, "DD/MM/YYYY").isAfter(dayjs(endNew, "DD/MM/YYYY"))){
+    if (dayjs(endOld, "DD/MM/YYYY").isAfter(dayjs(endNew, "DD/MM/YYYY"))) {
       console.log('ตัด end');
 
-    }else if(dayjs(endOld, "DD/MM/YYYY").isBefore(dayjs(endNew, "DD/MM/YYYY"))) {
+    } else if (dayjs(endOld, "DD/MM/YYYY").isBefore(dayjs(endNew, "DD/MM/YYYY"))) {
       console.log('เพิ่ม end new');
 
     }
@@ -674,7 +684,7 @@ export class CapacityMiddleService {
   generateMonthlyArrayNew(startDate: string, endDate: string): string[] {
     // สมมติ getTodayNowDDMMYYYYAdd7 คืนค่าเป็น dayjs()
     const start = startDate ? getTodayNowDDMMYYYYAdd7(startDate).startOf('month') : null;
-    const end   = endDate   ? getTodayNowDDMMYYYYAdd7(endDate).startOf('month')   : null;
+    const end = endDate ? getTodayNowDDMMYYYYAdd7(endDate).startOf('month') : null;
 
     if (!start || !end) return [];
 
@@ -785,7 +795,7 @@ export class CapacityMiddleService {
 
     return result;
   }
-  
+
   sumKeys(entryValue: any[], startKey: number) {
     const result: Record<string, number> = {};
 
@@ -926,7 +936,7 @@ export class CapacityMiddleService {
   }
 
   extendDates(data, shadowPeriod, type) {
-    const clonedData = JSON.parse(JSON.stringify(data));
+    const clonedData = this.safeParseJSON(JSON.stringify(data));
 
     // หาวันที่มากที่สุดในข้อมูลเดิม
     const maxDate = dayjs(data[data.length - 1].date);
@@ -1119,7 +1129,7 @@ export class CapacityMiddleService {
     console.timeEnd('middleBooking G1');
 
     let specificVersion = undefined;
-    if(specificVersionId){
+    if (specificVersionId) {
       specificVersion = await this.prisma.booking_version.findFirst({
         where: {
           // contract_code_id: Number(specificVersionId),
@@ -1135,22 +1145,22 @@ export class CapacityMiddleService {
 
     const contractCodePeriod = await this.prisma.contract_code.findFirst({
       where: { id: Number(id) },
-      select: { 
+      select: {
         contract_end_date: true,
         terminate_date: true,
         shadow_period: true,
-        booking_version:{
-            where: {
-              contract_code_id: Number(id),
-              flag_use: true,
-            },
-            include: {
-              booking_row_json: true,
-              booking_full_json: true,
-            },
-            orderBy: { id: 'desc' },
+        booking_version: {
+          where: {
+            contract_code_id: Number(id),
+            flag_use: true,
+          },
+          include: {
+            booking_row_json: true,
+            booking_full_json: true,
+          },
+          orderBy: { id: 'desc' },
         },
-       },
+      },
     });
     const contractPointAPI = await this.prisma.contract_point.findMany({
       where: {
@@ -1240,7 +1250,7 @@ export class CapacityMiddleService {
       const npath_management_config = path_management_config.map((e: any) => {
         return {
           ...e,
-          temps: JSON.parse(e['temps']),
+          temps: this.safeParseJSON(e['temps']),
         };
       });
       // console.log('--------- npath_management_config : ', npath_management_config);
@@ -1293,21 +1303,21 @@ export class CapacityMiddleService {
     // const getData = await this.bookingVersion(Number(id));
     console.log('contractCodePeriod : ', contractCodePeriod);
     console.log('specificVersion : ', specificVersion);
-    const getData = specificVersion ?? contractCodePeriod?.booking_version?.[0]
+    const getData = specificVersion ?? contractCodePeriod?.['booking_version']?.[0]
     console.timeEnd('middleBooking G3.1');
-    
+
     console.log('middleBooking G4 process...');
     console.time('middleBooking G4');
-    const dataRow = getData['booking_row_json'];
-    const dataFull = JSON.parse(getData['booking_full_json'][0]?.data_temp);
-    const tempType = dataFull?.shipperInfo['1']['Type of Contract'];
+    const dataRow = getData?.['booking_row_json'] || [];
+    const dataFull = this.safeParseJSON(getData?.['booking_full_json']?.[0]?.data_temp);
+    const tempType = dataFull?.shipperInfo?.['1']?.['Type of Contract'];
     const contractType = this.typeOfContractTextToNum(tempType);
     const { bookingTemplate, modeDayAndMonth, file_period_mode } =
       await this.bookingTemplate(Number(contractType));
 
     const dailyBooking =
-      dataFull['headerEntry']['Capacity Daily Booking (MMBTU/d)'];
-    const shipperName = dataFull?.shipperInfo[0]['Shipper Name'] || null;
+      dataFull?.['headerEntry']?.['Capacity Daily Booking (MMBTU/d)'];
+    const shipperName = dataFull?.shipperInfo?.[0]?.['Shipper Name'] || null;
     const getGroupByName = await this.getGroupByName(shipperName);
     console.timeEnd('middleBooking G4');
 
@@ -1360,7 +1370,7 @@ export class CapacityMiddleService {
     console.time('middleBooking G8');
     for (let i = 0; i < entryUse.length; i++) {
       const contractPoint = contractPointAPI.find((fNe: any) => {
-        return fNe?.contract_point === JSON.parse(entryUse[i]?.data_temp)['0'];
+        return fNe?.contract_point === this.safeParseJSON(entryUse[i]?.data_temp)?.['0'];
       });
       if (
         !contractPoint?.contract_point ||
@@ -1395,7 +1405,7 @@ export class CapacityMiddleService {
           );
         }
 
-        entryUse[i].data_temp = JSON.parse(entryUse[i].data_temp);
+        entryUse[i].data_temp = this.safeParseJSON(entryUse[i].data_temp);
         entryData.push({
           contract_point: contractPoint?.contract_point,
           entry_exit_id: contractPoint?.entry_exit_id,
@@ -1419,11 +1429,11 @@ export class CapacityMiddleService {
         // });
       }
     }
-  
+
 
     for (let i = 0; i < exitUse.length; i++) {
       const contractPoint = contractPointAPI.find((fNe: any) => {
-        return fNe?.contract_point === JSON.parse(exitUse[i]?.data_temp)['0'];
+        return fNe?.contract_point === this.safeParseJSON(exitUse[i]?.data_temp)?.['0'];
       });
 
       if (
@@ -1458,7 +1468,7 @@ export class CapacityMiddleService {
             HttpStatus.BAD_REQUEST,
           );
         }
-        exitUse[i].data_temp = JSON.parse(exitUse[i].data_temp);
+        exitUse[i].data_temp = this.safeParseJSON(exitUse[i].data_temp);
         exitData.push({
           contract_point: contractPoint?.contract_point,
           entry_exit_id: contractPoint?.entry_exit_id,
@@ -1568,13 +1578,13 @@ export class CapacityMiddleService {
 
     console.log('****** setDataUse : ', setDataUse);
     let tsetDataUse = []
-    if(terminateDate){
+    if (terminateDate) {
       console.log('******* terminateDate Day : ', dayjs(terminateDate).format("YYYY-MM-DD"));
-      tsetDataUse = setDataUse?.map((sd:any) => {
+      tsetDataUse = setDataUse?.map((sd: any) => {
         const { resCalcNew, ...nSd } = sd
-        const nresCalcNew = resCalcNew?.map((rCn:any) => {
+        const nresCalcNew = resCalcNew?.map((rCn: any) => {
           const { calcNew, ...nRCn } = rCn
-          const fcalcNew = calcNew?.filter((f:any) => {
+          const fcalcNew = calcNew?.filter((f: any) => {
             return (
               dayjs(f?.date, "YYYY-MM-DD").isSameOrAfter(dayjs(terminateDate).format("YYYY-MM-DD"))
             )
@@ -1591,7 +1601,7 @@ export class CapacityMiddleService {
         }
       })
 
-    }else{
+    } else {
       tsetDataUse = setDataUse
     }
     console.log('@@@@@@@@@ tsetDataUse : ', tsetDataUse);
@@ -1663,7 +1673,7 @@ export class CapacityMiddleService {
     const terminateDate = terminate_date ? dayjs(terminate_date) : undefined;
     return exitValue.map((values: any) => {
       const fromData = values['5'];
-      const endData  = values['6'];
+      const endData = values['6'];
 
       const data = keys.map((keyItem: any) => ({
         key: keyItem.key,
@@ -1679,10 +1689,10 @@ export class CapacityMiddleService {
 
       for (let i = 0; i < data.length; i++) {
         const current = data[i];
-        const next    = data[i + 1] || { date: endData }; // ถ้าเป็นคีย์สุดท้าย
+        const next = data[i + 1] || { date: endData }; // ถ้าเป็นคีย์สุดท้าย
 
         let startDate = dayjs(current.date, 'DD/MM/YYYY');
-        let endDate   = dayjs(next.date,   'DD/MM/YYYY');
+        let endDate = dayjs(next.date, 'DD/MM/YYYY');
 
         // --- แก้ boundary ให้ชัด ---
         if (file_period_mode === 1 || file_period_mode === 2) {
@@ -1700,7 +1710,7 @@ export class CapacityMiddleService {
 
         const fromDay = dayjs(fromData, 'DD/MM/YYYY');
 
-        if(contractEndDate && (startDate.isAfter(contractEndDate) || startDate.isSame(contractEndDate))) {
+        if (contractEndDate && (startDate.isAfter(contractEndDate) || startDate.isSame(contractEndDate))) {
           continue;
         }
 
@@ -1708,10 +1718,10 @@ export class CapacityMiddleService {
           if (startDate.isSameOrAfter(fromDay)) {
             const iso = startDate.format('YYYY-MM-DD');
             // ค่าท้ายสุดจะทับของเดิมโดยอัตโนมัติ (กันเบิ้ล)
-            if(terminateDate && (startDate.isAfter(terminateDate) || startDate.isSame(terminateDate))) {
+            if (terminateDate && (startDate.isAfter(terminateDate) || startDate.isSame(terminateDate))) {
               valueByDate.set(iso, 0);
             }
-            else{
+            else {
               valueByDate.set(iso, current.value);
             }
           }
@@ -1824,7 +1834,7 @@ export class CapacityMiddleService {
     });
   }
 
-  async processGenPublicData(setDataUse: any, plus?:any) {
+  async processGenPublicData(setDataUse: any, plus?: any) {
     // plus true ให้ + คืนกลับของเดิม
     // period
     console.log('***setDataUse : ', setDataUse);
@@ -1863,24 +1873,24 @@ export class CapacityMiddleService {
                 dayjs(calc.date).format('YYYY-MM-DD'),
               );
 
-               // const find = publicDataPre?.find((f:any) => {
-                //   return (
-                //     f?.area_id === setDataUse[upi]?.resCalcNew[fCp]?.area_id &&
-                //     f?.entry_exit_id === setDataUse[upi]?.resCalcNew[fCp]?.entry_exit_id &&
-                //     f?.date_day === getTodayNowAdd7(
-                //       setDataUse[upi]?.resCalcNew[fCp]?.calcNew[iCpD]?.date,
-                //     ).toDate() 
-                //   )
-                // })
-                // let value = (find && find?.value || 0) + Number(setDataUse[upi]?.resCalcNew[fCp]?.calcNew[iCpD]?.value ?? 0)
-                // publicDataPre.push({
-                //   area_id: setDataUse[upi]?.resCalcNew[fCp]?.area_id,
-                //   entry_exit_id: setDataUse[upi]?.resCalcNew[fCp]?.entry_exit_id,
-                //   value: String(value),
-                //   date_day: getTodayNowAdd7(
-                //     setDataUse[upi]?.resCalcNew[fCp]?.calcNew[iCpD]?.date,
-                //   ).toDate(),
-                // });
+              // const find = publicDataPre?.find((f:any) => {
+              //   return (
+              //     f?.area_id === setDataUse[upi]?.resCalcNew[fCp]?.area_id &&
+              //     f?.entry_exit_id === setDataUse[upi]?.resCalcNew[fCp]?.entry_exit_id &&
+              //     f?.date_day === getTodayNowAdd7(
+              //       setDataUse[upi]?.resCalcNew[fCp]?.calcNew[iCpD]?.date,
+              //     ).toDate() 
+              //   )
+              // })
+              // let value = (find && find?.value || 0) + Number(setDataUse[upi]?.resCalcNew[fCp]?.calcNew[iCpD]?.value ?? 0)
+              // publicDataPre.push({
+              //   area_id: setDataUse[upi]?.resCalcNew[fCp]?.area_id,
+              //   entry_exit_id: setDataUse[upi]?.resCalcNew[fCp]?.entry_exit_id,
+              //   value: String(value),
+              //   date_day: getTodayNowAdd7(
+              //     setDataUse[upi]?.resCalcNew[fCp]?.calcNew[iCpD]?.date,
+              //   ).toDate(),
+              // });
 
               if (ckDateMatch) {
                 const updateDataDC = { ...ckDateMatch };
@@ -2225,7 +2235,7 @@ export class CapacityMiddleService {
               contractCodePeriod?.shadow_period,
               modeDayAndMonth,
             ) ?? [];
-          
+
           const periods = resultPeriodAdd.map((p: any) => ({
             ...p,
             mk: monthKeyFromYYYYMMDD(p?.date), // 'YYYY-MM' จาก 'YYYY-MM-DD'
@@ -2246,7 +2256,7 @@ export class CapacityMiddleService {
             // 4) ปรับตามประกาศแบบ O(1)
             // const m = matchAdjustDate(areaId, isoDate);
             const m = matchAdjust(areaId, rp.mk);
-          
+
             let mainCalc = areaCap;
             let adjust: number | null = null;
             let adjustType: string | null = null;
@@ -2289,20 +2299,20 @@ export class CapacityMiddleService {
             prevVal = v;
 
             // if(dayjs(dateEndExcel).isSameOrAfter(dayjs(isoDate))){
-              // เขียน object แบบกำหนด field ชัด ๆ (เบากว่า spread ใน hot loop)
-              calcNew[i] = {
-                date: isoDate,
-                value: rp?.value, // เก็บค่าเดิมไว้ถ้าต้องการชนิดเดิม
-                cals,
-                ck_comparea,
-                adjust,
-                adjustType,
-                config: null,
-              };
+            // เขียน object แบบกำหนด field ชัด ๆ (เบากว่า spread ใน hot loop)
+            calcNew[i] = {
+              date: isoDate,
+              value: rp?.value, // เก็บค่าเดิมไว้ถ้าต้องการชนิดเดิม
+              cals,
+              ck_comparea,
+              adjust,
+              adjustType,
+              config: null,
+            };
             // }
           }
 
-          
+
 
           // 5) push ผลรวม (ไม่ต้องวน setArrAreaData อีก เพราะหา area ตรง ๆ แล้ว)
           resCalcNew.push({
@@ -2356,8 +2366,8 @@ export class CapacityMiddleService {
           };
         });
         console.timeEnd('setDataUsed G1 Exit area');
-        
-        
+
+
         console.log('setDataUsed G1 Exit areaAr Loop process...'); // ส่วนนี้ช้า
         console.time('setDataUsed G1 Exit areaAr Loop');
         // 0) helpers: คีย์เดือนจากสตริงวันที่ (เลี่ยง dayjs ในลูป)
@@ -2423,8 +2433,8 @@ export class CapacityMiddleService {
             modeDayAndMonth,
           ) ?? [];
 
-          // const dateEndExcel = monthKeyFromYYYYMMDD(sets?.valueEx?.valueExtend[sets?.valueEx?.valueExtend.length - 1]?.date)
-          const dateEndExcel = sets?.valueEx?.valueExtend[sets?.valueEx?.valueExtend.length - 1]?.date
+        // const dateEndExcel = monthKeyFromYYYYMMDD(sets?.valueEx?.valueExtend[sets?.valueEx?.valueExtend.length - 1]?.date)
+        const dateEndExcel = sets?.valueEx?.valueExtend[sets?.valueEx?.valueExtend.length - 1]?.date
 
         const periods = resultPeriodAdd.map((p: any) => ({
           ...p,
@@ -2455,7 +2465,7 @@ export class CapacityMiddleService {
 
             // ปรับตามประกาศ (แทน isDateMatching ในลูป)...
             const m = matchAdjust(areaId, pd.mk);
-           
+
             let mainCalc = areaCap;
             let adjust: number | null = null;
             let adjustType: string | null = null;
@@ -2506,7 +2516,7 @@ export class CapacityMiddleService {
             // แทน findPconfig ด้วยคอนฟิกรายเดือน O(1) + fallback อันท้ายสุด
             const cfg = pconfigByMonth.get(pd.mk) ?? lastPathCfg;
             // date
-            if(dayjs(dateEndExcel).isSameOrAfter(dayjs(pd?.date))){
+            if (dayjs(dateEndExcel).isSameOrAfter(dayjs(pd?.date))) {
               calcNew.push({
                 ...pd,
                 cals,
@@ -2547,17 +2557,17 @@ export class CapacityMiddleService {
 
 
     // console.log('G1 --> onsetDataUseZero : ', onsetDataUseZero);
-    function dateRange(start: string, end: string, datas:any) {
+    function dateRange(start: string, end: string, datas: any) {
       const s = dayjs(start).add(1, "day");
       const e = dayjs(end);
       const out: string[] = [];
       for (let d = s; !d.isAfter(e); d = d.add(1, "day")) {
-        out.push({ ...datas, date:d.format("YYYY-MM-DD"),});
+        out.push({ ...datas, date: d.format("YYYY-MM-DD"), });
       }
       return out;
     }
-    const nsetDataUseZero = onsetDataUseZero?.map((e:any) => {
-      if(e?.entry_exit_id === 2){
+    const nsetDataUseZero = onsetDataUseZero?.map((e: any) => {
+      if (e?.entry_exit_id === 2) {
         const dateEndExcel = e?.valueEx?.valueExtend[e?.valueEx?.valueExtend.length - 1]?.date
         const resultPeriodAdd = this.extendDates(
           e?.valueEx?.valueExtend,
@@ -2566,19 +2576,19 @@ export class CapacityMiddleService {
         ) ?? [];
         const extenDateEnd = resultPeriodAdd[resultPeriodAdd?.length - 1]?.date || null
         const { resCalcNew, ...nE } = e
-        const _resCalcNew = resCalcNew?.map((eresCalcNew:any) => {
+        const _resCalcNew = resCalcNew?.map((eresCalcNew: any) => {
 
           const lastCalcEnd = eresCalcNew?.["calcNew"][eresCalcNew?.["calcNew"]?.length - 1]
-          if(lastCalcEnd?.date === dateEndExcel && extenDateEnd){
+          if (lastCalcEnd?.date === dateEndExcel && extenDateEnd) {
             const { calcNew, ...meresCalcNew } = eresCalcNew
             const daysExitExtend = dateRange(dateEndExcel, extenDateEnd, lastCalcEnd);
-            const ncalcNew = [ ...calcNew, ...daysExitExtend, ]
+            const ncalcNew = [...calcNew, ...daysExitExtend,]
             // 
             return {
               ...meresCalcNew,
               calcNew: ncalcNew
             }
-          }else{
+          } else {
 
             return eresCalcNew
           }
@@ -2587,7 +2597,7 @@ export class CapacityMiddleService {
           ...nE,
           resCalcNew: _resCalcNew,
         }
-      }else{
+      } else {
         return e
       }
     })
@@ -2632,9 +2642,9 @@ export class CapacityMiddleService {
             if (otherCalcNewByDate.has(c.date)) {
               c.cals = plus
                 ? Number(c.cals || 0) +
-                  Number(otherCalcNewByDate.get(c.date) || 0)
+                Number(otherCalcNewByDate.get(c.date) || 0)
                 : Number(c.cals || 0) -
-                  Number(otherCalcNewByDate.get(c.date) || 0);
+                Number(otherCalcNewByDate.get(c.date) || 0);
             }
           }
         }
@@ -2659,7 +2669,7 @@ export class CapacityMiddleService {
     console.log('pnmatchData : ', pnmatchData);
     console.log('id : ', id);
     // period
-    
+
     console.log('path detail G1 process...');
     console.time('path detail G1');
     const versionLastUse = await this.prisma.booking_version.findFirst({
@@ -2671,9 +2681,9 @@ export class CapacityMiddleService {
     console.timeEnd('path detail G1');
 
     const pathData = [];
-  
 
-  function assignNestedPeriodsOLDS(data: any[]) {
+
+    function assignNestedPeriodsOLDS(data: any[]) {
       const monthKeyFromISO = (s: string) => (s ? s.slice(0, 7) : '');
       const monthKeyFromDDMY = (s: string) => {
         if (!s) return '';
@@ -2691,7 +2701,7 @@ export class CapacityMiddleService {
 
       // ---- กันซ้ำ: จำว่าใน period X เคย push pathKey ไหนแล้วบ้าง ----
       const pushedByPeriod = new Map<number, Set<string>>();
-      const pushPathOnce = (period: number, pc: any, makeSlim: (pc:any)=>any) => {
+      const pushPathOnce = (period: number, pc: any, makeSlim: (pc: any) => any) => {
         const key = getPathKey(pc);
         if (!key) return;
         let set = pushedByPeriod.get(period);
@@ -2861,199 +2871,199 @@ export class CapacityMiddleService {
     }
 
 
-  function assignNestedPeriods(data: any[]) {
-  const monthKeyFromISO = (s: string) => (s ? s.slice(0, 7) : '');
-  const monthKeyFromDDMY = (s: string) => {
-    if (!s) return '';
-    const dd = s.slice(0, 2), mm = s.slice(3, 5), yyyy = s.slice(6, 10);
-    return `${yyyy}-${mm}`;
-  };
-  const getNum = (x: any) => {
-    const v = x?.cals ?? x?.value ?? 0;
-    const n = Number(String(v).replace(/,/g, '').trim());
-    return Number.isFinite(n) ? n : 0;
-  };
+    function assignNestedPeriods(data: any[]) {
+      const monthKeyFromISO = (s: string) => (s ? s.slice(0, 7) : '');
+      const monthKeyFromDDMY = (s: string) => {
+        if (!s) return '';
+        const dd = s.slice(0, 2), mm = s.slice(3, 5), yyyy = s.slice(6, 10);
+        return `${yyyy}-${mm}`;
+      };
+      const getNum = (x: any) => {
+        const v = x?.cals ?? x?.value ?? 0;
+        const n = Number(String(v).replace(/,/g, '').trim());
+        return Number.isFinite(n) ? n : 0;
+      };
 
-  // ใช้ path_id เป็นหลัก (กันเคสหลาย path อยู่ใต้ master เดียวกัน)
-  const getPathKey = (pc: any) =>
-    String(pc?.path_id ?? pc?.config_master_path_id ?? '');
+      // ใช้ path_id เป็นหลัก (กันเคสหลาย path อยู่ใต้ master เดียวกัน)
+      const getPathKey = (pc: any) =>
+        String(pc?.path_id ?? pc?.config_master_path_id ?? '');
 
-  // กันซ้ำรายการ path ต่อ period
-  const pushedByPeriod = new Map<number, Set<string>>();
-  const pushPathOnce = (period: number, pc: any, makeSlim: (pc:any)=>any) => {
-    const key = getPathKey(pc);
-    if (!key) return;
-    let set = pushedByPeriod.get(period);
-    if (!set) { set = new Set<string>(); pushedByPeriod.set(period, set); }
-    if (set.has(key)) return;
-    set.add(key);
-    pathData.push({ period, pathConfig: makeSlim(pc) });
-  };
+      // กันซ้ำรายการ path ต่อ period
+      const pushedByPeriod = new Map<number, Set<string>>();
+      const pushPathOnce = (period: number, pc: any, makeSlim: (pc: any) => any) => {
+        const key = getPathKey(pc);
+        if (!key) return;
+        let set = pushedByPeriod.get(period);
+        if (!set) { set = new Set<string>(); pushedByPeriod.set(period, set); }
+        if (set.has(key)) return;
+        set.add(key);
+        pathData.push({ period, pathConfig: makeSlim(pc) });
+      };
 
-  // ทำ slim
-  const makeSlim = (pc: any) => {
-    const out: any = { ...pc };
-    if (Array.isArray(pc?.findExit)) {
-      out.findExit = pc.findExit.map((pF: any) => ({
-        id: pF?.id,
-        config_master_path_id: pF?.config_master_path_id,
-        revised_capacity_path_type_id: pF?.revised_capacity_path_type_id,
-        source_id: pF?.source_id ?? null,
-        area: {
-          id: pF?.area?.id,
-          name: pF?.area?.name,
-          area_nominal_capacity: pF?.area?.area_nominal_capacity,
-          zone_id: pF?.area?.zone_id,
-          entry_exit_id: pF?.area?.entry_exit_id,
-          supply_reference_quality_area: pF?.area?.supply_reference_quality_area,
-          color: pF?.area?.color,
-        },
-      }));
-    }
-    delete out.config_master_path;
-    return out;
-  };
+      // ทำ slim
+      const makeSlim = (pc: any) => {
+        const out: any = { ...pc };
+        if (Array.isArray(pc?.findExit)) {
+          out.findExit = pc.findExit.map((pF: any) => ({
+            id: pF?.id,
+            config_master_path_id: pF?.config_master_path_id,
+            revised_capacity_path_type_id: pF?.revised_capacity_path_type_id,
+            source_id: pF?.source_id ?? null,
+            area: {
+              id: pF?.area?.id,
+              name: pF?.area?.name,
+              area_nominal_capacity: pF?.area?.area_nominal_capacity,
+              zone_id: pF?.area?.zone_id,
+              entry_exit_id: pF?.area?.entry_exit_id,
+              supply_reference_quality_area: pF?.area?.supply_reference_quality_area,
+              color: pF?.area?.color,
+            },
+          }));
+        }
+        delete out.config_master_path;
+        return out;
+      };
 
-  // === base period per month (จาก path version) ===
-  const monthPeriodBase = new Map<string, number>();
-  const prevSigByArea = new Map<string, string>();
-  let basePeriodCounter = 0;
+      // === base period per month (จาก path version) ===
+      const monthPeriodBase = new Map<string, number>();
+      const prevSigByArea = new Map<string, string>();
+      let basePeriodCounter = 0;
 
-  // รวมเดือนจาก pnmatchData
-  const monthSet = new Set<string>();
-  for (const a of (pnmatchData ?? [])) {
-    for (const c of a?.configPathDate ?? []) {
-      const mk = monthKeyFromDDMY(c?.date);
-      if (mk) monthSet.add(mk);
-    }
-  }
-  const monthsSorted = Array.from(monthSet).sort(); // 'YYYY-MM'
-
-  // ★★ baseline period 0 จากเดือนแรก (ไม่รวม path ซ้ำ แต่ "นับแยกตาม path_id") ★★
-  const firstMonth = monthsSorted[0];
-  if (firstMonth) {
-    for (const a of (pnmatchData ?? [])) {
-      const c = (a?.configPathDate ?? []).find(
-        (x: any) => monthKeyFromDDMY(x?.date) === firstMonth
-      );
-      if (!c) continue;
-      const pc = c?.pathConfig;
-
-      const sig = [(pc?.path_id ?? ''), (pc?.value ?? ''), (c?.value ?? '')].join('|');
-      prevSigByArea.set(a?.area, sig);
-
-      // เดิมเช็คเฉพาะ config_master_path_id → กรณีมีหลาย path ใต้ master เดียวกันจะหาย
-      // ปรับให้ push ได้ถ้าอย่างน้อยมี path_id หรือ config_master_path_id อย่างใดอย่างหนึ่ง
-      if (pc && (pc?.path_id != null || pc?.config_master_path_id != null)) {
-        pushPathOnce(0, pc, makeSlim);
-      }
-    }
-    monthPeriodBase.set(firstMonth, 0);
-  }
-
-  // เดินเดือนถัดไปเพื่อหา basePeriodCounter (เปลี่ยน version)
-  for (let i = 1; i < monthsSorted.length; i++) {
-    const mk = monthsSorted[i];
-    let changedThisMonth = false;
-
-    for (const a of (pnmatchData ?? [])) {
-      const c = (a?.configPathDate ?? []).find(
-        (x: any) => monthKeyFromDDMY(x?.date) === mk
-      );
-      if (!c) continue;
-      const pc = c?.pathConfig;
-      const sig = [(pc?.path_id ?? ''), (pc?.value ?? ''), (c?.value ?? '')].join('|');
-
-      if (sig !== prevSigByArea.get(a?.area)) {
-        changedThisMonth = true;
-      }
-    }
-
-    if (changedThisMonth) {
-      basePeriodCounter++;
-
+      // รวมเดือนจาก pnmatchData
+      const monthSet = new Set<string>();
       for (const a of (pnmatchData ?? [])) {
-        const c = (a?.configPathDate ?? []).find(
-          (x: any) => monthKeyFromDDMY(x?.date) === mk
-        );
-        if (!c) continue;
-        const pc = c?.pathConfig;
-        const sig = [(pc?.path_id ?? ''), (pc?.value ?? ''), (c?.value ?? '')].join('|');
-        prevSigByArea.set(a?.area, sig);
-
-        if (pc && (pc?.path_id != null || pc?.config_master_path_id != null)) {
-          pushPathOnce(basePeriodCounter, pc, makeSlim);
+        for (const c of a?.configPathDate ?? []) {
+          const mk = monthKeyFromDDMY(c?.date);
+          if (mk) monthSet.add(mk);
         }
       }
-    }
-    monthPeriodBase.set(mk, basePeriodCounter);
-  }
+      const monthsSorted = Array.from(monthSet).sort(); // 'YYYY-MM'
 
-  // ===== รวมวันที่จริงทั้งหมด =====
-  const allDates = new Set<string>();
-  for (const row of data ?? []) {
-    for (const res of row?.resCalcNew ?? []) {
-      for (const c of res?.calcNew ?? []) if (c?.date) allDates.add(c.date);
-    }
-  }
-  const datesAsc = Array.from(allDates).sort(); // 'YYYY-MM-DD'
+      // ★★ baseline period 0 จากเดือนแรก (ไม่รวม path ซ้ำ แต่ "นับแยกตาม path_id") ★★
+      const firstMonth = monthsSorted[0];
+      if (firstMonth) {
+        for (const a of (pnmatchData ?? [])) {
+          const c = (a?.configPathDate ?? []).find(
+            (x: any) => monthKeyFromDDMY(x?.date) === firstMonth
+          );
+          if (!c) continue;
+          const pc = c?.pathConfig;
 
-  // >>> carry-forward base period ให้ครบทุกเดือนที่มีข้อมูลจริง <<<
-  const monthsFromDates = Array.from(new Set(datesAsc.map(d => d.slice(0, 7)))).sort();
-  let carry = 0;
-  for (const mk of monthsFromDates) {
-    if (monthPeriodBase.has(mk)) {
-      carry = monthPeriodBase.get(mk)!;
-    }
-    monthPeriodBase.set(mk, carry);
-  }
+          const sig = [(pc?.path_id ?? ''), (pc?.value ?? ''), (c?.value ?? '')].join('|');
+          prevSigByArea.set(a?.area, sig);
 
-  // ===== ใส่ period รายวัน =====
-  let lastSignature = '';
-  let curPeriod = 0;
-  let curMonth = '';
-
-  for (const d of datesAsc) {
-    const mk = monthKeyFromISO(d);
-    const baseForMonth = monthPeriodBase.get(mk)!;
-
-    if (mk !== curMonth) {
-      curMonth = mk;
-      curPeriod = baseForMonth;
-      lastSignature = '';
-    }
-
-    const sigParts: number[] = [];
-    for (const row of data ?? []) {
-      for (const res of row?.resCalcNew ?? []) {
-        const cell = (res?.calcNew ?? []).find((x: any) => x?.date === d);
-        sigParts.push(getNum(cell));
+          // เดิมเช็คเฉพาะ config_master_path_id → กรณีมีหลาย path ใต้ master เดียวกันจะหาย
+          // ปรับให้ push ได้ถ้าอย่างน้อยมี path_id หรือ config_master_path_id อย่างใดอย่างหนึ่ง
+          if (pc && (pc?.path_id != null || pc?.config_master_path_id != null)) {
+            pushPathOnce(0, pc, makeSlim);
+          }
+        }
+        monthPeriodBase.set(firstMonth, 0);
       }
-    }
-    const curSig = JSON.stringify(sigParts);
 
-    if (lastSignature && curSig !== lastSignature) {
-      curPeriod += 1;
-    }
-    lastSignature = curSig;
+      // เดินเดือนถัดไปเพื่อหา basePeriodCounter (เปลี่ยน version)
+      for (let i = 1; i < monthsSorted.length; i++) {
+        const mk = monthsSorted[i];
+        let changedThisMonth = false;
 
-    for (const row of data ?? []) {
-      for (const res of row?.resCalcNew ?? []) {
-        const arr = res?.calcNew ?? [];
-        const idx = arr.findIndex((x: any) => x?.date === d);
-        if (idx >= 0) arr[idx] = { ...arr[idx], period: curPeriod };
+        for (const a of (pnmatchData ?? [])) {
+          const c = (a?.configPathDate ?? []).find(
+            (x: any) => monthKeyFromDDMY(x?.date) === mk
+          );
+          if (!c) continue;
+          const pc = c?.pathConfig;
+          const sig = [(pc?.path_id ?? ''), (pc?.value ?? ''), (c?.value ?? '')].join('|');
+
+          if (sig !== prevSigByArea.get(a?.area)) {
+            changedThisMonth = true;
+          }
+        }
+
+        if (changedThisMonth) {
+          basePeriodCounter++;
+
+          for (const a of (pnmatchData ?? [])) {
+            const c = (a?.configPathDate ?? []).find(
+              (x: any) => monthKeyFromDDMY(x?.date) === mk
+            );
+            if (!c) continue;
+            const pc = c?.pathConfig;
+            const sig = [(pc?.path_id ?? ''), (pc?.value ?? ''), (c?.value ?? '')].join('|');
+            prevSigByArea.set(a?.area, sig);
+
+            if (pc && (pc?.path_id != null || pc?.config_master_path_id != null)) {
+              pushPathOnce(basePeriodCounter, pc, makeSlim);
+            }
+          }
+        }
+        monthPeriodBase.set(mk, basePeriodCounter);
       }
+
+      // ===== รวมวันที่จริงทั้งหมด =====
+      const allDates = new Set<string>();
+      for (const row of data ?? []) {
+        for (const res of row?.resCalcNew ?? []) {
+          for (const c of res?.calcNew ?? []) if (c?.date) allDates.add(c.date);
+        }
+      }
+      const datesAsc = Array.from(allDates).sort(); // 'YYYY-MM-DD'
+
+      // >>> carry-forward base period ให้ครบทุกเดือนที่มีข้อมูลจริง <<<
+      const monthsFromDates = Array.from(new Set(datesAsc.map(d => d.slice(0, 7)))).sort();
+      let carry = 0;
+      for (const mk of monthsFromDates) {
+        if (monthPeriodBase.has(mk)) {
+          carry = monthPeriodBase.get(mk)!;
+        }
+        monthPeriodBase.set(mk, carry);
+      }
+
+      // ===== ใส่ period รายวัน =====
+      let lastSignature = '';
+      let curPeriod = 0;
+      let curMonth = '';
+
+      for (const d of datesAsc) {
+        const mk = monthKeyFromISO(d);
+        const baseForMonth = monthPeriodBase.get(mk)!;
+
+        if (mk !== curMonth) {
+          curMonth = mk;
+          curPeriod = baseForMonth;
+          lastSignature = '';
+        }
+
+        const sigParts: number[] = [];
+        for (const row of data ?? []) {
+          for (const res of row?.resCalcNew ?? []) {
+            const cell = (res?.calcNew ?? []).find((x: any) => x?.date === d);
+            sigParts.push(getNum(cell));
+          }
+        }
+        const curSig = JSON.stringify(sigParts);
+
+        if (lastSignature && curSig !== lastSignature) {
+          curPeriod += 1;
+        }
+        lastSignature = curSig;
+
+        for (const row of data ?? []) {
+          for (const res of row?.resCalcNew ?? []) {
+            const arr = res?.calcNew ?? [];
+            const idx = arr.findIndex((x: any) => x?.date === d);
+            if (idx >= 0) arr[idx] = { ...arr[idx], period: curPeriod };
+          }
+        }
+      }
+
+      return data;
     }
-  }
-
-  return data;
-}
 
 
 
 
-// path_temp_json
-    
+    // path_temp_json
+
     console.log('path detail G2 process...'); // ช้า 25181.385009765625 ms
     console.time('path detail G2');
     const resultC = assignNestedPeriods(setDataUse);
@@ -3198,28 +3208,32 @@ export class CapacityMiddleService {
     });
     let newBK: any = null;
     newBK = bookingVersion;
-    newBK['booking_full_json'] = await newBK?.booking_full_json.map(
-      (e: any) => {
-        const data_temp = JSON.parse(e['data_temp']);
+    if (newBK?.['booking_full_json']) {
+      newBK['booking_full_json'] = await newBK.booking_full_json.map(
+        (e: any) => {
+          const data_temp = this.safeParseJSON(e?.['data_temp']);
+          return { ...e, data_temp: data_temp };
+        },
+      );
+    }
+    if (newBK?.['booking_row_json']) {
+      newBK['booking_row_json'] = await newBK.booking_row_json.map((e: any) => {
+        const data_temp = this.safeParseJSON(e?.['data_temp']);
         return { ...e, data_temp: data_temp };
-      },
-    );
-    newBK['booking_row_json'] = await newBK?.booking_row_json.map((e: any) => {
-      const data_temp = JSON.parse(e['data_temp']);
-      return { ...e, data_temp: data_temp };
-    });
+      });
+    }
 
     const shipperInfo =
-      newBK['booking_full_json'][0]['data_temp']['shipperInfo'];
+      newBK?.['booking_full_json']?.[0]?.['data_temp']?.['shipperInfo'] || {};
 
     const ShipperName = Object.keys(shipperInfo)
       .map((key) => {
-        return shipperInfo[key]['Shipper Name'];
+        return shipperInfo[key]?.['Shipper Name'];
       })
       .find((item) => item !== undefined);
     const typeOfContract: any = Object.keys(shipperInfo)
       .map((key) => {
-        return shipperInfo[key]['Type of Contract'];
+        return shipperInfo[key]?.['Type of Contract'];
       })
       .find((item) => item !== undefined);
     const ContractCode = Object.keys(shipperInfo)
@@ -3230,9 +3244,9 @@ export class CapacityMiddleService {
 
     // headerEntry
     const headerEntryInfo1 =
-      newBK['booking_full_json'][0]['data_temp']['headerEntry'][
-        'Capacity Daily Booking (MMBTU/d)'
-      ];
+      newBK?.['booking_full_json']?.[0]?.['data_temp']?.['headerEntry']?.[
+      'Capacity Daily Booking (MMBTU/d)'
+      ] || {};
 
     const headerEntryArr1 = Object.keys(headerEntryInfo1)
       .filter((key) => key !== 'key')
@@ -3247,7 +3261,7 @@ export class CapacityMiddleService {
       });
     const headerEntryInfo2 =
       newBK['booking_full_json'][0]['data_temp']['headerEntry'][
-        'Maximum Hour Booking (MMBTU/h)'
+      'Maximum Hour Booking (MMBTU/h)'
       ];
     const headerEntryArr2 = Object.keys(headerEntryInfo2)
       .filter((key) => key !== 'key')
@@ -3262,7 +3276,7 @@ export class CapacityMiddleService {
       });
     const headerEntryInfo3 =
       newBK['booking_full_json'][0]['data_temp']['headerEntry'][
-        'Capacity Daily Booking (MMscfd)'
+      'Capacity Daily Booking (MMscfd)'
       ];
     const headerEntryArr3 = Object.keys(headerEntryInfo3)
       .filter((key) => key !== 'key')
@@ -3277,7 +3291,7 @@ export class CapacityMiddleService {
       });
     const headerEntryInfo4 =
       newBK['booking_full_json'][0]['data_temp']['headerEntry'][
-        'Maximum Hour Booking (MMscfh)'
+      'Maximum Hour Booking (MMscfh)'
       ];
     const headerEntryArr4 = Object.keys(headerEntryInfo4)
       .filter((key) => key !== 'key')
@@ -3310,7 +3324,7 @@ export class CapacityMiddleService {
 
     const headerExitInfo1 =
       newBK['booking_full_json'][0]['data_temp']['headerExit'][
-        'Capacity Daily Booking (MMBTU/d)'
+      'Capacity Daily Booking (MMBTU/d)'
       ];
     const headerExitArr1 = Object.keys(headerExitInfo1)
       .filter((key) => key !== 'key')
@@ -3325,7 +3339,7 @@ export class CapacityMiddleService {
       });
     const headerExitInfo2 =
       newBK['booking_full_json'][0]['data_temp']['headerExit'][
-        'Capacity Daily Booking (MMBTU/d)'
+      'Capacity Daily Booking (MMBTU/d)'
       ];
     const headerExitArr2 = Object.keys(headerExitInfo2)
       .filter((key) => key !== 'key')

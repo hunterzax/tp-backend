@@ -72,7 +72,7 @@ export class BalancingService {
     private readonly meteredMicroService: MeteredMicroService,
     @Inject(forwardRef(() => ExportFilesService))
     private readonly exportFilesService: ExportFilesService,
-  ) {}
+  ) { }
 
   // balance_balance_report
   async evidenApiCenter(
@@ -167,7 +167,7 @@ export class BalancingService {
   }
 
   async useReqs(req: any) {
-    const ip = req.headers['x-forwarded-for'] || req.ip;
+    const ip = req?.headers?.['x-forwarded-for'] || req?.ip;
     return {
       ip: ip,
       sub: req?.user?.sub,
@@ -2917,75 +2917,75 @@ export class BalancingService {
 
     const filterGasDay = gas_day
       ? nresData?.filter((f: any) => {
-          return f?.gas_day_text === gas_day;
-        })
+        return f?.gas_day_text === gas_day;
+      })
       : nresData;
     const filterZone = zone
       ? filterGasDay?.filter((f: any) => {
-          return f?.zone_text === zone;
-        })
+        return f?.zone_text === zone;
+      })
       : filterGasDay;
     const filterMode = mode
       ? filterZone?.filter((f: any) => {
-          return f?.mode === mode;
-        })
+        return f?.mode === mode;
+      })
       : filterZone;
     const filterTimestamp = timestamp
       ? filterMode?.filter((f: any) => {
-          return f?.timestamp === timestamp;
-        })
+        return f?.timestamp === timestamp;
+      })
       : filterMode;
 
     const filteredActiveMode = active_mode
       ? Object.values(
-          filterTimestamp.reduce(
-            (acc, curr) => {
-              const key = `${curr.gas_day_text}_${curr.zone_text}`;
+        filterTimestamp.reduce(
+          (acc, curr) => {
+            const key = `${curr.gas_day_text}_${curr.zone_text}`;
 
-              const currentTimestamp = dayjs(
-                curr.timestamp,
-                'DD/MM/YYYY HH:mm',
-              );
-              const existing = acc[key];
+            const currentTimestamp = dayjs(
+              curr.timestamp,
+              'DD/MM/YYYY HH:mm',
+            );
+            const existing = acc[key];
 
-              if (
-                !existing ||
-                currentTimestamp.isAfter(
-                  dayjs(existing.timestamp, 'DD/MM/YYYY HH:mm'),
-                )
-              ) {
-                acc[key] = curr;
-              }
+            if (
+              !existing ||
+              currentTimestamp.isAfter(
+                dayjs(existing.timestamp, 'DD/MM/YYYY HH:mm'),
+              )
+            ) {
+              acc[key] = curr;
+            }
 
-              return acc;
-            },
-            {} as Record<string, (typeof filterTimestamp)[0]>,
-          ),
-        )
+            return acc;
+          },
+          {} as Record<string, (typeof filterTimestamp)[0]>,
+        ),
+      )
       : filterTimestamp;
 
     const filteredLatestDailyVersion = latest_daily_version
       ? Object.values(
-          filteredActiveMode.reduce(
-            (acc, curr) => {
-              // const key = curr.gas_day_text;
-              const key = `${curr.gas_day}|${curr.zone}|${curr.mode}|${curr?.shipper}`;
-              const currTimestamp = dayjs(curr.timestamp, 'DD/MM/YYYY HH:mm');
+        filteredActiveMode.reduce(
+          (acc, curr) => {
+            // const key = curr.gas_day_text;
+            const key = `${curr.gas_day}|${curr.zone}|${curr.mode}|${curr?.shipper}`;
+            const currTimestamp = dayjs(curr.timestamp, 'DD/MM/YYYY HH:mm');
 
-              if (
-                !acc[key] ||
-                currTimestamp.isAfter(
-                  dayjs(acc[key].timestamp, 'DD/MM/YYYY HH:mm'),
-                )
-              ) {
-                acc[key] = curr;
-              }
+            if (
+              !acc[key] ||
+              currTimestamp.isAfter(
+                dayjs(acc[key].timestamp, 'DD/MM/YYYY HH:mm'),
+              )
+            ) {
+              acc[key] = curr;
+            }
 
-              return acc;
-            },
-            {} as Record<string, (typeof filteredActiveMode)[0]>,
-          ),
-        )
+            return acc;
+          },
+          {} as Record<string, (typeof filteredActiveMode)[0]>,
+        ),
+      )
       : filteredActiveMode;
 
     const f_latest_hourly_version = (data: any[]) => {
@@ -3262,7 +3262,7 @@ export class BalancingService {
       }
 
       return acc;
-    } , [])
+    }, [])
 
     const meteredMicroData = await this.meteredMicroService.sendMessage(
       JSON.stringify({
@@ -3274,11 +3274,11 @@ export class BalancingService {
       }),
     );
     const meterReply =
-    (!!meteredMicroData?.reply && JSON.parse(meteredMicroData?.reply)) ||
-    null;
+      (!!meteredMicroData?.reply && JSON.parse(meteredMicroData?.reply)) ||
+      null;
 
     // console.log('meterReply : ', meterReply);
-    
+
     let meteringPointList = [];
     if (meterReply && Array.isArray(meterReply)) {
       const hvMeterRaw =
@@ -3772,7 +3772,7 @@ export class BalancingService {
         })
 
         let activeMode = undefined
-        if(modeOfThisHourAndZone.length > 0){
+        if (modeOfThisHourAndZone.length > 0) {
           // if must prorate do it here
           // just get the lastet for now
           modeOfThisHourAndZone.sort((a: any, b: any) => {
@@ -3780,19 +3780,19 @@ export class BalancingService {
           })
           activeMode = modeOfThisHourAndZone[0]
         }
-        else{
+        else {
           const todayModeOfZoneBeforeThisHour = todayModeZone.filter((modeZone: any) => {
             const gasHour = parseToNumber(dayjs(modeZone.start_date).tz('Asia/Bangkok').format('H')) + 1;
             return gasHour < item.gasHour && isMatch(modeZone?.zone?.name, item.zone)
           })
 
-          if(todayModeOfZoneBeforeThisHour.length > 0){
+          if (todayModeOfZoneBeforeThisHour.length > 0) {
             todayModeOfZoneBeforeThisHour.sort((a: any, b: any) => {
               return dayjs(b.start_date).diff(dayjs(a.start_date));
             })
             activeMode = todayModeOfZoneBeforeThisHour[0]
           }
-          else{
+          else {
             activeMode = lastetModeBeforeToday.find((f: any) => isMatch(f?.zone?.name, item.zone))
           }
         }
@@ -3812,7 +3812,7 @@ export class BalancingService {
         })
 
         let activeMode = undefined
-        if(modeOfThisHourAndZone.length > 0){
+        if (modeOfThisHourAndZone.length > 0) {
           // if must prorate do it here
           // just get the lastet for now
           modeOfThisHourAndZone.sort((a: any, b: any) => {
@@ -3820,19 +3820,19 @@ export class BalancingService {
           })
           activeMode = modeOfThisHourAndZone[0]
         }
-        else{
+        else {
           const todayModeOfZoneBeforeThisHour = todayModeZone.filter((modeZone: any) => {
             const gasHour = parseToNumber(dayjs(modeZone.start_date).tz('Asia/Bangkok').format('H')) + 1;
             return gasHour < itemGasHour && isMatch(modeZone?.zone?.name, item.zone_text)
           })
 
-          if(todayModeOfZoneBeforeThisHour.length > 0){
+          if (todayModeOfZoneBeforeThisHour.length > 0) {
             todayModeOfZoneBeforeThisHour.sort((a: any, b: any) => {
               return dayjs(b.start_date).diff(dayjs(a.start_date));
             })
             activeMode = todayModeOfZoneBeforeThisHour[0]
           }
-          else{
+          else {
             activeMode = lastetModeBeforeToday.find((f: any) => isMatch(f?.zone?.name, item.zone_text))
           }
         }
@@ -3855,7 +3855,7 @@ export class BalancingService {
         if (
           !groupedByHour.has(key) ||
           compareTimestamps(item.timestamp, groupedByHour.get(key).timestamp) >
-            0
+          0
         ) {
           groupedByHour.set(key, item);
         }
@@ -3869,7 +3869,7 @@ export class BalancingService {
         if (
           !groupedBaseByLatestHour.has(key) ||
           compareTimestamps(item.timestamp, groupedBaseByLatestHour.get(key).timestamp) >
-            0
+          0
         ) {
           groupedBaseByLatestHour.set(key, item);
         }
@@ -3883,7 +3883,7 @@ export class BalancingService {
         if (
           !groupedAccumByLatestHour.has(key) ||
           compareTimestamps(item.timestamp, groupedAccumByLatestHour.get(key).timestamp) >
-            0
+          0
         ) {
           groupedAccumByLatestHour.set(key, item);
         }
@@ -3905,7 +3905,7 @@ export class BalancingService {
         if (
           !groupedByLatestHour.has(key) ||
           compareGasHour(item.gas_hour, groupedByLatestHour.get(key).gas_hour) >
-            0
+          0
         ) {
           groupedByLatestHour.set(key, item);
         }
@@ -3916,7 +3916,7 @@ export class BalancingService {
         if (
           !groupedBaseByLatestHour.has(key) ||
           compareGasHour(item.gasHour, groupedBaseByLatestHour.get(key).gasHour) >
-            0
+          0
         ) {
           groupedBaseByLatestHour.set(key, item);
         }
@@ -3927,7 +3927,7 @@ export class BalancingService {
         if (
           !groupedAccumByLatestHour.has(key) ||
           compareGasHour(item.gasHour, groupedAccumByLatestHour.get(key).gasHour) >
-            0
+          0
         ) {
           groupedAccumByLatestHour.set(key, item);
         }
@@ -4152,8 +4152,8 @@ export class BalancingService {
       const hvObjFil = hv.length > 0 ? hv[hv.length - 1] : null;
       const heatingValue_base = hvObjFil
         ? hvObjFil?.values?.find((f: any) => {
-            return f?.tag === 'heatingValue_base';
-          })?.value || null
+          return f?.tag === 'heatingValue_base';
+        })?.value || null
         : null;
 
       return {
@@ -4169,44 +4169,44 @@ export class BalancingService {
 
     const zoneFil = zone
       ? addProp?.filter((f: any) => {
-          return f?.zone === zone;
-        })
+        return f?.zone === zone;
+      })
       : addProp;
     const modeFil = mode
       ? zoneFil?.filter((f: any) => {
-          return f?.mode === mode;
-        })
+        return f?.mode === mode;
+      })
       : zoneFil;
     const timestampFil = timestamp
       ? modeFil?.filter((f: any) => {
-          return f?.execute_timestamp === Number(timestamp);
-        })
+        return f?.execute_timestamp === Number(timestamp);
+      })
       : modeFil;
 
     // latest_daily_version
 
     const filteredLatestDailyVersion = latest_daily_version
       ? Object.values(
-          timestampFil.reduce(
-            (acc, curr) => {
-              const key = `${curr.gas_day}|${curr.zone}|${curr.mode}|${curr?.shipper}`;
-              // const key = `${curr.gas_day}`;
-              const currTimestamp = dayjs(curr.timestamp, 'DD/MM/YYYY HH:mm');
+        timestampFil.reduce(
+          (acc, curr) => {
+            const key = `${curr.gas_day}|${curr.zone}|${curr.mode}|${curr?.shipper}`;
+            // const key = `${curr.gas_day}`;
+            const currTimestamp = dayjs(curr.timestamp, 'DD/MM/YYYY HH:mm');
 
-              if (
-                !acc[key] ||
-                currTimestamp.isAfter(
-                  dayjs(acc[key].timestamp, 'DD/MM/YYYY HH:mm'),
-                )
-              ) {
-                acc[key] = curr;
-              }
+            if (
+              !acc[key] ||
+              currTimestamp.isAfter(
+                dayjs(acc[key].timestamp, 'DD/MM/YYYY HH:mm'),
+              )
+            ) {
+              acc[key] = curr;
+            }
 
-              return acc;
-            },
-            {} as Record<string, (typeof timestampFil)[0]>,
-          ),
-        )
+            return acc;
+          },
+          {} as Record<string, (typeof timestampFil)[0]>,
+        ),
+      )
       : timestampFil;
 
     const f_latest_hourly_version = (data: any[]) => {
@@ -4301,10 +4301,10 @@ export class BalancingService {
   }
 
   async intradayBaseInentoryImport(grpcTransform: any, file: any, userId: any) {
-    const findData = JSON.parse(grpcTransform?.jsonDataMultiSheet);
-    const dataRes = findData[0]?.data;
-    const header = dataRes[0];
-    const value = dataRes.slice(1);
+    const findData = grpcTransform?.jsonDataMultiSheet ? JSON.parse(grpcTransform.jsonDataMultiSheet) : null;
+    const dataRes = findData?.[0]?.data;
+    const header = dataRes?.[0];
+    const value = dataRes ? dataRes.slice(1) : [];
 
     const gasDayKey = Object.keys(header).find(
       (key) => header[key] === 'Gas Day',
@@ -4434,7 +4434,7 @@ export class BalancingService {
       const checkMaster = intradayBaseInentoryAll.find((f: any) => {
         return (
           f?.gas_day_text ===
-            dayjs(value[i][gasDayKey], 'DD/MM/YYYY').format('YYYY-MM-DD') &&
+          dayjs(value[i][gasDayKey], 'DD/MM/YYYY').format('YYYY-MM-DD') &&
           f?.gas_hour === value[i][gasHourKey] &&
           f?.timestamp === value[i][timestampKey] &&
           f?.zone_text === value[i][zoneKey] &&
@@ -4709,9 +4709,9 @@ export class BalancingService {
 
     const nData: any = evidenApiCenter;
     const { data } = nData;
-    const timestamp = data?.[0]?.execute_timestamp  &&  getTodayNowAdd7(data?.[0]?.execute_timestamp  * 1000).tz('Asia/Bangkok').format(
-          'YYYY-MM-DD HH:mm:ss',
-        )
+    const timestamp = data?.[0]?.execute_timestamp && getTodayNowAdd7(data?.[0]?.execute_timestamp * 1000).tz('Asia/Bangkok').format(
+      'YYYY-MM-DD HH:mm:ss',
+    )
     return {
       timestamp: timestamp || null,
       execute_timestamp: data?.[0]?.execute_timestamp || null
@@ -4726,7 +4726,7 @@ export class BalancingService {
 
     // 
     const { minDate, maxDate } = await findMinMaxExeDate(this.prisma, start_date, end_date);
-    
+
     let totalRecord: number | undefined = undefined;
     await this.evidenApiCenter(
       {
@@ -4783,12 +4783,12 @@ export class BalancingService {
         where: {
           AND: [
             {
-              gas_day:{
+              gas_day: {
                 gte: todayStart,
               }
             },
             {
-              gas_day:{
+              gas_day: {
                 lte: todayEnd,
               }
             },
@@ -4799,7 +4799,7 @@ export class BalancingService {
         },
       })
 
-      const matchWithExecuteList = evidenApiCenter.data.filter((item:any)=>{
+      const matchWithExecuteList = evidenApiCenter.data.filter((item: any) => {
         const itemGasDay = getTodayNowYYYYMMDDDfaultAdd7(item.gas_day);
         return executeEodList?.some((executeData: any) => {
           const executeStart = getTodayNowAdd7(executeData?.start_date_date);
@@ -4810,7 +4810,7 @@ export class BalancingService {
         })
       })
 
-      const latestByGasDay = matchWithExecuteList.filter((item:any)=>{
+      const latestByGasDay = matchWithExecuteList.filter((item: any) => {
         return !publicationCenterDeletedList?.some((f: any) => {
           return (
             f?.execute_timestamp === item.execute_timestamp &&
@@ -4820,11 +4820,11 @@ export class BalancingService {
         })
       }).reduce((acc: any, current: any) => {
         const gasDay = current.gas_day;
-        
+
         if (!acc[gasDay] || current.execute_timestamp > acc[gasDay].execute_timestamp) {
           acc[gasDay] = current;
         }
-        
+
         return acc;
       }, {});
 
@@ -4934,12 +4934,12 @@ export class BalancingService {
     // console.log('newData : ', newData);
     // validation
 
-    const matchWithExecuteList = newData.filter((item:any) => {
+    const matchWithExecuteList = newData.filter((item: any) => {
       const itemGasDay = getTodayNowYYYYMMDDDfaultAdd7(item.gas_day);
       return executeIntradayList?.some((executeData: any) => {
         const executeGasDay = getTodayNowAdd7(executeData.gas_day);
         return executeData.request_number_id == item.request_number &&
-          executeGasDay.isSame(itemGasDay, 'day') && 
+          executeGasDay.isSame(itemGasDay, 'day') &&
           executeData.gas_hour == item.gas_hour
       })
     })
@@ -4982,9 +4982,9 @@ export class BalancingService {
           ...Object.fromEntries(
             Array.isArray(nomination_values)
               ? nomination_values.map((item) => [
-                  `validation_${item?.tag}`,
-                  item?.validation || null,
-                ])
+                `validation_${item?.tag}`,
+                item?.validation || null,
+              ])
               : [],
           ),
         };
@@ -5000,9 +5000,9 @@ export class BalancingService {
           ...Object.fromEntries(
             Array.isArray(balance_values)
               ? balance_values.map((item) => [
-                  `validation_${item?.tag}`,
-                  item?.validation || null,
-                ])
+                `validation_${item?.tag}`,
+                item?.validation || null,
+              ])
               : [],
           ),
         };
@@ -5027,17 +5027,17 @@ export class BalancingService {
               ...Object.fromEntries(
                 Array.isArray(shipper_nomination_values)
                   ? shipper_nomination_values.map((item) => [
-                      item?.tag,
-                      item?.value,
-                    ])
+                    item?.tag,
+                    item?.value,
+                  ])
                   : [],
               ),
               ...Object.fromEntries(
                 Array.isArray(shipper_nomination_values)
                   ? shipper_nomination_values.map((item) => [
-                      `validation_${item?.tag}`,
-                      item?.validation || null,
-                    ])
+                    `validation_${item?.tag}`,
+                    item?.validation || null,
+                  ])
                   : [],
               ),
             };
@@ -5052,9 +5052,9 @@ export class BalancingService {
               ...Object.fromEntries(
                 Array.isArray(shipper_balance_values)
                   ? shipper_balance_values.map((item) => [
-                      `validation_${item?.tag}`,
-                      item?.validation || null,
-                    ])
+                    `validation_${item?.tag}`,
+                    item?.validation || null,
+                  ])
                   : [],
               ),
             };
@@ -5089,9 +5089,9 @@ export class BalancingService {
                   ...Object.fromEntries(
                     Array.isArray(contract_nomination_values)
                       ? contract_nomination_values.map((item) => [
-                          item?.tag,
-                          item?.value,
-                        ])
+                        item?.tag,
+                        item?.value,
+                      ])
                       : [],
                   ),
                   // ...Object.fromEntries(
@@ -5115,9 +5115,9 @@ export class BalancingService {
                   ...Object.fromEntries(
                     Array.isArray(contract_balance_values)
                       ? contract_balance_values.map((item) => [
-                          item?.tag,
-                          item?.value,
-                        ])
+                        item?.tag,
+                        item?.value,
+                      ])
                       : [],
                   ),
                   // ...Object.fromEntries(
@@ -5256,7 +5256,7 @@ export class BalancingService {
         if (
           !groupedByHour.has(key) ||
           compareTimestamps(item.execute_timestamp, groupedByHour.get(key).execute_timestamp) >
-            0
+          0
         ) {
           groupedByHour.set(key, item);
         }
@@ -5274,7 +5274,7 @@ export class BalancingService {
         if (
           !groupedByLatestHour.has(key) ||
           compareGasHour(item.gas_hour, groupedByLatestHour.get(key).gas_hour) >
-            0
+          0
         ) {
           groupedByLatestHour.set(key, item);
         }
@@ -5294,7 +5294,7 @@ export class BalancingService {
       });
       fOnlyPublicData = Array.from(groupedByDay.values());
     }
-    
+
     // calc total new
     const ttfData = fOnlyPublicData?.map((e: any) => {
       const {
@@ -6498,8 +6498,8 @@ export class BalancingService {
           })?.values || [];
         const findFn = (data: any, key: any) => {
           const value = data?.find((f: any) => {
-              return f?.tag === key;
-            })?.value
+            return f?.tag === key;
+          })?.value
           return value;
         };
 
@@ -6510,22 +6510,22 @@ export class BalancingService {
               getTodayNowDDMMYYYYHHmmDfaultAdd7(timestamp),
             ),
         );
-   
+
         const modeZoneEast =
           filteredEast && filteredEast.length > 0
             ? filteredEast.reduce((prev: any, curr: any) => {
-                const prevDiff = Math.abs(
-                  dayjs(timestamp, 'DD/MM/YYYY HH:mm').diff(
-                    dayjs(prev.start_date),
-                  ),
-                );
-                const currDiff = Math.abs(
-                  dayjs(timestamp, 'DD/MM/YYYY HH:mm').diff(
-                    dayjs(curr.start_date),
-                  ),
-                );
-                return currDiff < prevDiff ? curr : prev;
-              })
+              const prevDiff = Math.abs(
+                dayjs(timestamp, 'DD/MM/YYYY HH:mm').diff(
+                  dayjs(prev.start_date),
+                ),
+              );
+              const currDiff = Math.abs(
+                dayjs(timestamp, 'DD/MM/YYYY HH:mm').diff(
+                  dayjs(curr.start_date),
+                ),
+              );
+              return currDiff < prevDiff ? curr : prev;
+            })
             : null;
 
         const filteredWest = mode_zone_base_inventory?.filter(
@@ -6539,18 +6539,18 @@ export class BalancingService {
         const modeZoneWest =
           filteredWest && filteredWest.length > 0
             ? filteredWest.reduce((prev: any, curr: any) => {
-                const prevDiff = Math.abs(
-                  dayjs(timestamp, 'DD/MM/YYYY HH:mm').diff(
-                    dayjs(prev.start_date),
-                  ),
-                );
-                const currDiff = Math.abs(
-                  dayjs(timestamp, 'DD/MM/YYYY HH:mm').diff(
-                    dayjs(curr.start_date),
-                  ),
-                );
-                return currDiff < prevDiff ? curr : prev;
-              })
+              const prevDiff = Math.abs(
+                dayjs(timestamp, 'DD/MM/YYYY HH:mm').diff(
+                  dayjs(prev.start_date),
+                ),
+              );
+              const currDiff = Math.abs(
+                dayjs(timestamp, 'DD/MM/YYYY HH:mm').diff(
+                  dayjs(curr.start_date),
+                ),
+              );
+              return currDiff < prevDiff ? curr : prev;
+            })
             : null;
 
         const publication = !publicationCenter.some((publication: any) => {
@@ -6589,74 +6589,74 @@ export class BalancingService {
       }),
     );
 
-  if (timestamp) {
-    const filterTimestamp = getTodayNowDDMMYYYYHHmmDfaultAdd7(timestamp);
-    if (filterTimestamp.isValid()) {
-      resultGroupZoneLast = resultGroupZoneLast.filter((item: any) => {
-        const itemTimestamp = getTodayNowAdd7(item.execute_timestamp * 1000);
-        
-        return (
-          itemTimestamp.isValid() &&
-          itemTimestamp.isSame(filterTimestamp, 'minute')
-        );
-      });
+    if (timestamp) {
+      const filterTimestamp = getTodayNowDDMMYYYYHHmmDfaultAdd7(timestamp);
+      if (filterTimestamp.isValid()) {
+        resultGroupZoneLast = resultGroupZoneLast.filter((item: any) => {
+          const itemTimestamp = getTodayNowAdd7(item.execute_timestamp * 1000);
+
+          return (
+            itemTimestamp.isValid() &&
+            itemTimestamp.isSame(filterTimestamp, 'minute')
+          );
+        });
+      }
     }
-  }
 
-  if (latest_hourly_version) {
-    // Group by gas_day_text and gas_hour, then get the latest timestamp for each group
-    const groupedByHour = new Map();
+    if (latest_hourly_version) {
+      // Group by gas_day_text and gas_hour, then get the latest timestamp for each group
+      const groupedByHour = new Map();
 
-    resultGroupZoneLast.forEach((item: any) => {
-      const key = `${item.gas_day}_${item.gas_hour ?? item.gasHour}`;
-      if (
-        !groupedByHour.has(key) ||
-        compareTimestamps(item.execute_timestamp, groupedByHour.get(key).execute_timestamp) >
+      resultGroupZoneLast.forEach((item: any) => {
+        const key = `${item.gas_day}_${item.gas_hour ?? item.gasHour}`;
+        if (
+          !groupedByHour.has(key) ||
+          compareTimestamps(item.execute_timestamp, groupedByHour.get(key).execute_timestamp) >
           0
-      ) {
-        groupedByHour.set(key, item);
-      }
-    });
+        ) {
+          groupedByHour.set(key, item);
+        }
+      });
 
-    resultGroupZoneLast = Array.from(groupedByHour.values());
-  }
+      resultGroupZoneLast = Array.from(groupedByHour.values());
+    }
 
-  if (latest_daily_version) {
-    // First, group by gas_day_text, zone_text, and mode to get the latest gas_hour for each group
-    const groupedByLatestHour = new Map();
-    resultGroupZoneLast.forEach((item: any) => {
-      const key = `${item.gas_day}`;
-      
+    if (latest_daily_version) {
+      // First, group by gas_day_text, zone_text, and mode to get the latest gas_hour for each group
+      const groupedByLatestHour = new Map();
+      resultGroupZoneLast.forEach((item: any) => {
+        const key = `${item.gas_day}`;
 
-      if (
-        !groupedByLatestHour.has(key) ||
-        compareGasHour(item.gas_hour ?? item.gasHour, groupedByLatestHour.get(key).gas_hour ?? groupedByLatestHour.get(key).gasHour) >
+
+        if (
+          !groupedByLatestHour.has(key) ||
+          compareGasHour(item.gas_hour ?? item.gasHour, groupedByLatestHour.get(key).gas_hour ?? groupedByLatestHour.get(key).gasHour) >
           0
-      ) {
-        groupedByLatestHour.set(key, item);
-      }
-    });
+        ) {
+          groupedByLatestHour.set(key, item);
+        }
+      });
 
-    // Then, from the latest gas_hour records, get the latest timestamp for each group
-    const groupedByDay = new Map();
-    Array.from(groupedByLatestHour.values()).forEach((item: any) => {
-      const key = `${item.gas_day}`;
+      // Then, from the latest gas_hour records, get the latest timestamp for each group
+      const groupedByDay = new Map();
+      Array.from(groupedByLatestHour.values()).forEach((item: any) => {
+        const key = `${item.gas_day}`;
 
-      if (
-        !groupedByDay.has(key) ||
-        compareTimestamps(item.execute_timestamp, groupedByDay.get(key).execute_timestamp) > 0
-      ) {
-        groupedByDay.set(key, item);
-      }
-    });
-    resultGroupZoneLast = Array.from(groupedByDay.values());
-  }
+        if (
+          !groupedByDay.has(key) ||
+          compareTimestamps(item.execute_timestamp, groupedByDay.get(key).execute_timestamp) > 0
+        ) {
+          groupedByDay.set(key, item);
+        }
+      });
+      resultGroupZoneLast = Array.from(groupedByDay.values());
+    }
 
     return resultGroupZoneLast;
   }
 
   async instructedOperationFlowShippers(payload: any, userId: any) {
-    const { gas_day, start_hour, end_hour, last_version , skip, limit } = payload;
+    const { gas_day, start_hour, end_hour, last_version, skip, limit } = payload;
 
     const nowCre = getTodayNowAdd7();
     const todayStart = getTodayStartAdd7().toDate();
@@ -6752,18 +6752,18 @@ export class BalancingService {
 
     let evidenData = (evidenApiCenter?.data || []);
 
-    if(last_version == true){
+    if (last_version == true) {
       // Group data by gas_day, gas_hour and zone, then get the latest execute_timestamp for each group
       const groupedData = evidenData.reduce((acc: any, item: any) => {
         const key = `${item.gas_day}_${item.gas_hour}_${item.zone}`;
-        
+
         if (!acc[key] || item.execute_timestamp > acc[key].execute_timestamp) {
           acc[key] = item;
         }
-        
+
         return acc;
       }, {});
-      
+
       evidenData = Object.values(groupedData);
     }
 
@@ -7200,7 +7200,7 @@ export class BalancingService {
               f?.gas_hour === nEvidenApiCenter[i]?.gas_hour &&
               f?.zone === nEvidenApiCenter[i]?.zone &&
               f?.shipper ===
-                nEvidenApiCenter[i]?.shipperData[iSd]?.shipperName &&
+              nEvidenApiCenter[i]?.shipperData[iSd]?.shipperName &&
               isSignConsistent
             );
           },
@@ -7595,38 +7595,38 @@ export class BalancingService {
 
         const dbEdit = findDataShipper
           ? {
-              accImb_or_accImbInv: findDataShipper?.accImb_or_accImbInv,
-              accMargin: findDataShipper?.accMargin,
-              energyAdjust: findDataShipper?.energyAdjust,
-              energyAdjustRate_mmbtud: findDataShipper?.energyAdjustRate_mmbtud,
-              energyAdjustRate_mmbtuh: findDataShipper?.energyAdjustRate_mmbtuh,
-              flow_type:
-                findDataShipper?.level === 'DD'
-                  ? 'DIFFICULT DAY FLOW'
-                  : findDataShipper?.level === 'OFO'
-                    ? 'OPERATION FLOW'
-                    : findDataShipper?.level === 'IF'
-                      ? 'INSTRUCTED FLOW'
-                      : findDataShipper?.level,
-              heatingValue: findDataShipper?.heatingValue,
-              resolveHour: findDataShipper?.resolveHour,
-              volumeAdjust: findDataShipper?.volumeAdjust,
-              volumeAdjustRate_mmscfd: findDataShipper?.volumeAdjustRate_mmscfd,
-              volumeAdjustRate_mmscfh: findDataShipper?.volumeAdjustRate_mmscfh,
-            }
+            accImb_or_accImbInv: findDataShipper?.accImb_or_accImbInv,
+            accMargin: findDataShipper?.accMargin,
+            energyAdjust: findDataShipper?.energyAdjust,
+            energyAdjustRate_mmbtud: findDataShipper?.energyAdjustRate_mmbtud,
+            energyAdjustRate_mmbtuh: findDataShipper?.energyAdjustRate_mmbtuh,
+            flow_type:
+              findDataShipper?.level === 'DD'
+                ? 'DIFFICULT DAY FLOW'
+                : findDataShipper?.level === 'OFO'
+                  ? 'OPERATION FLOW'
+                  : findDataShipper?.level === 'IF'
+                    ? 'INSTRUCTED FLOW'
+                    : findDataShipper?.level,
+            heatingValue: findDataShipper?.heatingValue,
+            resolveHour: findDataShipper?.resolveHour,
+            volumeAdjust: findDataShipper?.volumeAdjust,
+            volumeAdjustRate_mmscfd: findDataShipper?.volumeAdjustRate_mmscfd,
+            volumeAdjustRate_mmscfh: findDataShipper?.volumeAdjustRate_mmscfh,
+          }
           : {
-              accImb_or_accImbInv,
-              accMargin,
-              energyAdjust,
-              energyAdjustRate_mmbtud,
-              energyAdjustRate_mmbtuh,
-              flow_type,
-              heatingValue,
-              resolveHour,
-              volumeAdjust,
-              volumeAdjustRate_mmscfd,
-              volumeAdjustRate_mmscfh,
-            };
+            accImb_or_accImbInv,
+            accMargin,
+            energyAdjust,
+            energyAdjustRate_mmbtud,
+            energyAdjustRate_mmbtuh,
+            flow_type,
+            heatingValue,
+            resolveHour,
+            volumeAdjust,
+            volumeAdjustRate_mmscfd,
+            volumeAdjustRate_mmscfh,
+          };
 
         return {
           id: findDataShipper?.id || null,
@@ -8048,14 +8048,17 @@ export class BalancingService {
         },
       });
 
+    if (!resData) {
+      return null;
+    }
     return {
       ...resData,
-      timestamp: dayjs(resData['execute_timestamp'] * 1000).format(
+      timestamp: resData?.['execute_timestamp'] ? dayjs(resData['execute_timestamp'] * 1000).format(
         'DD/MM/YYYY HH:mm',
-      ),
+      ) : null,
       gas_hours:
-        resData?.gas_hour &&
-        `${resData?.gas_hour > 10 ? resData?.gas_hour + ':00' : '0' + resData?.gas_hour + ':00'}`,
+        resData?.gas_hour ?
+          `${resData.gas_hour > 10 ? resData.gas_hour + ':00' : '0' + resData.gas_hour + ':00'}` : null,
     };
   }
 
@@ -8173,8 +8176,8 @@ export class BalancingService {
     });
     const efnGrouped = execute_timestamp
       ? fnGrouped?.filter((f: any) => {
-          return f?.execute_timestamp === execute_timestamp;
-        })
+        return f?.execute_timestamp === execute_timestamp;
+      })
       : fnGrouped;
 
     const nefnGrouped = efnGrouped?.map((e: any) => {
@@ -8276,33 +8279,33 @@ export class BalancingService {
       //         getValueArr(plan, 'otherGas_east-west')?.value) || null
 
       // console.log('testEast : ', testEastWest);
-      const fnNullCheckZeroAll = (datas:any, a:any, b:any, c:any, d:any, e:any) => {
+      const fnNullCheckZeroAll = (datas: any, a: any, b: any, c: any, d: any, e: any) => {
         // getValueArr(plan, 'shrinkage_east')?.value
-        if(
+        if (
           getValueArr(datas, a)?.value === undefined &&
           getValueArr(datas, b)?.value === undefined &&
           getValueArr(datas, c)?.value === undefined &&
           getValueArr(datas, d)?.value === undefined &&
           getValueArr(datas, e)?.value === undefined
-        ){
+        ) {
           return null
-        }else{
-        
+        } else {
+
           return (getValueArr(datas, a)?.value ?? 0) +
             (getValueArr(datas, b)?.value ?? 0) -
             (getValueArr(datas, c)?.value ?? 0) +
-              (getValueArr(datas, d)?.value ?? 0) +
-              (getValueArr(datas, e)?.value ?? 0) || 0 //calc
+            (getValueArr(datas, d)?.value ?? 0) +
+            (getValueArr(datas, e)?.value ?? 0) || 0 //calc
         }
       }
-      const p_shrinkage_others_east = fnNullCheckZeroAll(plan, "shrinkage_east","instructedFlow_east","ventGas_east","commissioningGas_east","otherGas_east")
-      const p_shrinkage_others_west = fnNullCheckZeroAll(plan, "shrinkage_west","instructedFlow_west","ventGas_west","commissioningGas_west","otherGas_west")
-      const p_shrinkage_others_east_west = fnNullCheckZeroAll(plan, "shrinkage_east-west","instructedFlow_east-west","ventGas_east-west","commissioningGas_east-west","otherGas_east-west")
-     
-      const a_shrinkage_others_east = fnNullCheckZeroAll(actual, "shrinkage_east","instructedFlow_east","ventGas_east","commissioningGas_east","otherGas_east")
-      const a_shrinkage_others_west = fnNullCheckZeroAll(actual, "shrinkage_west","instructedFlow_west","ventGas_west","commissioningGas_west","otherGas_west")
-      const a_shrinkage_others_east_west = fnNullCheckZeroAll(actual, "shrinkage_east-west","instructedFlow_east-west","ventGas_east-west","commissioningGas_east-west","otherGas_east-west")
-     
+      const p_shrinkage_others_east = fnNullCheckZeroAll(plan, "shrinkage_east", "instructedFlow_east", "ventGas_east", "commissioningGas_east", "otherGas_east")
+      const p_shrinkage_others_west = fnNullCheckZeroAll(plan, "shrinkage_west", "instructedFlow_west", "ventGas_west", "commissioningGas_west", "otherGas_west")
+      const p_shrinkage_others_east_west = fnNullCheckZeroAll(plan, "shrinkage_east-west", "instructedFlow_east-west", "ventGas_east-west", "commissioningGas_east-west", "otherGas_east-west")
+
+      const a_shrinkage_others_east = fnNullCheckZeroAll(actual, "shrinkage_east", "instructedFlow_east", "ventGas_east", "commissioningGas_east", "otherGas_east")
+      const a_shrinkage_others_west = fnNullCheckZeroAll(actual, "shrinkage_west", "instructedFlow_west", "ventGas_west", "commissioningGas_west", "otherGas_west")
+      const a_shrinkage_others_east_west = fnNullCheckZeroAll(actual, "shrinkage_east-west", "instructedFlow_east-west", "ventGas_east-west", "commissioningGas_east-west", "otherGas_east-west")
+
       // sys_plan,
       //   sys_actual,
 
@@ -8325,8 +8328,8 @@ export class BalancingService {
         ['park/unpark_east-west']:
           (getValueArr(plan, 'park_east-west')?.value ?? 0) -
           (getValueArr(plan, 'unpark_east-west')?.value ?? 0), //calc
-          // detail_entry_east-west_ra6Ratio
-          // detail_entry_east-west_bvw10Ratio
+        // detail_entry_east-west_ra6Ratio
+        // detail_entry_east-west_bvw10Ratio
         ['detail_entry_east-west_ra6Ratio']: getValueArr(plan, 'detail_entry_east-west_ra6Ratio'),
         ['detail_entry_east-west_bvw10Ratio']: getValueArr(
           plan,
@@ -9064,10 +9067,10 @@ export class BalancingService {
           user_type_id: 3,
           ...(shipper &&
             shipper.length > 0 && {
-              id_name: {
-                in: shipper,
-              },
-            }),
+            id_name: {
+              in: shipper,
+            },
+          }),
           AND: [
             {
               start_date: {
@@ -9570,7 +9573,7 @@ export class BalancingService {
         totalRecord = total_record;
       },
     );
-    const evidenApi: any = minDate ?  await this.evidenApiCenter(
+    const evidenApi: any = minDate ? await this.evidenApiCenter(
       {
         // start_date: minDate.toDate(),
         // end_date: maxDate.toDate(),
@@ -9676,17 +9679,17 @@ export class BalancingService {
 
     const evidenResultLast: any = evidenApiData
       ? Object.values(
-          evidenApiData?.reduce((acc, curr) => {
-            const key = `${curr.gas_day}`;
-            if (
-              !acc[key] ||
-              acc[key].execute_timestamp < curr.execute_timestamp
-            ) {
-              acc[key] = curr;
-            }
-            return acc;
-          }, {}),
-        )
+        evidenApiData?.reduce((acc, curr) => {
+          const key = `${curr.gas_day}`;
+          if (
+            !acc[key] ||
+            acc[key].execute_timestamp < curr.execute_timestamp
+          ) {
+            acc[key] = curr;
+          }
+          return acc;
+        }, {}),
+      )
       : [];
 
     console.log('evidenResultLast : ', evidenResultLast);
@@ -9738,7 +9741,7 @@ export class BalancingService {
         console.log('contractData : ', contractData);
         const contractDataTemp = contractData?.map((cd: any) => {
           const { contractSummary, ...nCd } = cd;
-          if(findShipperName){
+          if (findShipperName) {
             contractArr.push(nCd?.contract);
           }
           // console.log('contractSummary : ', contractSummary);
@@ -9960,9 +9963,9 @@ export class BalancingService {
             'minInventory_east-west',
           ]), //minInventory_east | minInventory_west | minInventory_east-west
         },
-        shipperData: shipperDataTemp?.filter((f:any) => f?.shipperName !== null),
+        shipperData: shipperDataTemp?.filter((f: any) => f?.shipperName !== null),
       };
-    })?.filter((f:any) => f?.shipperData?.length > 0);
+    })?.filter((f: any) => f?.shipperData?.length > 0);
     console.log('evidenResultLastCalc : ', evidenResultLastCalc);
     console.log('contractArr : ', contractArr);
     const ncontractArr =
@@ -9984,9 +9987,9 @@ export class BalancingService {
       ...(!!shipperId && contractCode !== 'Summary' && !!contractCode
         ? []
         : ncontractArr?.map((cA: any) => ({
-            key: cA,
-            value: dataNewData?.map((e: any) => e),
-          }))),
+          key: cA,
+          value: dataNewData?.map((e: any) => e),
+        }))),
       {
         key:
           shipperId && contractCode !== 'Summary' && !!contractCode
@@ -10554,12 +10557,20 @@ export class BalancingService {
           id: Number(id),
         },
       });
-    console.log('allMonthly : ', allMonthly);
-    const dataD = JSON.parse(allMonthly['jsonData']);
+    if (!allMonthly) {
+      throw new HttpException(
+        {
+          status: HttpStatus.NOT_FOUND,
+          error: 'Monthly report not found',
+        },
+        HttpStatus.NOT_FOUND,
+      );
+    }
+    const dataD = allMonthly?.jsonData ? JSON.parse(allMonthly.jsonData) : null;
     await this.exportFilesService.exportDataToExcelNewMontlyBalancing(
       dataD,
       response,
-      allMonthly['file'],
+      allMonthly?.['file'],
       // userId,
       allMonthly?.create_by, // https://app.clickup.com/t/86eujrga5
     );
@@ -10678,7 +10689,7 @@ export class BalancingService {
       }
 
       return acc;
-    } , [])
+    }, [])
 
     const executeIntradayList = await this.prisma.execute_intraday.findMany({
       where: {
@@ -10713,10 +10724,10 @@ export class BalancingService {
       },
     })
 
-    
+
     const dataEvuent = evidenApiCenter?.data || [];
 
-    const matchWithExecuteList = dataEvuent.filter((item:any)=>{
+    const matchWithExecuteList = dataEvuent.filter((item: any) => {
       const itemGasDay = getTodayNowYYYYMMDDDfaultAdd7(item.gas_day);
       return executeIntradayList?.some((executeData: any) => {
         const executeGasDay = getTodayNowAdd7(executeData.gas_day);
@@ -10724,7 +10735,7 @@ export class BalancingService {
           executeGasDay.isSame(itemGasDay, 'day')
       })
     })
-    
+
     const publishData = matchWithExecuteList.filter((evidenData: any) => {
       return !publicationCenterDeletedList?.some((unpublishData: any) => {
         return (
@@ -10738,19 +10749,19 @@ export class BalancingService {
     // Get the latest execute_timestamp for each unique combination of gas_day, gas_hour, zone, and mode
     const latestPublishData = publishData.reduce((acc: any[], current: any) => {
       // const key = `${current.gas_day}_${current.gas_hour}_${current.zone}_${current.mode}`;
-      const existingIndex = acc.findIndex(item => 
+      const existingIndex = acc.findIndex(item =>
         item.gas_day === current.gas_day &&
         item.gas_hour === current.gas_hour &&
         item.zone === current.zone &&
         item.mode === current.mode
       );
-      
+
       if (existingIndex < 0) {
         acc.push(current);
       } else if (current.execute_timestamp > acc[existingIndex].execute_timestamp) {
         acc[existingIndex] = current;
       }
-      
+
       return acc;
     }, []);
 
@@ -10760,14 +10771,14 @@ export class BalancingService {
       const hourData = [];
       for (let i = 0; i <= 24; i++) {
 
-        for(const zone of uniqueZones){
+        for (const zone of uniqueZones) {
           const modeOfThisHourAndZone = todayModeZone.filter((modeZone: any) => {
             const gasHour = parseToNumber(dayjs(modeZone.start_date).tz('Asia/Bangkok').format('H'));
             return gasHour == i && isMatch(modeZone?.zone?.name, `${zone}`)
           })
 
           let activeMode = undefined
-          if(modeOfThisHourAndZone.length > 0){
+          if (modeOfThisHourAndZone.length > 0) {
             // if must prorate do it here
             // just get the lastet for now
             modeOfThisHourAndZone.sort((a: any, b: any) => {
@@ -10775,19 +10786,19 @@ export class BalancingService {
             })
             activeMode = modeOfThisHourAndZone[0]
           }
-          else{
+          else {
             const todayModeOfZoneBeforeThisHour = todayModeZone.filter((modeZone: any) => {
               const gasHour = parseToNumber(dayjs(modeZone.start_date).tz('Asia/Bangkok').format('H')) + 1;
               return gasHour < i && isMatch(modeZone?.zone?.name, `${zone}`)
             })
 
-            if(todayModeOfZoneBeforeThisHour.length > 0){
+            if (todayModeOfZoneBeforeThisHour.length > 0) {
               todayModeOfZoneBeforeThisHour.sort((a: any, b: any) => {
                 return dayjs(b.start_date).diff(dayjs(a.start_date));
               })
               activeMode = todayModeOfZoneBeforeThisHour[0]
             }
-            else{
+            else {
               activeMode = lastetModeBeforeToday.find((f: any) => isMatch(f?.zone?.name, `${zone}`))
             }
           }
@@ -10814,30 +10825,30 @@ export class BalancingService {
           };
 
 
-          if(thisHourData){
+          if (thisHourData) {
             value['totalAccImbInv_percentage'] =
-              thisHourData.values?.find((f: any) => f?.tag === 'totalAccImbInv_percentage')
+              thisHourData?.values?.find((f: any) => f?.tag === 'totalAccImbInv_percentage')
                 ?.value ?? null;
             value['high_max_percentage'] =
-              thisHourData.values?.find((f: any) => f?.tag === 'high_max_percentage')
+              thisHourData?.values?.find((f: any) => f?.tag === 'high_max_percentage')
                 ?.value ?? null;
             value['high_dd_percentage'] =
-              thisHourData.values?.find((f: any) => f?.tag === 'high_dd_percentage')
+              thisHourData?.values?.find((f: any) => f?.tag === 'high_dd_percentage')
                 ?.value ?? null;
             value['high_red_percentage'] =
-              thisHourData.values?.find((f: any) => f?.tag === 'high_red_percentage')
+              thisHourData?.values?.find((f: any) => f?.tag === 'high_red_percentage')
                 ?.value ?? null;
             value['high_orange_percentage'] =
-              thisHourData.values?.find((f: any) => f?.tag === 'high_orange_percentage')
+              thisHourData?.values?.find((f: any) => f?.tag === 'high_orange_percentage')
                 ?.value ?? null;
             value['high_alert_percentage'] =
-              thisHourData.values?.find((f: any) => f?.tag === 'high_alert_percentage')
+              thisHourData?.values?.find((f: any) => f?.tag === 'high_alert_percentage')
                 ?.value ?? null;
             value['low_max_percentage'] =
-              thisHourData.values?.find((f: any) => f?.tag === 'low_max_percentage')
+              thisHourData?.values?.find((f: any) => f?.tag === 'low_max_percentage')
                 ?.value ?? null;
             value['low_dd_percentage'] =
-              thisHourData.values?.find((f: any) => f?.tag === 'low_dd_percentage')
+              thisHourData?.values?.find((f: any) => f?.tag === 'low_dd_percentage')
                 ?.value ?? null;
             value['low_red_percentage'] =
               thisHourData.values?.find((f: any) => f?.tag === 'low_red_percentage')
@@ -10849,10 +10860,10 @@ export class BalancingService {
               thisHourData.values?.find((f: any) => f?.tag === 'low_alert_percentage')
                 ?.value ?? null;
           }
-  
+
           const existingIndex = hourData.findIndex((data: any) => data.gas_hour === i)
-          if(existingIndex >= 0){
-            if(hourData[existingIndex].activeMode?.start_date < activeMode?.start_date){
+          if (existingIndex >= 0) {
+            if (hourData[existingIndex].activeMode?.start_date < activeMode?.start_date) {
               hourData[existingIndex].mode = thisHourData ? (thisHourData.mode ?? activeMode?.mode?.mode) : null
               hourData[existingIndex].zone = thisHourData ? zone : null
               hourData[existingIndex].value = value
@@ -10860,7 +10871,7 @@ export class BalancingService {
             }
             hourData[existingIndex].valueOfEachZone[`${zone}`] = value
           }
-          else{
+          else {
             hourData.push({
               gas_hour: i,
               gas_hour_text: i >= 10 ? `${i}:00` : `0${i}:00`,
@@ -10868,7 +10879,7 @@ export class BalancingService {
               zone: thisHourData ? zone : null,
               value: value,
               valueOfEachZone: {
-                [`${zone}`] : value
+                [`${zone}`]: value
               },
               activeMode
             });
@@ -11163,28 +11174,28 @@ export class BalancingService {
         'balance_intraday_acc_imb_inventory_by_shipper',
       );
     shipperEvidenData = (balance_intraday_acc_imb_inventory_by_shipper?.data || [])
-    if(isShipper){
+    if (isShipper) {
       shipperEvidenData = shipperEvidenData.filter((evidenData: any) => {
         const shipperData = evidenData?.shipper_data?.filter((shipperData: any) => {
           return currentUserShipperList.some((f: any) => f.id_name === shipperData.shipper)
         }) ?? []
-  
-        if(shipperData.length > 0){
+
+        if (shipperData.length > 0) {
           evidenData.shipper_data = shipperData
           return evidenData
         }
-        
+
         return false
       });
     }
 
-    if(zone){
+    if (zone) {
       shipperEvidenData = shipperEvidenData.filter((evidenData: any) => {
         return isMatch(evidenData.zone, zone)
       })
     }
 
-    if(mode){
+    if (mode) {
       shipperEvidenData = shipperEvidenData.filter((evidenData: any) => {
         return isMatch(evidenData.mode, mode)
       })
@@ -11291,7 +11302,7 @@ export class BalancingService {
       }
 
       return acc;
-    } , [])
+    }, [])
 
     const executeIntradayList = await this.prisma.execute_intraday.findMany({
       where: {
@@ -11328,10 +11339,10 @@ export class BalancingService {
 
     const systemEvidenData = balance_intraday_acc_imb_inventory?.data || [];
 
-    const formatedShipperData : any[] = []
+    const formatedShipperData: any[] = []
 
     shipperEvidenData.map((evidenData: any) => {
-      const {values, shipper_data, ...evidenDataWithoutValues} = evidenData
+      const { values, shipper_data, ...evidenDataWithoutValues } = evidenData
 
       const modeOfThisHourAndZone = todayModeZone.filter((modeZone: any) => {
         const gasHour = parseToNumber(dayjs(modeZone.start_date).tz('Asia/Bangkok').format('H'));
@@ -11339,7 +11350,7 @@ export class BalancingService {
       })
 
       let activeMode = undefined
-      if(modeOfThisHourAndZone.length > 0){
+      if (modeOfThisHourAndZone.length > 0) {
         // if must prorate do it here
         // just get the lastet for now
         modeOfThisHourAndZone.sort((a: any, b: any) => {
@@ -11347,25 +11358,25 @@ export class BalancingService {
         })
         activeMode = modeOfThisHourAndZone[0]
       }
-      else{
+      else {
         const todayModeOfZoneBeforeThisHour = todayModeZone.filter((modeZone: any) => {
           const gasHour = parseToNumber(dayjs(modeZone.start_date).tz('Asia/Bangkok').format('H')) + 1;
           return gasHour < evidenDataWithoutValues.gas_hou && isMatch(modeZone?.zone?.name, evidenDataWithoutValues.zone)
         })
 
-        if(todayModeOfZoneBeforeThisHour.length > 0){
+        if (todayModeOfZoneBeforeThisHour.length > 0) {
           todayModeOfZoneBeforeThisHour.sort((a: any, b: any) => {
             return dayjs(b.start_date).diff(dayjs(a.start_date));
           })
           activeMode = todayModeOfZoneBeforeThisHour[0]
         }
-        else{
+        else {
           activeMode = lastetModeBeforeToday.find((f: any) => isMatch(f?.zone?.name, evidenDataWithoutValues.zone))
         }
       }
 
-      if(activeMode || !isShipper){
-        const baseDataForGetHv = systemEvidenData.find((systemData: any) => 
+      if (activeMode || !isShipper) {
+        const baseDataForGetHv = systemEvidenData.find((systemData: any) =>
           systemData?.gas_day === evidenDataWithoutValues?.gas_day &&
           systemData?.gas_hour === evidenDataWithoutValues?.gas_hour &&
           systemData?.zone === evidenDataWithoutValues?.zone &&
@@ -11373,25 +11384,25 @@ export class BalancingService {
           systemData?.request_number === evidenDataWithoutValues?.request_number &&
           systemData?.execute_timestamp === evidenDataWithoutValues?.execute_timestamp
         )
-  
+
         const zoneObj = zoneList.find(zone => isMatch(zone.name, evidenDataWithoutValues.zone))
-  
+
         const heatingValue = baseDataForGetHv
           ? baseDataForGetHv?.values?.find((f: any) => {
-              return f?.tag === 'heatingValue_base';
-            }) ?? null
+            return f?.tag === 'heatingValue_base';
+          }) ?? null
           : null;
-  
+
         const heatingValue_base = heatingValue?.value ?? null
 
         shipper_data.map((shipperData: any) => {
           const shipperValues = shipperData.values
-          if(heatingValue){
+          if (heatingValue) {
             shipperValues.push(heatingValue)
           }
-  
+
           const groupObj = shipperList.find(shipper => shipper.id_name === shipperData.shipper)
-  
+
           formatedShipperData.push({
             ...evidenDataWithoutValues,
             shipper: shipperData.shipper,
@@ -11405,8 +11416,8 @@ export class BalancingService {
         })
       }
     })
-    
-    const matchWithExecuteList = formatedShipperData.filter((item:any) => {
+
+    const matchWithExecuteList = formatedShipperData.filter((item: any) => {
       const itemGasDay = getTodayNowYYYYMMDDDfaultAdd7(item.gas_day);
       return executeIntradayList?.some((executeData: any) => {
         const executeGasDay = getTodayNowAdd7(executeData.gas_day);
@@ -11414,7 +11425,7 @@ export class BalancingService {
           executeGasDay.isSame(itemGasDay, 'day')
       })
     })
-    
+
     const publishData = matchWithExecuteList.filter((evidenData: any) => {
       return !publicationCenterDeletedList?.some((unpublishData: any) => {
         return (
@@ -11452,7 +11463,7 @@ export class BalancingService {
         if (
           !groupedByHour.has(key) ||
           compareTimestamps(item.execute_timestamp, groupedByHour.get(key).execute_timestamp) >
-            0
+          0
         ) {
           groupedByHour.set(key, item);
         }
@@ -11470,7 +11481,7 @@ export class BalancingService {
         if (
           !groupedByLatestHour.has(key) ||
           compareGasHour(item.gas_hour, groupedByLatestHour.get(key).gas_hour) >
-            0
+          0
         ) {
           groupedByLatestHour.set(key, item);
         }
@@ -11510,25 +11521,25 @@ export class BalancingService {
 
     const nDataTempAll = [];
     const mapShipperIDWithName: Record<string, string> = {};
-    if(gas_day){
+    if (gas_day) {
       const datesArray = Array.from({ length: 3 }).map((_, i) =>
         dayjs(gas_day).subtract(i, 'day').format('YYYY-MM-DD'),
       );
-  
+
       for (let iDay = 0; iDay < datesArray.length; iDay++) {
         const gasDay = getTodayNowYYYYMMDDDfaultAdd7(datesArray[iDay]).toDate();
         const gasDayStart = getTodayStartYYYYMMDDDfaultAdd7(datesArray[iDay]).toDate();
         const gasDayEnd = getTodayEndYYYYMMDDDfaultAdd7(datesArray[iDay]).toDate();
-        
+
         const groupMaster = await this.prisma.group.findMany({
           where: {
             user_type_id: 3,
             ...(shipper &&
               shipper.length > 0 && {
-                id_name: {
-                  in: shipper,
-                },
-              }),
+              id_name: {
+                in: shipper,
+              },
+            }),
             AND: [
               {
                 start_date: {
@@ -11544,7 +11555,7 @@ export class BalancingService {
             ],
           },
         });
-  
+
         const todayModeZone = await this.prisma.mode_zone_base_inventory.findMany({
           where: {
             start_date: {
@@ -11582,9 +11593,9 @@ export class BalancingService {
             start_date: 'desc',
           },
         });
-  
+
         let lastetModeBeforeToday = []
-  
+
         const modeZone = await this.prisma.mode_zone_base_inventory.findMany({
           where: {
             start_date: {
@@ -11621,18 +11632,18 @@ export class BalancingService {
             start_date: 'desc',
           },
         });
-  
+
         lastetModeBeforeToday = modeZone.reduce((acc: any[], current: any) => {
           const existingIndex = acc.findIndex(item => isMatch(item.zone?.name, current.zone?.name));
-  
+
           if (existingIndex < 0) {
             acc.push(current);
           } else if (current.start_date > acc[existingIndex]?.start_date) {
             acc[existingIndex] = current;
           }
-  
+
           return acc;
-        } , [])
+        }, [])
 
         const executeIntradayList = await this.prisma.execute_intraday.findMany({
           where: {
@@ -11646,7 +11657,7 @@ export class BalancingService {
             }
           }
         })
-  
+
         const publicationCenterDeletedList = await this.prisma.publication_center.findMany({
           where: {
             AND: [
@@ -11666,8 +11677,8 @@ export class BalancingService {
             ]
           },
         })
-        
-  
+
+
         let totalRecord: number | undefined = undefined;
         await this.evidenApiCenter(
           {
@@ -11694,11 +11705,11 @@ export class BalancingService {
           },
           'balance_intraday_acc_imb_inventory_by_shipper',
         );
-  
+
         const dataEvuent = evidenApiCenter?.data || [];
         const filterZone = dataEvuent?.filter((f: any) => isMatch(f?.zone, tab));
 
-        const matchWithExecuteList = filterZone.filter((item:any)=>{
+        const matchWithExecuteList = filterZone.filter((item: any) => {
           const itemGasDay = getTodayNowYYYYMMDDDfaultAdd7(item.gas_day);
           return executeIntradayList?.some((executeData: any) => {
             const executeGasDay = getTodayNowAdd7(executeData.gas_day);
@@ -11706,7 +11717,7 @@ export class BalancingService {
               executeGasDay.isSame(itemGasDay, 'day')
           })
         })
-      
+
         const publishData = matchWithExecuteList.filter((evidenData: any) => {
           return !publicationCenterDeletedList?.some((unpublishData: any) => {
             return (
@@ -11716,40 +11727,40 @@ export class BalancingService {
             );
           })
         })
-    
+
         // Get the latest execute_timestamp for each unique combination of gas_day, gas_hour, zone, and mode
         const latestPublishData = publishData.reduce((acc: any[], current: any) => {
           // const key = `${current.gas_day}_${current.gas_hour}_${current.zone}_${current.mode}`;
-          const existingIndex = acc.findIndex(item => 
+          const existingIndex = acc.findIndex(item =>
             item.gas_day === current.gas_day &&
             item.gas_hour === current.gas_hour &&
             item.zone === current.zone &&
             item.mode === current.mode
           );
-          
+
           if (existingIndex < 0) {
             acc.push(current);
           } else if (current.execute_timestamp > acc[existingIndex].execute_timestamp) {
             acc[existingIndex] = current;
           }
-          
+
           return acc;
         }, []);
-  
+
         if (
           tab &&
           latestPublishData?.length > 0
         ) {
-  
+
           const hourData = [];
           for (let i = 0; i <= 24; i++) {
             const modeOfThisHourAndZone = todayModeZone.filter((modeZone: any) => {
               const gasHour = parseToNumber(dayjs(modeZone.start_date).tz('Asia/Bangkok').format('H'));
               return gasHour == i
             })
-  
+
             let activeMode = undefined
-            if(modeOfThisHourAndZone.length > 0){
+            if (modeOfThisHourAndZone.length > 0) {
               // if must prorate do it here
               // just get the lastet for now
               modeOfThisHourAndZone.sort((a: any, b: any) => {
@@ -11757,30 +11768,30 @@ export class BalancingService {
               })
               activeMode = modeOfThisHourAndZone[0]
             }
-            else{
+            else {
               const todayModeOfZoneBeforeThisHour = todayModeZone.filter((modeZone: any) => {
                 const gasHour = parseToNumber(dayjs(modeZone.start_date).tz('Asia/Bangkok').format('H')) + 1;
                 return gasHour < i
               })
-  
-              if(todayModeOfZoneBeforeThisHour.length > 0){
+
+              if (todayModeOfZoneBeforeThisHour.length > 0) {
                 todayModeOfZoneBeforeThisHour.sort((a: any, b: any) => {
                   return dayjs(b.start_date).diff(dayjs(a.start_date));
                 })
                 activeMode = todayModeOfZoneBeforeThisHour[0]
               }
-              else{
+              else {
                 activeMode = lastetModeBeforeToday.find((f: any) => isMatch(f?.zone?.name, tab))
               }
             }
-  
+
             const thisHourData = latestPublishData?.find(
               (evidenData: any) => {
                 return evidenData.gas_hour === i && isMatch(evidenData.mode, activeMode?.mode?.mode)
               },
             );
-  
-            const value : any = {
+
+            const value: any = {
               all: null,
               high_max_percentage: null,
               high_dd_percentage: null,
@@ -11806,7 +11817,7 @@ export class BalancingService {
               low_dd: null,
               low_max: null,
             };
-            const systemValue : any = {
+            const systemValue: any = {
               all: null,
               high_max_percentage: null,
               high_dd_percentage: null,
@@ -11833,7 +11844,7 @@ export class BalancingService {
               low_max: null,
             };
 
-            const valueOfEachShipper : Record<string, {
+            const valueOfEachShipper: Record<string, {
               high_max_percentage: number | null,
               high_dd_percentage: number | null,
               high_red_percentage: number | null,
@@ -11856,20 +11867,21 @@ export class BalancingService {
               low_orange: number | null,
               low_red: number | null,
               low_dd: number | null,
-              low_max: number | null}> = {};
-  
-            if(thisHourData){
+              low_max: number | null
+            }> = {};
+
+            if (thisHourData) {
               const isUseSystemValue = isSystemValue == true || (thisHourData?.shipper_data?.length ?? 0) == 0 || !shipper || shipper.length === 0
-              
+
               // Assign values using the mapping
               Object.entries(accImbValueMappings).forEach(([property, tag]) => {
                 const valueByTag = getValueByTag(thisHourData, tag);
-                if(isUseSystemValue){
+                if (isUseSystemValue) {
                   value[property] = valueByTag;
                 }
                 systemValue[property] = valueByTag;
               });
-  
+
               if (thisHourData?.shipper_data?.length > 0) {
                 thisHourData?.shipper_data
                   ?.filter((f: any) => f?.shipper !== 'Total')
@@ -11882,11 +11894,11 @@ export class BalancingService {
                       const fShipperName = groupMaster?.find(
                         (f: any) => f?.id_name == sp?.shipper,
                       );
-    
+
                       if (fShipperName) {
                         mapShipperIDWithName[sp?.shipper] = fShipperName?.name;
-                        
-                        const shipperValue : any = {
+
+                        const shipperValue: any = {
                           high_max_percentage: null,
                           high_dd_percentage: null,
                           high_red_percentage: null,
@@ -11917,11 +11929,11 @@ export class BalancingService {
                           const valueByTag = getValueByTag(sp, tag);
                           shipperValue[property] = valueByTag;
 
-                          if(!isUseSystemValue){
-                            if(value[property] && valueByTag){
+                          if (!isUseSystemValue) {
+                            if (value[property] && valueByTag) {
                               value[property] = value[property] + valueByTag
                             }
-                            else{
+                            else {
                               value[property] = valueByTag
                             }
                           }
@@ -11936,11 +11948,11 @@ export class BalancingService {
                   });
               }
             }
-  
-    
+
+
             const existingIndex = hourData.findIndex((data: any) => data.gas_hour === i)
-            if(existingIndex >= 0){
-              if(hourData[existingIndex].activeMode?.start_date < activeMode?.start_date){
+            if (existingIndex >= 0) {
+              if (hourData[existingIndex].activeMode?.start_date < activeMode?.start_date) {
                 hourData[existingIndex].mode = thisHourData ? (thisHourData.mode ?? activeMode?.mode?.mode) : null
                 hourData[existingIndex].zone = thisHourData ? tab : null
                 hourData[existingIndex].value = value
@@ -11949,7 +11961,7 @@ export class BalancingService {
                 hourData[existingIndex].systemValue = systemValue
               }
             }
-            else{
+            else {
               hourData.push({
                 gas_hour: i,
                 gas_hour_text: i >= 10 ? `${i}:00` : `0${i}:00`,
@@ -11962,7 +11974,7 @@ export class BalancingService {
               });
             }
           }
-  
+
           nDataTempAll.push({
             gas_day: datesArray[iDay],
             hour: hourData,
@@ -11976,9 +11988,9 @@ export class BalancingService {
       }
     }
 
-    
+
     const fShipperName = Object.values(mapShipperIDWithName);
-    
+
     const dataUse = {
       templateLabelKeys: [
         ...fShipperName.map((t: any) => {

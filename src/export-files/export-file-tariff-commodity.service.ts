@@ -141,7 +141,17 @@ export interface GasAllocationMultiSheetParams {
 
 @Injectable()
 export class ExportFileTariffCommodityService {
-  
+
+  private safeParseJSON(data: any, defaultValue: any = null) {
+    if (!data) return defaultValue;
+    try {
+      return typeof data === 'string' ? JSON.parse(data) : data;
+    } catch (e) {
+      console.error('JSON parse error:', e);
+      return defaultValue;
+    }
+  }
+
   /**
    * Export Statement of Gas Allocation to Excel with Real Data (Multiple Sheets)
    */
@@ -153,7 +163,7 @@ export class ExportFileTariffCommodityService {
     try {
       // Convert real data to Excel format
       const pointData = this.convertRealDataToExcelFormat(realData);
-      
+
       // Use existing multi-sheet export method
       await this.exportStatementOfGasAllocationMultiSheet(pointData, params, response);
     } catch (error) {
@@ -178,13 +188,13 @@ export class ExportFileTariffCommodityService {
       // );
 
       const totals = pointData?.reduce(
-                    (acc: any, cur: any) => {
-                        acc.calc += cur.calc ||  0;
-                        acc.calcNotRound += cur.calcNotRound || 0;
-                        return acc;
-                    },
-                    { calc: 0, calcNotRound: 0 }
-                );
+        (acc: any, cur: any) => {
+          acc.calc += cur?.calc || 0;
+          acc.calcNotRound += cur?.calcNotRound || 0;
+          return acc;
+        },
+        { calc: 0, calcNotRound: 0 }
+      ) || { calc: 0, calcNotRound: 0 };
 
       // pointData
       // console.log('params : ', params);
@@ -193,7 +203,7 @@ export class ExportFileTariffCommodityService {
       // Create a sheet for each point
       for (const pointInfo of pointData) {
         const worksheet = workbook.addWorksheet(pointInfo.point);
-        
+
         // Set column widths
         worksheet.columns = [
           { width: 8 },  // Date
@@ -318,7 +328,7 @@ export class ExportFileTariffCommodityService {
 
   private addTableHeader(worksheet: ExcelJS.Worksheet): void {
     const headerRow = worksheet.getRow(5);
-    
+
     // Main header - GAS ENERGY (MMBTU) - merged across columns B-D
     worksheet.mergeCells('B5:D5');
     const mainHeaderCell = worksheet.getCell('B5');
@@ -376,7 +386,7 @@ export class ExportFileTariffCommodityService {
 
   private addDataRows(worksheet: ExcelJS.Worksheet, data: GasAllocationData[]): void {
     // console.log("data: ", data);
-    
+
     // Sort data by gas_day (ascending - earliest date first)
     const sortedData = data.sort((a: any, b: any) => {
       const dateA = new Date(a.gas_day);
@@ -385,8 +395,8 @@ export class ExportFileTariffCommodityService {
     });
 
     console.log('sortedData : ', sortedData);
-    
-    sortedData.forEach((rowData:any, index) => {
+
+    sortedData.forEach((rowData: any, index) => {
 
       // console.log(rowData);
 
@@ -504,9 +514,9 @@ export class ExportFileTariffCommodityService {
     totalRow.height = 25;
   }
 
-  private addFooterSection(worksheet: ExcelJS.Worksheet, params: GasAllocationParams, data: GasAllocationData[], totals?:any): void {
+  private addFooterSection(worksheet: ExcelJS.Worksheet, params: GasAllocationParams, data: GasAllocationData[], totals?: any): void {
     const startRow = data.length + 9; // After total row + empty row
-    
+
     // Total Gas Energy for Commodity Charge
     const totalGasEnergyRow = worksheet.getRow(startRow);
     const totalGasEnergyLabelCell = totalGasEnergyRow.getCell(1);
@@ -527,7 +537,7 @@ export class ExportFileTariffCommodityService {
 
     // sawetchote@nueamek.com
     const roundedTotal = totals;
-    
+
     const totalGasEnergyValueCell = totalGasEnergyRow.getCell(2);
     totalGasEnergyValueCell.value = roundedTotal;
     totalGasEnergyValueCell.numFmt = '#,##0';
@@ -555,7 +565,7 @@ export class ExportFileTariffCommodityService {
       const value = crypto.randomInt(-range, range + 1);
       return value;
     };
-    
+
     for (let i = 1; i <= daysInMonth; i++) {
       data.push({
         date: i,
@@ -566,7 +576,7 @@ export class ExportFileTariffCommodityService {
         remark: '',
       });
     }
-    
+
     return data;
   }
 
@@ -576,7 +586,7 @@ export class ExportFileTariffCommodityService {
   generateSampleMultiSheetData(): GasAllocationPointData[] {
     const points = ['RPCL', 'IND-A1'];
     const result: GasAllocationPointData[] = [];
-    
+
     for (const point of points) {
       const tempDateArr: GasAllocationData[] = [];
       const daysInMonth = 30;
@@ -584,7 +594,7 @@ export class ExportFileTariffCommodityService {
         const value = crypto.randomInt(-range, range + 1);
         return value;
       };
-      
+
       for (let i = 1; i <= daysInMonth; i++) {
         tempDateArr.push({
           date: i,
@@ -595,11 +605,11 @@ export class ExportFileTariffCommodityService {
           remark: '',
         });
       }
-      
+
       // Calculate totals
       const calc = tempDateArr.reduce((sum, item) => sum + item.finalAllocation, 0);
       const calcNotRound = tempDateArr.reduce((sum, item) => sum + item.finalAllocation, 0);
-      
+
       result.push({
         point,
         calc: Math.round(calc),
@@ -607,7 +617,7 @@ export class ExportFileTariffCommodityService {
         tempDateArr,
       });
     }
-    
+
     return result;
   }
 
@@ -617,13 +627,13 @@ export class ExportFileTariffCommodityService {
   convertRealDataToExcelFormat(realData: RealGasAllocationData[]): GasAllocationPointData[] {
     // Group data by point
     const groupedData = new Map<string, RealGasAllocationData[]>();
-    
-    realData.forEach(item => {
-      const point = item.point;
+
+    realData?.forEach(item => {
+      const point = item?.point || 'Unknown';
       if (!groupedData.has(point)) {
         groupedData.set(point, []);
       }
-      groupedData.get(point)!.push(item);
+      groupedData.get(point)?.push(item);
     });
 
     const result: GasAllocationPointData[] = [];
@@ -638,17 +648,17 @@ export class ExportFileTariffCommodityService {
       });
 
       // Convert to Excel format
-      const tempDateArr: GasAllocationData[] = sortedData.map((item, index) => {
+      const tempDateArr: GasAllocationData[] = (sortedData || []).map((item, index) => {
         // Extract day from gas_day (e.g., "2025-01-31" -> 31)
-        const gasDay = new Date(item.gas_day);
+        const gasDay = new Date(item?.gas_day || new Date());
         const dayOfMonth = gasDay.getDate();
 
         return {
           date: dayOfMonth,
-          finalAllocation: item.allocatedValue || 0,
-          statementOfGasDelivered: item.nominationValue || 0,
-          gasAllocation: item.allocatedValue || 0,
-          satStdVolAllocation: this.calculateSatStdVolAllocation(item.allocatedValue || 0),
+          finalAllocation: item?.allocatedValue || 0,
+          statementOfGasDelivered: item?.nominationValue || 0,
+          gasAllocation: item?.allocatedValue || 0,
+          satStdVolAllocation: this.calculateSatStdVolAllocation(item?.allocatedValue || 0),
           remark: '', // Can be customized based on business logic
         };
       });

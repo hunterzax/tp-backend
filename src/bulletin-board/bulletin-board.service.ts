@@ -34,7 +34,17 @@ export class BulletinBoardService {
     private jwtService: JwtService,
     private prisma: PrismaService,
     // @Inject(CACHE_MANAGER) private cacheService: Cache,
-  ) {}
+  ) { }
+
+  private safeParseJSON(data: any, defaultValue: any = null) {
+    if (!data) return defaultValue;
+    try {
+      return typeof data === 'string' ? JSON.parse(data) : data;
+    } catch (e) {
+      console.error('JSON parse error:', e);
+      return defaultValue;
+    }
+  }
 
   generateMonthArray(
     startDate: string,
@@ -158,7 +168,7 @@ export class BulletinBoardService {
 
     return {
       ...resData,
-      name: resData?.user_type_id !== 3 ? 'xx' : resData?.name,
+      name: resData?.['user_type_id'] !== 3 ? 'xx' : resData?.['name'],
     };
   }
 
@@ -255,27 +265,27 @@ export class BulletinBoardService {
             : type === '4'
               ? 'SHORT_NON_FIRM'
               : 'error type';
-    const ShipperName = groupInfo?.name || '';
+    const ShipperName = groupInfo?.['name'] || '';
 
     const capacityDailyBookingArrayMMB = [
       'Capacity Daily Booking (MMBTU/d)',
-      ...Array(resultDate.length - 1).fill(''),
+      ...Array((resultDate?.length || 1) - 1).fill(''),
     ];
     const maximumHourBookingMMBArray = [
       'Maximum Hour Booking (MMBTU/h)',
-      ...Array(resultDate.length - 1).fill(''),
+      ...Array((resultDate?.length || 1) - 1).fill(''),
     ];
     const capacityDailyBookingMMsArray = [
       'Capacity Daily Booking (MMscfd)',
-      ...Array(resultDate.length - 1).fill(''),
+      ...Array((resultDate?.length || 1) - 1).fill(''),
     ];
     const maximumHourBookingMMsArray = [
       'Maximum Hour Booking (MMscfh)',
-      ...Array(resultDate.length - 1).fill(''),
+      ...Array((resultDate?.length || 1) - 1).fill(''),
     ];
 
     // คำนวณจำนวนเซลล์ทั้งหมดในแถวที่ 6 (รวม resultDate ทั้งหมด 4 กลุ่ม)
-    const totalCellsInRow6 = 33 + resultDate.length * 4;
+    const totalCellsInRow6 = 33 + (resultDate?.length || 0) * 4;
 
     // เพิ่ม "" ให้ครบตามจำนวนของแถวที่ 6 (เรามี startDate และ endDateDate ที่แถวที่ 7 แล้ว)
     const row7 = Array(totalCellsInRow6 - 33).fill('');
@@ -284,15 +294,15 @@ export class BulletinBoardService {
 
     const capacityDailyBookingArrayMMBExit = [
       'Capacity Daily Booking (MMBTU/d)',
-      ...Array(resultDate.length - 1).fill(''),
+      ...Array((resultDate?.length || 1) - 1).fill(''),
     ];
     const maximumHourBookingMMBArrayExit = [
       'Maximum Hour Booking (MMBTU/h)',
-      ...Array(resultDate.length - 1).fill(''),
+      ...Array((resultDate?.length || 1) - 1).fill(''),
     ];
 
     // คำนวณจำนวนเซลล์ทั้งหมดในแถวที่ 6 (รวม resultDate ทั้งหมด 2 กลุ่ม)
-    const totalCellsInRow12 = 33 + resultDate.length * 2;
+    const totalCellsInRow12 = 33 + (resultDate?.length || 0) * 2;
 
     // เพิ่ม "" ให้ครบตามจำนวนของแถวที่ 6 (เรามี startDate และ endDateDate ที่แถวที่ 7 แล้ว)
     const row13 = Array(totalCellsInRow12 - 33).fill('');
@@ -1098,27 +1108,27 @@ export class BulletinBoardService {
             : type === '4'
               ? 'SHORT_NON_FIRM'
               : 'error type';
-    const ShipperName = groupInfo?.name || '';
+    const ShipperName = groupInfo?.['name'] || '';
 
     const capacityDailyBookingArrayMMB = [
       'Capacity Daily Booking (MMBTU/d)',
-      ...Array(resultDate.length - 1).fill(''),
+      ...Array((resultDate?.length || 1) - 1).fill(''),
     ];
     const maximumHourBookingMMBArray = [
       'Maximum Hour Booking (MMBTU/h)',
-      ...Array(resultDate.length - 1).fill(''),
+      ...Array((resultDate?.length || 1) - 1).fill(''),
     ];
     const capacityDailyBookingMMsArray = [
       'Capacity Daily Booking (MMscfd)',
-      ...Array(resultDate.length - 1).fill(''),
+      ...Array((resultDate?.length || 1) - 1).fill(''),
     ];
     const maximumHourBookingMMsArray = [
       'Maximum Hour Booking (MMscfh)',
-      ...Array(resultDate.length - 1).fill(''),
+      ...Array((resultDate?.length || 1) - 1).fill(''),
     ];
 
     // คำนวณจำนวนเซลล์ทั้งหมดในแถวที่ 6 (รวม resultDate ทั้งหมด 4 กลุ่ม)
-    const totalCellsInRow6 = 5 + resultDate.length * 4;
+    const totalCellsInRow6 = 5 + (resultDate?.length || 0) * 4;
 
     // เพิ่ม "" ให้ครบตามจำนวนของแถวที่ 6 (เรามี startDate และ endDateDate ที่แถวที่ 7 แล้ว)
     const row7 = Array(totalCellsInRow6 - 5).fill('');
@@ -1127,15 +1137,15 @@ export class BulletinBoardService {
 
     const capacityDailyBookingArrayMMBExit = [
       'Capacity Daily Booking (MMBTU/d)',
-      ...Array(resultDate.length - 1).fill(''),
+      ...Array((resultDate?.length || 1) - 1).fill(''),
     ];
     const maximumHourBookingMMBArrayExit = [
       'Maximum Hour Booking (MMBTU/h)',
-      ...Array(resultDate.length - 1).fill(''),
+      ...Array((resultDate?.length || 1) - 1).fill(''),
     ];
 
     // คำนวณจำนวนเซลล์ทั้งหมดในแถวที่ 6 (รวม resultDate ทั้งหมด 2 กลุ่ม)
-    const totalCellsInRow12 = 5 + resultDate.length * 2;
+    const totalCellsInRow12 = 5 + (resultDate?.length || 0) * 2;
 
     // เพิ่ม "" ให้ครบตามจำนวนของแถวที่ 6 (เรามี startDate และ endDateDate ที่แถวที่ 7 แล้ว)
     const row13 = Array(totalCellsInRow12 - 5).fill('');
@@ -1492,8 +1502,8 @@ export class BulletinBoardService {
       : null;
     endDateDate = endDateDate
       ? getTodayNowDDMMYYYYAdd7(endDateDate)
-          .subtract(1, 'day')
-          .format('DD/MM/YYYY')
+        .subtract(1, 'day')
+        .format('DD/MM/YYYY')
       : null;
 
     const bookingTemplate = await this.prisma.booking_template.findFirst({
@@ -1559,43 +1569,44 @@ export class BulletinBoardService {
 
     const typeOfContract = this.typeOfContractNumToText(type);
 
-    const ShipperName = groupInfo?.name || '';
+    const ShipperName = groupInfo?.['name'] || '';
 
     const capacityDailyBookingArrayMMB = [
       'Capacity Daily Booking (MMBTU/d)',
-      ...Array(resultDate.length - 1).fill(''),
+      ...Array((resultDate?.length || 1) - 1).fill(''),
     ];
     const maximumHourBookingMMBArray = [
       'Maximum Hour Booking (MMBTU/h)',
-      ...Array(resultDate.length - 1).fill(''),
+      ...Array((resultDate?.length || 1) - 1).fill(''),
     ];
     const capacityDailyBookingMMsArray = [
       'Capacity Daily Booking (MMscfd)',
-      ...Array(resultDate.length - 1).fill(''),
+      ...Array((resultDate?.length || 1) - 1).fill(''),
     ];
     const maximumHourBookingMMsArray = [
       'Maximum Hour Booking (MMscfh)',
-      ...Array(resultDate.length - 1).fill(''),
+      ...Array((resultDate?.length || 1) - 1).fill(''),
     ];
 
     // คำนวณจำนวนเซลล์ทั้งหมดในแถวที่ 6 (รวม resultDate ทั้งหมด 4 กลุ่ม)
-    const totalCellsInRow6 = 5 + resultDate.length * 4;
+    const totalCellsInRow6 = 5 + (resultDate?.length || 0) * 4;
 
     // เพิ่ม "" ให้ครบตามจำนวนของแถวที่ 6 (เรามี startDate และ endDateDate ที่แถวที่ 7 แล้ว)
     const row7 = Array(totalCellsInRow6 - 5).fill('');
     const row8 = Array(totalCellsInRow6 - 5).fill(0);
+    // ----
 
     const capacityDailyBookingArrayMMBExit = [
       'Capacity Daily Booking (MMBTU/d)',
-      ...Array(resultDate.length - 1).fill(''),
+      ...Array((resultDate?.length || 1) - 1).fill(''),
     ];
     const maximumHourBookingMMBArrayExit = [
       'Maximum Hour Booking (MMBTU/h)',
-      ...Array(resultDate.length - 1).fill(''),
+      ...Array((resultDate?.length || 1) - 1).fill(''),
     ];
 
     // คำนวณจำนวนเซลล์ทั้งหมดในแถวที่ 6 (รวม resultDate ทั้งหมด 2 กลุ่ม)
-    const totalCellsInRow12 = 5 + resultDate.length * 2;
+    const totalCellsInRow12 = 5 + (resultDate?.length || 0) * 2;
 
     // เพิ่ม "" ให้ครบตามจำนวนของแถวที่ 6 (เรามี startDate และ endDateDate ที่แถวที่ 7 แล้ว)
     const row13 = Array(totalCellsInRow12 - 5).fill('');

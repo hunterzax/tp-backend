@@ -240,6 +240,17 @@ export class PlanningSubmissionFileService {
 
     const gId =
       !!shipper_id && shipper_id !== 'null' ? Number(shipper_id) : groups?.id;
+
+    if (!gId) {
+      throw new HttpException(
+        {
+          status: HttpStatus.BAD_REQUEST,
+          error: 'Shipper ID not found',
+        },
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
     const planningTemplate =
       await this.prisma.planning_file_submission_template.findFirst({
         where: {
@@ -1459,8 +1470,11 @@ export class PlanningSubmissionFileService {
   }
 
   findLastValidIndex(sheet: any) {
+    if (!sheet || !Array.isArray(sheet)) {
+      return -1;
+    }
     for (let i = sheet.length - 1; i >= 6; i--) {
-      if (sheet[i]['1'] === 'Entry' || sheet[i]['1'] === 'Exit') {
+      if (sheet[i]?.['1'] === 'Entry' || sheet[i]?.['1'] === 'Exit') {
         return i; // ตำแหน่งสุดท้ายที่เป็น Entry หรือ Exit
       }
     }
@@ -1617,7 +1631,7 @@ export class PlanningSubmissionFileService {
     let warningZero = false;
 
     // Total Entry & Total Exit equals zero.
-    const newDataAll = JSON.parse(jsonDataMultiSheet);
+    const newDataAll = jsonDataMultiSheet ? JSON.parse(jsonDataMultiSheet) : [];
 
     const newData1 = newDataAll[0]?.data; //sheet1 ต่ำ
     const newData = newDataAll[1]?.data; //sheet2 ปกติ
@@ -1655,19 +1669,19 @@ export class PlanningSubmissionFileService {
       );
     }
 
-    const type = newData[1]?.['1'];
+    const type = newData?.[1]?.['1'];
     // sheet 2 use
-    const currentEntryTotal = newData[2];
-    const currentExitTotal = newData[3];
-    const currentDate = newData[5];
+    const currentEntryTotal = newData?.[2];
+    const currentExitTotal = newData?.[3];
+    const currentDate = newData?.[5];
     // sheet 1
-    const currentEntryTotal1 = newData1[2];
-    const currentExitTotal1 = newData1[3];
-    const currentDate1 = newData1[5];
+    const currentEntryTotal1 = newData1?.[2];
+    const currentExitTotal1 = newData1?.[3];
+    const currentDate1 = newData1?.[5];
     // sheet 3
-    const currentEntryTotal3 = newData3[2];
-    const currentExitTotal3 = newData3[3];
-    const currentDate3 = newData3[5];
+    const currentEntryTotal3 = newData3?.[2];
+    const currentExitTotal3 = newData3?.[3];
+    const currentDate3 = newData3?.[5];
 
     const typeOfContract =
       type === 'Long Term'
@@ -1715,24 +1729,30 @@ export class PlanningSubmissionFileService {
     console.log('planningDeadline : ', planningDeadline);
 
     // sheet 2 use
-    const resultDate = Object.keys(currentDate)
-      .filter((key) => parseInt(key) > 5)
-      .reduce((obj, key) => {
-        obj[key] = currentDate[key];
-        return obj;
-      }, {});
-    const resultDateEntry = Object.keys(currentEntryTotal)
-      .filter((key) => parseInt(key) > 5)
-      .reduce((obj, key) => {
-        obj[key] = currentEntryTotal[key];
-        return obj;
-      }, {});
-    const resultDateExit = Object.keys(currentExitTotal)
-      .filter((key) => parseInt(key) > 5)
-      .reduce((obj, key) => {
-        obj[key] = currentExitTotal[key];
-        return obj;
-      }, {});
+    const resultDate = currentDate
+      ? Object.keys(currentDate)
+        .filter((key) => parseInt(key) > 5)
+        .reduce((obj, key) => {
+          obj[key] = currentDate[key];
+          return obj;
+        }, {})
+      : {};
+    const resultDateEntry = currentEntryTotal
+      ? Object.keys(currentEntryTotal)
+        .filter((key) => parseInt(key) > 5)
+        .reduce((obj, key) => {
+          obj[key] = currentEntryTotal[key];
+          return obj;
+        }, {})
+      : {};
+    const resultDateExit = currentExitTotal
+      ? Object.keys(currentExitTotal)
+        .filter((key) => parseInt(key) > 5)
+        .reduce((obj, key) => {
+          obj[key] = currentExitTotal[key];
+          return obj;
+        }, {})
+      : {};
 
     // sheet 1
     const resultDate1 = Object.keys(currentDate1)
@@ -1907,20 +1927,20 @@ export class PlanningSubmissionFileService {
         ? newData.slice(resultStartIndexExit, newData.length)
         : [];
 
-    
+
     console.log('valueEntry : ', valueEntry);
     console.log('valueExit : ', valueExit);
     const cellsFrom6 = (row: any) =>
       Array.isArray(row)
         ? row.slice(6)
         : Object.keys(row)
-            .filter(k => Number(k) >= 6)
-            .map(k => (row as any)[k]);
+          .filter(k => Number(k) >= 6)
+          .map(k => (row as any)[k]);
     let warningRowZero = false
     const ckWarningEn =
       (valueEntry ?? []).some(row =>
         cellsFrom6(row).some(cell => {
-          if(cell === "0"){
+          if (cell === "0") {
             warningRowZero = true
           }
           return String(cell).trim() === '0'
@@ -1929,7 +1949,7 @@ export class PlanningSubmissionFileService {
     const ckWarningEx =
       (valueExit ?? []).some(row =>
         cellsFrom6(row).some(cell => {
-          if(cell === "0"){
+          if (cell === "0") {
             warningRowZero = true
           }
           return String(cell).trim() === '0'
@@ -2037,6 +2057,7 @@ export class PlanningSubmissionFileService {
 
     // ฟังก์ชันเพิ่ม key ที่ขาดไปตั้งแต่ 6 ถึง maxDateKey
     const addMissingKeysEntryOrExit = (data, mKey) => {
+      if (!data) return {};
       for (let i = 6; i <= mKey; i++) {
         if (!data[i]) {
           data[i] = '0'; // ถ้าไม่มี key นี้อยู่ในออบเจ็กต์ ให้เพิ่ม key และกำหนดค่าเป็น '0'
@@ -2103,7 +2124,7 @@ export class PlanningSubmissionFileService {
     // const newArrHead = Object.values(newData[4])?.slice(6); // ของเดิม BANK พี่เห็น newData[4] มันเริ่มที่ 6 อยู่แล้ว พอ slice ไปมันก็ทำให้ newArrHead.length ไม่มีทางตรงกับ dateArr.length
     const newArrHead = Object.values(newData[4]); // คมมาเยือน ถ้าผิดขออภัย
     // console.log('newArrHead : ', newArrHead);
-    
+
     const sDate = startDate
       ? getTodayNowDDMMYYYYAdd7(startDate).format('DD/MM/YYYY')
       : null;
@@ -2497,8 +2518,9 @@ export class PlanningSubmissionFileService {
       }
 
       // เพิ่มปี และตั้งวันที่เป็นวันที่ 1 มกราคม
+      const lastDateVal = resultDate?.[`${maxDateKey}`];
       const nextYearDate = dayjs(
-        `${Number(resultDate[`${maxDateKey}`]) + 1}-01-01`,
+        `${lastDateVal ? Number(lastDateVal) + 1 : dayjs().year() + 1}-01-01`,
       );
 
       // แสดงผลในรูปแบบ "DD/MM/YYYY"
@@ -3053,10 +3075,11 @@ export class PlanningSubmissionFileService {
         }
       }
       console.log('newPoint : ex ', newPoint);
-      const currentDate = dayjs(resultDate[`${maxDateKey}`], 'DD/MM/YYYY');
+      const lastDateValM = resultDate?.[`${maxDateKey}`];
+      const currentDateM = dayjs(lastDateValM || dayjs().format('DD/MM/YYYY'), 'DD/MM/YYYY');
 
       // เพิ่มเดือนและตั้งวันที่เป็นวันที่ 1 ของเดือนถัดไป
-      const nextMonthDate = currentDate.add(1, 'month').startOf('month');
+      const nextMonthDate = currentDateM.add(1, 'month').startOf('month');
 
       // แสดงผลในรูปแบบ "DD/MM/YYYY"
       const formattedDate = nextMonthDate.format('DD/MM/YYYY');
@@ -3617,10 +3640,11 @@ export class PlanningSubmissionFileService {
         }
       }
 
-      const currentDate = dayjs(resultDate[`${maxDateKey}`], 'DD/MM/YYYY');
+      const lastDateValS = resultDate?.[`${maxDateKey}`];
+      const currentDateS = dayjs(lastDateValS || dayjs().format('DD/MM/YYYY'), 'DD/MM/YYYY');
 
       // เพิ่ม 1 วัน
-      const nextDay = currentDate.add(1, 'day');
+      const nextDay = currentDateS.add(1, 'day');
 
       // แสดงผลในรูปแบบ "DD/MM/YYYY"
       const formattedDate = nextDay.format('DD/MM/YYYY');

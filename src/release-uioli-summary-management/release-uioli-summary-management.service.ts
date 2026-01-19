@@ -28,13 +28,22 @@ export class ReleaseUioliSummaryManagementService {
     private jwtService: JwtService,
     private prisma: PrismaService,
     // @Inject(CACHE_MANAGER) private cacheService: Cache,
-  ) {}
+  ) { }
+
+  private safeParseJSON(jsonString: string): any {
+    try {
+      return JSON.parse(jsonString);
+    } catch (e) {
+      console.error('Error parsing JSON:', e);
+      return null;
+    }
+  }
 
   async findAll(userId: any) {
     const { group, isShipper } = await getGroupData(this.prisma, userId);
     const resData = await this.prisma.release_summary.findMany({
       where: {
-        ...(isShipper && { group_id: { in: group.map((f: any) => f?.id) } }),
+        ...(isShipper && { group_id: { in: (group && Array.isArray(group)) ? group.map((f: any) => f?.id) : [] } }),
       },
       include: {
         release_summary_comment: {
@@ -240,29 +249,30 @@ export class ReleaseUioliSummaryManagementService {
     });
 
     const fullJson = (
-      booking?.booking_full_json_release.length > 0
+      (booking?.booking_full_json_release && booking.booking_full_json_release.length > 0)
         ? booking?.booking_full_json_release
         : booking?.booking_full_json
-    ).map((e: any) => {
-      e['data_temp'] = JSON.parse(e['data_temp']);
+    )?.map((e: any) => {
+      e['data_temp'] = this.safeParseJSON(e['data_temp']);
       return e;
-    });
+    }) || [];
 
     const fullRow = (
-      booking?.booking_row_json_release.length > 0
+      (booking?.booking_row_json_release && booking.booking_row_json_release.length > 0)
         ? booking?.booking_row_json_release
         : booking?.booking_row_json
-    ).map((e: any) => {
-      e['data_temp'] = JSON.parse(e['data_temp']);
+    )?.map((e: any) => {
+      e['data_temp'] = this.safeParseJSON(e['data_temp']);
       return e;
-    });
+    }) || [];
     console.log('fullJson : ', fullJson);
     console.log('fullRow : ', fullRow);
     // const valuesKey = 35;
     const valuesKey = 7;
     console.log('0');
     const nRowJson = fullRow.map((e: any) => {
-      const maxKey = Math.max(...Object.keys(e.data_temp).map(Number));
+      const keys = e?.data_temp ? Object.keys(e.data_temp).map(Number) : [];
+      const maxKey = keys.length > 0 ? Math.max(...keys) : valuesKey;
       console.log('e : ', e);
       const numGroups = Number(e?.entry_exit_id) === 1 ? 4 : 2; // แบ่งเป็น 4 , 2 ช่วง
       // คำนวณขนาดของแต่ละช่วง
@@ -307,7 +317,7 @@ export class ReleaseUioliSummaryManagementService {
             ) {
               const hentMMBTU =
                 fullJson[0]?.data_temp?.headerEntry[
-                  'Capacity Daily Booking (MMBTU/d)'
+                'Capacity Daily Booking (MMBTU/d)'
                 ];
               Object.entries(hentMMBTU).forEach(([dateStr, obj]: any) => {
                 const currentDate = dayjs(dateStr, 'DD/MM/YYYY'); // แปลงวันที่จาก hentMMBTU
@@ -328,13 +338,14 @@ export class ReleaseUioliSummaryManagementService {
               });
               //
               if (isInRange) {
+                const mmbtu_d_num = (!!Number(payload?.mmbtu_d?.replace(/,/g, '')) &&
+                  Number(payload?.mmbtu_d?.replace(/,/g, ''))) ||
+                  0;
                 e.data_temp[key] =
                   ((!!Number(String(e.data_temp[key])?.replace(/,/g, '')) &&
                     Number(String(e.data_temp[key])?.replace(/,/g, ''))) ||
                     0) -
-                  ((!!Number(payload?.mmbtu_d?.replace(/,/g, '')) &&
-                    Number(payload?.mmbtu_d?.replace(/,/g, ''))) ||
-                    0);
+                  mmbtu_d_num;
                 if (Number(e.data_temp[key]) <= 0) {
                   throw new HttpException(
                     {
@@ -350,13 +361,13 @@ export class ReleaseUioliSummaryManagementService {
               }
             } else if (
               isInRangeMMSCF &&
-              !!payload?.contract_point_entry_exit.find((ff: any) => {
+              !!payload?.contract_point_entry_exit?.find((ff: any) => {
                 return ff === e['contract_point'];
               })
             ) {
               const hentMMSCF =
                 fullJson[0]?.data_temp?.headerEntry[
-                  'Capacity Daily Booking (MMscfd)'
+                'Capacity Daily Booking (MMscfd)'
                 ];
               Object.entries(hentMMSCF).forEach(([dateStr, obj]: any) => {
                 const currentDate = dayjs(dateStr, 'DD/MM/YYYY'); // แปลงวันที่จาก hentMMBTU
@@ -376,13 +387,14 @@ export class ReleaseUioliSummaryManagementService {
                 }
               });
               if (isInRange) {
+                const mmscfd_d_num = (!!Number(payload?.mmscfd_d?.replace(/,/g, '')) &&
+                  Number(payload?.mmscfd_d?.replace(/,/g, ''))) ||
+                  0;
                 e.data_temp[key] =
                   ((!!Number(String(e.data_temp[key])?.replace(/,/g, '')) &&
                     Number(String(e.data_temp[key])?.replace(/,/g, ''))) ||
                     0) -
-                  ((!!Number(payload?.mmscfd_d?.replace(/,/g, '')) &&
-                    Number(payload?.mmscfd_d?.replace(/,/g, ''))) ||
-                    0);
+                  mmscfd_d_num;
                 if (Number(e.data_temp[key]) <= 0) {
                   throw new HttpException(
                     {
@@ -415,7 +427,7 @@ export class ReleaseUioliSummaryManagementService {
               //
               const heexMMBTU =
                 fullJson[0]?.data_temp?.headerEntry[
-                  'Capacity Daily Booking (MMBTU/d)'
+                'Capacity Daily Booking (MMBTU/d)'
                 ];
               Object.entries(heexMMBTU).forEach(([dateStr, obj]: any) => {
                 const currentDate = dayjs(dateStr, 'DD/MM/YYYY'); // แปลงวันที่จาก hentMMBTU
@@ -436,13 +448,14 @@ export class ReleaseUioliSummaryManagementService {
               });
               //
               if (isInRange) {
+                const mmbtu_d_num = (!!Number(payload?.mmbtu_d?.replace(/,/g, '')) &&
+                  Number(payload?.mmbtu_d?.replace(/,/g, ''))) ||
+                  0;
                 e.data_temp[key] =
                   ((!!Number(String(e.data_temp[key])?.replace(/,/g, '')) &&
                     Number(String(e.data_temp[key])?.replace(/,/g, ''))) ||
                     0) -
-                  ((!!Number(payload?.mmbtu_d?.replace(/,/g, '')) &&
-                    Number(payload?.mmbtu_d?.replace(/,/g, ''))) ||
-                    0);
+                  mmbtu_d_num;
                 if (Number(e.data_temp[key]) <= 0) {
                   throw new HttpException(
                     {
@@ -462,7 +475,7 @@ export class ReleaseUioliSummaryManagementService {
           }
         }
       }
-      e['data_temp'] = JSON.stringify(e['data_temp']);
+      e['data_temp'] = JSON.stringify(e['data_temp'] || {});
       delete e['id'];
 
       e['create_date'] = getTodayNowAdd7().toDate();
@@ -482,12 +495,12 @@ export class ReleaseUioliSummaryManagementService {
         .filter((ff: any) => {
           return ff?.entry_exit_id === 1;
         })
-        .map((ef: any) => JSON.parse(ef?.data_temp));
+        .map((ef: any) => this.safeParseJSON(ef?.data_temp));
       const exitValueArray = nRowJson
         .filter((ff: any) => {
           return ff?.entry_exit_id === 2;
         })
-        .map((ef: any) => JSON.parse(ef?.data_temp));
+        .map((ef: any) => this.safeParseJSON(ef?.data_temp));
 
       e['data_temp']['entryValue'] = entryValueArray;
       e['data_temp']['exitValue'] = exitValueArray;
@@ -541,10 +554,9 @@ export class ReleaseUioliSummaryManagementService {
       }
 
       // ใส่ผลรวมใน `data_temp`
-      e.data_temp.sumEntries = sumEntries;
       e.data_temp.sumExits = sumExits;
 
-      e['data_temp'] = JSON.stringify(e['data_temp']);
+      e['data_temp'] = JSON.stringify(e['data_temp'] || {});
       delete e['id'];
 
       e['flag_use'] = true;
@@ -602,14 +614,11 @@ export class ReleaseUioliSummaryManagementService {
         create_date_num: getTodayNowAdd7().unix(),
         create_by_account: {
           connect: {
-            id: Number(userId), // Prisma จะใช้ connect แทนการใช้ create_by โดยตรง
+            id: Number(userId),
           },
         },
       },
     });
-
-    // console.log('nFullJson : ', nFullJson);
-    // console.log('nRowJson : ', nRowJson);
 
     return { payload, contractCodeId, booking, resData, nRowJson, nFullJson };
   }

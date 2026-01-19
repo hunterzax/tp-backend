@@ -210,7 +210,7 @@ export async function buildActiveDataForDates(
   activeNonTpaPoints?: nonTpaPointWithRelations[]
   activeMeteringPoints?: meteringPointWithRelations[]
 }[]> {
-  if(dateArray.length === 0) {
+  if (dateArray.length === 0) {
     return [];
   }
   // Find min and max dates from dateArray
@@ -219,7 +219,7 @@ export async function buildActiveDataForDates(
     const currentDayjs = getTodayNowYYYYMMDDDfaultAdd7(current + 'T00:00:00Z')
     return currentDayjs.isBefore(minDayjs) ? current : min
   });
-  const max = dateArray.reduce((max, current) =>{
+  const max = dateArray.reduce((max, current) => {
     const maxDayjs = getTodayNowYYYYMMDDDfaultAdd7(max + 'T00:00:00Z')
     const currentDayjs = getTodayNowYYYYMMDDDfaultAdd7(current + 'T00:00:00Z')
     return currentDayjs.isAfter(maxDayjs) ? current : max
@@ -352,7 +352,7 @@ export async function buildActiveDataForDates(
 
         // Find active zones at this date
         const activeZones: zone[] = zoneMaster.filter((zone) => zone.start_date <= targetDate && (zone.end_date === null || zone.end_date >= targetDate))
-        
+
 
         // Find active groups at this date
         const activeGroups: group[] = groupMaster.filter((group) => group.start_date <= targetDate && (group.end_date === null || group.end_date >= targetDate))
@@ -402,11 +402,11 @@ export async function buildActiveDataForDates(
           });
 
         // Find active contract_code at this date
-        const activeContractCodes: contract_code[] = contractCodsMaster.filter((contractCode) => 
-          contractCode.contract_start_date <= targetDate && 
+        const activeContractCodes: contract_code[] = contractCodsMaster.filter((contractCode) =>
+          contractCode.contract_start_date <= targetDate &&
           (contractCode.terminate_date === null || contractCode.terminate_date >= targetDate) &&
           (
-            (contractCode.extend_deadline != null && contractCode.extend_deadline >= targetDate) || 
+            (contractCode.extend_deadline != null && contractCode.extend_deadline >= targetDate) ||
             (contractCode.extend_deadline == null && (contractCode.contract_end_date == null || contractCode.contract_end_date >= targetDate))
           )
         )
@@ -757,53 +757,54 @@ export function groupDataAlloManage(data: any[]) {
     };
 
     const grouped: any = data.reduce((acc, item) => {
-        const key = `${item.gas_day}-${item.point}`;
+      const key = `${item.gas_day}-${item.point}`;
 
-        if (!acc[key]) {
-            acc[key] = {
-                // id: generateRandomId(),
-                id: item?.point + '_' + item.gas_day,
-                gas_day: item.gas_day,
-                point_text: item?.point,
-                entry_exit: item?.entry_exit_obj?.name,
+      if (!acc[key]) {
+        acc[key] = {
+          // id: generateRandomId(),
+          id: item?.point + '_' + item.gas_day,
+          gas_day: item.gas_day,
+          point_text: item?.point,
+          entry_exit: item?.entry_exit_obj?.name,
 
-                nomination_value: 0,
-                system_allocation: 0,
-                intraday_system: 0,
-                previous_allocation_tpa_for_review: 0,
-                shipper_allocation_review: 0,
-                metering_value: 0,
+          nomination_value: 0,
+          system_allocation: 0,
+          intraday_system: 0,
+          previous_allocation_tpa_for_review: 0,
+          shipper_allocation_review: 0,
+          metering_value: 0,
 
-                data: [],
-                priorityStatus: item?.allocation_status?.id ?? 999,
-            };
-        }
+          data: [],
+          priorityStatus: item?.allocation_status?.id ?? 999,
+        };
+      }
 
-        acc[key].data.push(item);
+      acc[key].data.push(item);
 
-        // Sum
-        acc[key].nominationValue += Number(item?.nominationValue ?? 0);
-        acc[key].systemAllocation += Number(item?.systemAllocation ?? 0);
-        acc[key].intradaySystem += Number(item?.intradaySystem ?? 0);
-        acc[key].previousAllocationTPAforReview += Number(item?.previousAllocationTPAforReview ?? 0);
-        // acc[key].metering_value += Number(item?.meteringValue ?? 0);
-        acc[key].meteringValue = Number(item?.meteringValue ?? 0);
+      // Sum
+      // Sum
+      acc[key].nomination_value += Number(item?.nominationValue ?? 0);
+      acc[key].system_allocation += Number(item?.systemAllocation ?? 0);
+      acc[key].intraday_system += Number(item?.intradaySystem ?? 0);
+      acc[key].previous_allocation_tpa_for_review += Number(item?.previousAllocationTPAforReview ?? 0);
+      // acc[key].metering_value += Number(item?.meteringValue ?? 0);
+      acc[key].metering_value = Number(item?.meteringValue ?? 0);
 
-        const shipperReview =
-            item?.allocation_management_shipper_review?.[0]?.shipper_allocation_review ??
-            item?.shipperAllocationReview ??
-            0;
-        acc[key].shipperAllocationReview += Number(shipperReview);
+      const shipperReview =
+        item?.allocation_management_shipper_review?.[0]?.shipper_allocation_review ??
+        item?.shipperAllocationReview ??
+        0;
+      acc[key].shipper_allocation_review += Number(shipperReview);
 
-        // Update priority status if item has higher priority
-        const currentPriority = priorityMap[acc[key].priorityStatus] ?? 999;
-        const itemPriority = priorityMap[item.allocation_status?.id] ?? 999;
+      // Update priority status if item has higher priority
+      const currentPriority = priorityMap[acc[key].priorityStatus] ?? 999;
+      const itemPriority = priorityMap[item.allocation_status?.id] ?? 999;
 
-        if (itemPriority < currentPriority) {
-            acc[key].priorityStatus = item.allocation_status?.id
-        }
+      if (itemPriority < currentPriority) {
+        acc[key].priorityStatus = item.allocation_status?.id
+      }
 
-        return acc;
+      return acc;
     }, {} as Record<string, any>);
 
     return Object.values(grouped);

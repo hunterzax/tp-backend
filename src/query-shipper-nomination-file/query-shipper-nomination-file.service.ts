@@ -32,7 +32,7 @@ export class QueryShipperNominationFileService {
     private jwtService: JwtService,
     private prisma: PrismaService,
     // @Inject(CACHE_MANAGER) private cacheService: Cache,
-  ) {}
+  ) { }
 
   async findAll(userId?: any) {
     const resData = await this.prisma.query_shipper_nomination_file.findMany({
@@ -157,7 +157,7 @@ export class QueryShipperNominationFileService {
         contract_point_list: true,
       },
     })
-    
+
     const todayNow = getTodayNow();
     const startOfToday = getTodayStartAdd7();
     // Initialize empty array for deadline list
@@ -165,9 +165,9 @@ export class QueryShipperNominationFileService {
     try {
       // Get current date in UTC+7 timezone
       const todayStart = startOfToday.toDate();
-      
+
       // Define base conditions for nomination deadline query
-      const andInWhere : Prisma.new_nomination_deadlineWhereInput[] = [
+      const andInWhere: Prisma.new_nomination_deadlineWhereInput[] = [
         {
           start_date: {
             lte: todayStart, // start_date ต้องก่อนหรือเท่ากับสิ้นสุดวันนี้
@@ -180,7 +180,7 @@ export class QueryShipperNominationFileService {
           ],
         },
         {
-          OR:[
+          OR: [
             {
               process_type: {
                 name: 'Management'
@@ -215,12 +215,12 @@ export class QueryShipperNominationFileService {
       });
 
       // Add user type filter if user is not admin (type 1)
-      if(accountManage?.user_type_id && accountManage?.user_type_id != 1){
+      if (accountManage?.user_type_id && accountManage?.user_type_id != 1) {
         andInWhere.push({
           user_type_id: accountManage?.user_type_id
         })
       }
-  
+
       // Fetch nomination deadlines with process type info
       deadlineList = await this.prisma.new_nomination_deadline.findMany({
         where: {
@@ -234,18 +234,18 @@ export class QueryShipperNominationFileService {
       // If any error occurs, set empty array as fallback
       deadlineList = []
     }
-    
+
     const nresData = (resData && Array.isArray(resData)) ? resData.map(e => {
       const disabledFlag = e?.contract_code?.status_capacity_request_management_id === 3 || e?.contract_code?.status_capacity_request_management_id === 5 ? true : false
 
       const contractPointList = (e?.contract_code?.booking_version?.[0]?.booking_row_json && Array.isArray(e.contract_code.booking_version[0].booking_row_json)) ? e.contract_code.booking_version[0].booking_row_json.map(bookingRowJson => bookingRowJson?.contract_point) : []
       let endDate = e.gas_day
-      if(e.nomination_type_id == 2){
+      if (e.nomination_type_id == 2) {
         endDate = getTodayNowAdd7(e.gas_day).endOf('week').toDate()
       }
       const activeNominationPointList = (nominationPointList && Array.isArray(nominationPointList)) ? nominationPointList.filter(nominationPoint => {
         return nominationPoint?.start_date <= endDate &&
-        (nominationPoint?.end_date === null || nominationPoint?.end_date >= e?.gas_day)
+          (nominationPoint?.end_date === null || nominationPoint?.end_date >= e?.gas_day)
       }) : []
 
       // if(disabledFlag == false){
@@ -312,21 +312,21 @@ export class QueryShipperNominationFileService {
 
       const nominationVersionWithContractPointList = e.nomination_version.map(nomination_version => {
         const nominationRowJsonWithContractPointList = nomination_version.nomination_row_json.map(nomination_row_json => {
-          if(nomination_row_json.zone_text && nomination_row_json.area_text) { // is nom point
+          if (nomination_row_json.zone_text && nomination_row_json.area_text) { // is nom point
             const dataTemp = JSON.parse(nomination_row_json.data_temp)
             const targetContractPointList = activeNominationPointList
-            .filter(nominationPoint => nominationPoint.nomination_point == dataTemp["3"])
-            .map(nominationPoint => {
-              const contractPointOfNomPointList = nominationPoint.contract_point_list.filter(contractPoint => contractPointList.includes(contractPoint.contract_point))
+              .filter(nominationPoint => nominationPoint.nomination_point == dataTemp["3"])
+              .map(nominationPoint => {
+                const contractPointOfNomPointList = nominationPoint.contract_point_list.filter(contractPoint => contractPointList.includes(contractPoint.contract_point))
 
-              return contractPointOfNomPointList
-            })
-            .flat() // Flatten the nested array to 1 level
-            .filter((item, index, self) => 
-              index === self.findIndex(obj => obj.id === item.id)
-            ) // Remove duplicates by id
-            
-            return {...nomination_row_json, contract_point_list: targetContractPointList}
+                return contractPointOfNomPointList
+              })
+              .flat() // Flatten the nested array to 1 level
+              .filter((item, index, self) =>
+                index === self.findIndex(obj => obj.id === item.id)
+              ) // Remove duplicates by id
+
+            return { ...nomination_row_json, contract_point_list: targetContractPointList }
           }
           return nomination_row_json
         })
@@ -392,8 +392,8 @@ export class QueryShipperNominationFileService {
               id: 'desc',
             },
           },
-          query_shipper_nomination_file_url:{
-            orderBy:{
+          query_shipper_nomination_file_url: {
+            orderBy: {
               id: "desc"
             }
           },
@@ -413,7 +413,7 @@ export class QueryShipperNominationFileService {
         },
       },
     });
- 
+
     const create =
       await this.prisma.query_shipper_nomination_file_comment.create({
         data: {
@@ -454,15 +454,15 @@ export class QueryShipperNominationFileService {
         },
       });
 
-      
-      await this.prisma.query_shipper_nomination_file_url.updateMany({
-        where:{
-          id: queryShipperNominationFile?.query_shipper_nomination_file_url[0]?.id
-        },
-        data:{
-          query_shipper_nomination_status_id: Number(status)
-        },
-      })
+
+    await this.prisma.query_shipper_nomination_file_url.updateMany({
+      where: {
+        id: queryShipperNominationFile?.query_shipper_nomination_file_url[0]?.id
+      },
+      data: {
+        query_shipper_nomination_status_id: Number(status)
+      },
+    })
 
     return create;
   }
@@ -488,38 +488,38 @@ export class QueryShipperNominationFileService {
         nomination_row_json: true,
       },
     });
-    
+
     const fullJsonOld = await versionNom?.nomination_full_json.map((e: any) => ({
       ...e,
       data_temp: JSON.parse(e['data_temp']),
     }))[0];
 
-    fullJsonOld.data_temp.valueData = fullJsonOld.data_temp.valueData?.map((e:any, ix:any) => {
-      const findIx = rowChange?.find((f:any) => { return f?.old_index === ix })
-      if(findIx){
+    fullJsonOld.data_temp.valueData = fullJsonOld.data_temp.valueData?.map((e: any, ix: any) => {
+      const findIx = rowChange?.find((f: any) => { return f?.old_index === ix })
+      if (findIx) {
         return JSON.parse(findIx?.data_temp)
-      }else{
+      } else {
         return e
       }
     })
 
-      Object.keys(fullJsonOld.data_temp.typeDoc || {}).forEach((key) => {
-        // console.log('key : ', key);
-        fullJsonOld.data_temp.typeDoc[key] = fullJsonOld.data_temp.typeDoc[key]?.map((tD:any) => {
-          const findTD = rowChange?.find((f:any) => { return f?.old_index === tD?.ix })
-          if(findTD){
-            return { ...tD, row: JSON.parse(findTD?.data_temp) }
-          }else{
-            return tD
-          }
-        })
-      });
+    Object.keys(fullJsonOld.data_temp.typeDoc || {}).forEach((key) => {
+      // console.log('key : ', key);
+      fullJsonOld.data_temp.typeDoc[key] = fullJsonOld.data_temp.typeDoc[key]?.map((tD: any) => {
+        const findTD = rowChange?.find((f: any) => { return f?.old_index === tD?.ix })
+        if (findTD) {
+          return { ...tD, row: JSON.parse(findTD?.data_temp) }
+        } else {
+          return tD
+        }
+      })
+    });
 
-    const rowJsonData = versionNom?.nomination_row_json?.map((e:any) => {
-      const findIx = rowChange?.find((f:any) => { return f?.old_index === e?.old_index })
-      if(findIx){
+    const rowJsonData = versionNom?.nomination_row_json?.map((e: any) => {
+      const findIx = rowChange?.find((f: any) => { return f?.old_index === e?.old_index })
+      if (findIx) {
         return { ...e, data_temp: findIx?.data_temp }
-      }else{
+      } else {
         return e
       }
     })
@@ -537,7 +537,7 @@ export class QueryShipperNominationFileService {
         query_shipper_nomination_file_id: Number(
           versionNom?.query_shipper_nomination_file_id,
         ),
-        
+
       },
       data: {
         flag_use: false,
@@ -572,10 +572,10 @@ export class QueryShipperNominationFileService {
     });
 
     const nom = await this.prisma.query_shipper_nomination_file.update({
-      where:{
+      where: {
         id: versionNom?.query_shipper_nomination_file_id
       },
-      data:{
+      data: {
         query_shipper_nomination_status_id: 1
       },
     })
@@ -785,13 +785,13 @@ export class QueryShipperNominationFileService {
     const typeM = this.typeOfContractTextToNum(typeTerm) === 4 ? 2 : 1; // 1 month, 2 day
     const cMMBTUD =
       bookingFull?.headerEntry['Capacity Daily Booking (MMBTU/d)'];
-    delete cMMBTUD['key'];
+    if (cMMBTUD) delete cMMBTUD['key'];
     const cMMSCFD = bookingFull?.headerEntry['Capacity Daily Booking (MMscfd)'];
-    delete cMMSCFD['key'];
+    if (cMMSCFD) delete cMMSCFD['key'];
     const mMMBTUH = bookingFull?.headerEntry['Maximum Hour Booking (MMBTU/h)'];
-    delete mMMBTUH['key'];
+    if (mMMBTUH) delete mMMBTUH['key'];
     const mMMSCFH = bookingFull?.headerEntry['Maximum Hour Booking (MMscfh)'];
-    delete mMMSCFH['key'];
+    if (mMMSCFH) delete mMMSCFH['key'];
     const bookingRow = (bookingVersion?.booking_row_json && Array.isArray(bookingVersion.booking_row_json)) ? bookingVersion.booking_row_json.map((e: any) => {
       if (e && e['data_temp']) {
         e['data_temp'] = JSON.parse(e['data_temp']);
@@ -868,7 +868,7 @@ export class QueryShipperNominationFileService {
         let gKeyDataMMYYYYcMMBTUD = null;
         let gKeyDataMMYYYYmMMBTUH = null;
         let gKeyDataMMYYYYmMMSCFH = null;
-        if(bookingVersion?.contract_code?.term_type_id === 4){ // short term non-firm
+        if (bookingVersion?.contract_code?.term_type_id === 4) { // short term non-firm
           gKeyDataMMYYYYcMMBTUD = await this.gKeyDataDDMMYYYY(
             gasDayMonthFull,
             cMMBTUD,
@@ -882,19 +882,19 @@ export class QueryShipperNominationFileService {
             mMMSCFH,
           );
         }
-        else{
-        gKeyDataMMYYYYcMMBTUD = await this.gKeyDataMMYYYY(
-          gasDayMonth,
-          cMMBTUD,
-        );
-        gKeyDataMMYYYYmMMBTUH = await this.gKeyDataMMYYYY(
-          gasDayMonth,
-          mMMBTUH,
-        );
-        gKeyDataMMYYYYmMMSCFH = await this.gKeyDataMMYYYY(
-          gasDayMonth,
-          mMMSCFH,
-        );
+        else {
+          gKeyDataMMYYYYcMMBTUD = await this.gKeyDataMMYYYY(
+            gasDayMonth,
+            cMMBTUD,
+          );
+          gKeyDataMMYYYYmMMBTUH = await this.gKeyDataMMYYYY(
+            gasDayMonth,
+            mMMBTUH,
+          );
+          gKeyDataMMYYYYmMMSCFH = await this.gKeyDataMMYYYY(
+            gasDayMonth,
+            mMMSCFH,
+          );
         }
 
         // nomination_type_id // 1 day, 2 week
@@ -1012,8 +1012,8 @@ export class QueryShipperNominationFileService {
     return nomRowData;
   }
 
-  async autoGen(id: any, payload: any, userId: any) {}
-  
+  async autoGen(id: any, payload: any, userId: any) { }
+
   async updateStatus(payload: any, userId: any) {
     const { id, status, comment } = payload;
     const nowAt = getTodayNowAdd7()
@@ -1024,8 +1024,8 @@ export class QueryShipperNominationFileService {
     const nominationDeadlineManage = await this.prisma.new_nomination_deadline.findMany({
       where: {
         // before_gas_day
-        
-        process_type_id:2,
+
+        process_type_id: 2,
         AND: [
           {
             start_date: {
@@ -1045,17 +1045,17 @@ export class QueryShipperNominationFileService {
     console.log('nominationDeadlineManage : ', nominationDeadlineManage);
 
     const dwManage = await this.prisma.query_shipper_nomination_file?.findMany({
-      where:{
+      where: {
 
-      },include:{
+      }, include: {
 
       },
     })
 
 
     for (let i = 0; i < id.length; i++) {
-      const findId = dwManage?.find((f:any) => { return f?.id === Number(id[i]) })
-      const deadlineManage = nominationDeadlineManage?.find((f:any) => { return f?.nomination_type_id === findId?.nomination_type_id })
+      const findId = dwManage?.find((f: any) => { return f?.id === Number(id[i]) })
+      const deadlineManage = nominationDeadlineManage?.find((f: any) => { return f?.nomination_type_id === findId?.nomination_type_id })
       // const before_gas_day = deadlineManage?.before_gas_day && Number(deadlineManage?.before_gas_day) || 0
       // if(before_gas_day > 0){
       //   const target = dayjs(findId?.gas_day); // เป้าหมาย
@@ -1096,7 +1096,7 @@ export class QueryShipperNominationFileService {
 
     return `Success.`;
   }
- 
+
   // 
   async shipperNominationReport(query?: {
     gasDay?: string;
@@ -1107,7 +1107,7 @@ export class QueryShipperNominationFileService {
     // Calculate previous Sunday for weekly nominations
     const previousSunday = targetDate.subtract(targetDate.day(), 'day').startOf('day');
     const nextSunday = previousSunday.add(1, 'day');
-    
+
     const daysOfWeek = [
       "sunday",
       "monday",
@@ -1123,19 +1123,19 @@ export class QueryShipperNominationFileService {
         OR: [
           {
             status_capacity_request_management: {
-             id: {
-               in: [2],
-             },
-           },
+              id: {
+                in: [2],
+              },
+            },
           },
           {
             AND: [
               {
                 status_capacity_request_management: {
-                 id: {
-                   in: [5],
-                 },
-               },
+                  id: {
+                    in: [5],
+                  },
+                },
               },
               {
                 contract_start_date: {
@@ -1160,8 +1160,8 @@ export class QueryShipperNominationFileService {
             booking_row_json_release: true,
           },
           take: 1,
-          where:{
-            flag_use:true,
+          where: {
+            flag_use: true,
           },
           orderBy: {
             id: 'desc',
@@ -1186,13 +1186,13 @@ export class QueryShipperNominationFileService {
           },
         ],
       },
-      select:{
-        id:true,
-        name:true,
-        area_nominal_capacity:true,
-        color:true,
-        entry_exit_id:true,
-        zone_id:true,
+      select: {
+        id: true,
+        name: true,
+        area_nominal_capacity: true,
+        color: true,
+        entry_exit_id: true,
+        zone_id: true,
       },
     });
 
@@ -1212,11 +1212,11 @@ export class QueryShipperNominationFileService {
           },
         ],
       },
-      select:{
-        id:true,
-        name:true,
-        color:true,
-        entry_exit_id:true,
+      select: {
+        id: true,
+        name: true,
+        color: true,
+        entry_exit_id: true,
       },
     });
 
@@ -1226,14 +1226,14 @@ export class QueryShipperNominationFileService {
 
         AND: [
           {
-        OR: [{ del_flag: false }, { del_flag: null }],
+            OR: [{ del_flag: false }, { del_flag: null }],
           },
           {
-        query_shipper_nomination_status: {
-          id:{
-            in:[2, 5]
-          }
-        },
+            query_shipper_nomination_status: {
+              id: {
+                in: [2, 5]
+              }
+            },
           },
           {
             OR: [
@@ -1368,20 +1368,20 @@ export class QueryShipperNominationFileService {
       },
     });
     console.log('contractCodeMasterDB : ', contractCodeMasterDB);
-    const contractCodeMaster = (contractCodeMasterDB && Array.isArray(contractCodeMasterDB)) ? contractCodeMasterDB.map((e:any) => {
+    const contractCodeMaster = (contractCodeMasterDB && Array.isArray(contractCodeMasterDB)) ? contractCodeMasterDB.map((e: any) => {
       const { booking_version, ...nE } = e
-      const d_booking_version = booking_version?.map((eBv:any) => {
+      const d_booking_version = booking_version?.map((eBv: any) => {
         const { booking_full_json, booking_row_json, ...neBv } = eBv
-        const d_booking_full_json = booking_full_json?.map((eFj:any) => {
+        const d_booking_full_json = booking_full_json?.map((eFj: any) => {
           const { data_temp, ...neFj } = eFj
           return { ...neFj, data_temp: JSON.parse(data_temp) }
         })
-        const d_booking_row_json = booking_row_json?.map((eFj:any) => {
+        const d_booking_row_json = booking_row_json?.map((eFj: any) => {
           const { data_temp, ...neFj } = eFj
           return { ...neFj, data_temp: JSON.parse(data_temp) }
         })
 
-        return { ...neBv, booking_full_json:d_booking_full_json, booking_row_json:d_booking_row_json }
+        return { ...neBv, booking_full_json: d_booking_full_json, booking_row_json: d_booking_row_json }
       })
 
       return { ...nE, booking_version: d_booking_version }
@@ -1432,7 +1432,7 @@ export class QueryShipperNominationFileService {
 
       const gas_day_text = dayjs(e['gas_day']).format('DD/MM/YYYY');
       const shipper_name = e['shipper_name'];
-      
+
       return {
         shipper_name,
         gas_day: gas_day_text,
@@ -1446,7 +1446,7 @@ export class QueryShipperNominationFileService {
 
     console.time('resultGroupKeyAddArea');
     // nom
-    const resultGroupKeyAddArea = resultGroupType.map((e: any, ix:number) => {
+    const resultGroupKeyAddArea = resultGroupType.map((e: any, ix: number) => {
       const { dataDW, ...eData } = e;
       const nomination_type_id = eData?.nomination_type?.id
       // console.time('dwData');
@@ -1460,7 +1460,7 @@ export class QueryShipperNominationFileService {
               ...dfnomination_version
             } = fnomination_version;
 
-            const row = nomination_row_json?.filter((f:any) => f?.query_shipper_nomination_type_id === 1).map((mFM: any) => {
+            const row = nomination_row_json?.filter((f: any) => f?.query_shipper_nomination_type_id === 1).map((mFM: any) => {
               return {
                 gas_day: e["gas_day"],
                 nom: { ...dFm },
@@ -1478,9 +1478,9 @@ export class QueryShipperNominationFileService {
                 f?.query_shipper_nomination_type_id === 2
               );
             });
-            
+
             const rowFilType1MMBTUandMMSCFD = rowFilType
-            
+
             return [...rowFilType1MMBTUandMMSCFD];
           },
         );
@@ -1499,7 +1499,7 @@ export class QueryShipperNominationFileService {
               nomination_full_json,
               ...dfnomination_version
             } = fnomination_version;
-            const row = nomination_row_json.filter((f:any) => f?.query_shipper_nomination_type_id != 1).map((mFM: any) => {
+            const row = nomination_row_json.filter((f: any) => f?.query_shipper_nomination_type_id != 1).map((mFM: any) => {
               return {
                 nom: { ...dFm },
                 contract_code_id: dFm?.contract_code_id,
@@ -1512,10 +1512,10 @@ export class QueryShipperNominationFileService {
 
             const rowFilType = row?.filter((f: any) => {
               return (
-                f?.query_shipper_nomination_type_id !=1
+                f?.query_shipper_nomination_type_id != 1
               );
             });
-           
+
             const rowFilType1All = rowFilType
 
             return [...rowFilType1All];
@@ -1526,7 +1526,7 @@ export class QueryShipperNominationFileService {
       });
       // console.timeEnd('dwDataConcept');
 
-      
+
       const groupedDatas = {};
       for (const curr of dwData) {
         // dwDataConcept
@@ -1551,25 +1551,25 @@ export class QueryShipperNominationFileService {
       const resultGroupArea: any = Object.values(groupedDatas);
       console.log('resultGroupArea : ', resultGroupArea);
       console.log('contractCodeMaster : ', contractCodeMaster);
-       const booking_version = resultGroupArea?.flatMap((cd:any) => {
+      const booking_version = resultGroupArea?.flatMap((cd: any) => {
         // contract_code_id_arr
-         const contractCodeDataId = cd?.contract_code_id_arr?.map((cta:any) => {
-          const findCt = contractCodeMaster?.find((f:any) => { return f?.id === cta })
+        const contractCodeDataId = cd?.contract_code_id_arr?.map((cta: any) => {
+          const findCt = contractCodeMaster?.find((f: any) => { return f?.id === cta })
           return findCt
         })
         console.log('contractCodeDataId : ', contractCodeDataId);
-        const contractCodeDataIdFM = contractCodeDataId?.flatMap((cdFM:any) => {
-          const bjr = cdFM?.["booking_version"][0]?.["booking_row_json"]?.map((cdj:any) => ({
-            ...cdj, 
+        const contractCodeDataIdFM = contractCodeDataId?.flatMap((cdFM: any) => {
+          const bjr = cdFM?.["booking_version"][0]?.["booking_row_json"]?.map((cdj: any) => ({
+            ...cdj,
             area_text: cdj?.area_text,
             contract_code_id_arr: [cdFM?.id],
-            data:[],
+            data: [],
             gas_day: cd?.gas_day,
             zone_text: cdj?.zone_text,
           }))
           return [
-          ...bjr
-        ]
+            ...bjr
+          ]
 
         })
         return [
@@ -1578,18 +1578,18 @@ export class QueryShipperNominationFileService {
       })
       const resultGroupAreaMatch = [...resultGroupArea]
       for (let iB = 0; iB < booking_version.length; iB++) {
-        const findS = resultGroupAreaMatch?.find((f:any) => { return f?.area_text === booking_version[iB]?.area_text && f?.zone_text === booking_version[iB]?.zone_text })
-        if(!findS){
+        const findS = resultGroupAreaMatch?.find((f: any) => { return f?.area_text === booking_version[iB]?.area_text && f?.zone_text === booking_version[iB]?.zone_text })
+        if (!findS) {
           resultGroupAreaMatch.push({ ...booking_version[iB] })
         }
       }
-      
+
       const resultGroupAreaExt = resultGroupAreaMatch?.map((rEx: any) => {
         const { data, ...nrEx } = rEx;
 
-        const azData = data?.map((az:any) => {
-          const zoneObj = zoneMaster.find((f:any) => { return f?.name === az?.zone_text })
-          const areaObj = areaMaster.find((f:any) => { return f?.name === az?.area_text })
+        const azData = data?.map((az: any) => {
+          const zoneObj = zoneMaster.find((f: any) => { return f?.name === az?.zone_text })
+          const areaObj = areaMaster.find((f: any) => { return f?.name === az?.area_text })
 
           return { zoneObj, areaObj, ...az }
         })
@@ -1613,7 +1613,7 @@ export class QueryShipperNominationFileService {
         const dwDataConceptZone = dwDataConcept?.filter((f: any) => {
           return f?.zone_text === rEx?.zone_text;
         });
-       
+
         const conceptPoint = dwDataConceptZone
         const conceptGroupedZone = {};
         for (const curr of conceptPoint) {
@@ -1629,31 +1629,31 @@ export class QueryShipperNominationFileService {
           conceptGroupedZone[key].zone.push({ ...curr });
         }
         const conceptPointZone: any = Object.values(conceptGroupedZone);
-        const contractCodeData = nrEx?.contract_code_id_arr?.map((cta:any) => {
-          const findCt = contractCodeMaster?.find((f:any) => { return f?.id === cta })
+        const contractCodeData = nrEx?.contract_code_id_arr?.map((cta: any) => {
+          const findCt = contractCodeMaster?.find((f: any) => { return f?.id === cta })
           return findCt
         })
-        
-        const capacityRightMMBTUDOnce = (area:any, date:any) => {
-          const matchVersionCode = contractCodeData?.flatMap((ccd:any) => {
-          
-            const ccdVersion = ccd?.booking_version?.map((ccdV:any) => {
+
+        const capacityRightMMBTUDOnce = (area: any, date: any) => {
+          const matchVersionCode = contractCodeData?.flatMap((ccd: any) => {
+
+            const ccdVersion = ccd?.booking_version?.map((ccdV: any) => {
               const dateOne = ccd?.term_type_id === 4 ? dayjs(date, "DD/MM/YYYY").format("DD/MM/YYYY") : dayjs(date, "DD/MM/YYYY").format("01/MM/YYYY")
 
               const keyDate = ccdV?.booking_full_json[0]?.data_temp?.headerExit["Capacity Daily Booking (MMBTU/d)"][dateOne]?.key || null
-              const fArea = ccdV?.booking_row_json?.filter((f:any) => { return f?.area_text === area })
-              
+              const fArea = ccdV?.booking_row_json?.filter((f: any) => { return f?.area_text === area })
+
               let calcContract = 0
-              if(keyDate){
+              if (keyDate) {
                 calcContract = fArea?.reduce(
                   (accumulator, currentValue) => {
                     return accumulator + Number(currentValue?.["data_temp"]?.[keyDate]?.trim()?.replace(/,/g, '') || 0)
                   },
                   0,
                 );
-                
+
               }
-              
+
               return calcContract
             })
 
@@ -1666,11 +1666,11 @@ export class QueryShipperNominationFileService {
           );
 
           return matchVersionCode
-        }; 
+        };
 
-        const nomCalc = (nom:any, nomType:any) => {
+        const nomCalc = (nom: any, nomType: any) => {
 
-          if(nomType === 1){
+          if (nomType === 1) {
             // daily
             let calcData = 0
             for (let iCal = 0; iCal < nom.length; iCal++) {
@@ -1678,14 +1678,14 @@ export class QueryShipperNominationFileService {
                 // MMSCFD
                 // MMBTU/D
                 // data_temp
-                if(nom[iCal]?.zone[iCalZone]?.data_temp["9"] === "MMBTU/D"){
+                if (nom[iCal]?.zone[iCalZone]?.data_temp["9"] === "MMBTU/D") {
                   const valueDT = Number(nom[iCal]?.zone[iCalZone]?.data_temp["38"]?.replace(/,/g, ''))
                   calcData = calcData + valueDT
                 }
               }
             }
             return calcData;
-          }else{
+          } else {
             // weekly ทำที่ weeklyDay
             return 0;
           }
@@ -1695,36 +1695,36 @@ export class QueryShipperNominationFileService {
         const nominatedValueMMBTUD = nomination_type_id === 1 && nomCalc(nominaionPointZone, nomination_type_id);
         const overusageMMBTUD = nomination_type_id === 1 && nomCalc(nominaionPointZone, nomination_type_id) - capacityRightMMBTUDOnce(nrEx?.area_text, nrEx?.gas_day) > 0 ? (nomCalc(nominaionPointZone, nomination_type_id) - capacityRightMMBTUDOnce(nrEx?.area_text, nrEx?.gas_day)) : 0;
 
-        const zoneObj = zoneMaster.find((f:any) => { return f?.name === nrEx?.zone_text })
-        const areaObj = areaMaster.find((f:any) => { return f?.name === nrEx?.area_text })
-       
+        const zoneObj = zoneMaster.find((f: any) => { return f?.name === nrEx?.zone_text })
+        const areaObj = areaMaster.find((f: any) => { return f?.name === nrEx?.area_text })
+
 
         const startDate = dayjs(eData?.gas_day_text, "DD/MM/YYYY");
         const weeklyDay: any = {};
-  
+
         daysOfWeek.forEach((day, index) => {
-          
-          const nomCalcWeek = (gasDay:any, nom:any, nomType:any) => {
-            if(nomType === 2){
+
+          const nomCalcWeek = (gasDay: any, nom: any, nomType: any) => {
+            if (nomType === 2) {
               let calcData = 0
               for (let iCal = 0; iCal < nom.length; iCal++) {
                 for (let iCalZone = 0; iCalZone < nom[iCal]?.zone.length; iCalZone++) {
-                
-                  const foundEntry = Object.entries(nom[iCal]?.zone[iCalZone]?.headData || {}).find(([key, value]) => { 
+
+                  const foundEntry = Object.entries(nom[iCal]?.zone[iCalZone]?.headData || {}).find(([key, value]) => {
                     return value?.toString().trim() === gasDay.toString().trim()
-                   });
+                  });
                   const headDataDTKey = foundEntry ? foundEntry[0] : undefined;
-                  if(nom[iCal]?.zone[iCalZone]?.data_temp["9"] === "MMBTU/D"){
+                  if (nom[iCal]?.zone[iCalZone]?.data_temp["9"] === "MMBTU/D") {
                     const valueDT = headDataDTKey ? Number(nom[iCal]?.zone[iCalZone]?.data_temp[headDataDTKey]?.replace(/,/g, '')) : 0
                     calcData = calcData + valueDT
                   }
                 }
               }
-             
+
               return calcData;
             }
           }
-          const capacityRightMMBTUDWeek = capacityRightMMBTUDOnce(nrEx?.area_text ,startDate.add(index, 'day').format("DD/MM/YYYY"))
+          const capacityRightMMBTUDWeek = capacityRightMMBTUDOnce(nrEx?.area_text, startDate.add(index, 'day').format("DD/MM/YYYY"))
           const nominatedValueMMBTUDWeek = nomCalcWeek(startDate.add(index, 'day').format("DD/MM/YYYY"), nominaionPointZone, nomination_type_id)
           const overusageMMBTUDWeek = nominatedValueMMBTUDWeek - capacityRightMMBTUDWeek > 0 ? (nominatedValueMMBTUDWeek - capacityRightMMBTUDWeek) : 0
           weeklyDay[day] = {
@@ -1734,7 +1734,7 @@ export class QueryShipperNominationFileService {
             overusageMMBTUD: overusageMMBTUDWeek,
           };
         });
-       
+
         const overusageMMBTUDDaily = overusageMMBTUD
         return {
           gas_day: eData?.gas_day_text,
@@ -1751,34 +1751,34 @@ export class QueryShipperNominationFileService {
         };
       });
 
-       // หา contract
-       const contractAll = [...new Set(resultGroupAreaExt?.map((rg:any) => rg?.contract_code_id_arr).flat())]
-       const contractCodeData = contractAll?.map((cta:any) => {
-         const findCt = contractCodeMaster?.find((f:any) => { return f?.id === cta })
-         return findCt
-       })
-       
-       const capacityRightMMBTUD = (date:any, noms:any) => {
-        const areaBJR = noms?.map((brj:any) => brj?.area_text)
-        const matchVersionCode = contractCodeData?.flatMap((ccd:any) => {
-          const ccdVersion = ccd?.booking_version?.map((ccdV:any) => {
+      // หา contract
+      const contractAll = [...new Set(resultGroupAreaExt?.map((rg: any) => rg?.contract_code_id_arr).flat())]
+      const contractCodeData = contractAll?.map((cta: any) => {
+        const findCt = contractCodeMaster?.find((f: any) => { return f?.id === cta })
+        return findCt
+      })
+
+      const capacityRightMMBTUD = (date: any, noms: any) => {
+        const areaBJR = noms?.map((brj: any) => brj?.area_text)
+        const matchVersionCode = contractCodeData?.flatMap((ccd: any) => {
+          const ccdVersion = ccd?.booking_version?.map((ccdV: any) => {
             // DD/MM/YYYY
             const dateOne = ccd?.term_type_id === 4 ? dayjs(date, "DD/MM/YYYY").format("DD/MM/YYYY") : dayjs(date, "DD/MM/YYYY").format("01/MM/YYYY")
             const keyDate = ccdV?.booking_full_json[0]?.data_temp?.headerExit["Capacity Daily Booking (MMBTU/d)"][dateOne]?.key || null
             // entry_exit_id
             // const brjExit = ccdV?.booking_row_json?.filter((f:any) => f?.entry_exit_id === 2)
-            const brjExit = ccdV?.booking_row_json?.filter((f:any) => areaBJR.includes(f?.area_text))
+            const brjExit = ccdV?.booking_row_json?.filter((f: any) => areaBJR.includes(f?.area_text))
             let calcContract = 0
-            if(keyDate){
+            if (keyDate) {
               calcContract = brjExit.reduce(
                 (accumulator, currentValue) => accumulator + Number(currentValue?.["data_temp"]?.[keyDate]?.replace(/,/g, '') || 0),
                 0,
               );
-              
+
             }
             return calcContract
           })
-         
+
           return [
             ...ccdVersion,
           ]
@@ -1790,36 +1790,36 @@ export class QueryShipperNominationFileService {
         return matchVersionCode
       };
 
-      const nomCalc = (noms:any, nomType:any) => {
-          // nominaionPointZone
-          const nom = [...noms.map((eNo:any) => eNo?.nominaionPointZone)].flat()
-        if(nomType === 1){
+      const nomCalc = (noms: any, nomType: any) => {
+        // nominaionPointZone
+        const nom = [...noms.map((eNo: any) => eNo?.nominaionPointZone)].flat()
+        if (nomType === 1) {
           // daily
           let calcData = 0
           for (let iCal = 0; iCal < nom.length; iCal++) {
             for (let iCalZone = 0; iCalZone < nom[iCal]?.zone.length; iCalZone++) {
-              if(nom[iCal]?.zone[iCalZone]?.data_temp["9"] === "MMBTU/D"){
+              if (nom[iCal]?.zone[iCalZone]?.data_temp["9"] === "MMBTU/D") {
                 const valueDT = Number(nom[iCal]?.zone[iCalZone]?.data_temp["38"]?.replace(/,/g, ''))
                 calcData = calcData + valueDT
               }
             }
           }
           return calcData;
-        }else{
+        } else {
           // weekly ทำที่ weeklyDay
           return 0;
         }
       }
-      const imbalanceMMBTUDCalc = (noms:any, nomType:any) => {
-        const nom = [...noms.map((eNo:any) => eNo?.nominaionPointZone)].flat()
-        const concept = [...noms.map((eNo:any) => eNo?.conceptPointZone)].flat()
+      const imbalanceMMBTUDCalc = (noms: any, nomType: any) => {
+        const nom = [...noms.map((eNo: any) => eNo?.nominaionPointZone)].flat()
+        const concept = [...noms.map((eNo: any) => eNo?.conceptPointZone)].flat()
         // nom?.nomination_type_id
         // Park
         // Unpark
         // Min_Inventory_Change
         // Shrinkage_Volume
         // entry - exit - Min_Inventory_Change - Park + Unpark - Shrinkage_Volume
-        if(nomType === 1){
+        if (nomType === 1) {
           // daily
           let calcData = 0
           let nomEntry = 0
@@ -1830,11 +1830,11 @@ export class QueryShipperNominationFileService {
           let ShrinkageVolume = 0
           for (let iCal = 0; iCal < nom.length; iCal++) {
             for (let iCalZone = 0; iCalZone < nom[iCal]?.zone.length; iCalZone++) {
-              if(nom[iCal]?.zone[iCalZone]?.data_temp["9"] === "MMBTU/D"){
-                if(nom[iCal]?.zone[iCalZone]?.entry_exit_text === "Entry"){
+              if (nom[iCal]?.zone[iCalZone]?.data_temp["9"] === "MMBTU/D") {
+                if (nom[iCal]?.zone[iCalZone]?.entry_exit_text === "Entry") {
                   const valueDT = Number(nom[iCal]?.zone[iCalZone]?.data_temp["38"]?.replace(/,/g, ''))
                   nomEntry = nomEntry + valueDT
-                }else{
+                } else {
                   const valueDT = Number(nom[iCal]?.zone[iCalZone]?.data_temp["38"]?.replace(/,/g, ''))
                   nomExit = nomExit + valueDT
                 }
@@ -1844,28 +1844,28 @@ export class QueryShipperNominationFileService {
 
           for (let iCal = 0; iCal < concept.length; iCal++) {
             for (let iCalZone = 0; iCalZone < concept[iCal]?.zone.length; iCalZone++) {
-              if(concept[iCal]?.zone[iCalZone]?.data_temp["5"] === "Park"){
+              if (concept[iCal]?.zone[iCalZone]?.data_temp["5"] === "Park") {
                 const valueDT = Number(concept[iCal]?.zone[iCalZone]?.data_temp["38"]?.replace(/,/g, ''))
                 Park = Park + valueDT
-              }else if(concept[iCal]?.zone[iCalZone]?.data_temp["5"] === "Unpark"){
+              } else if (concept[iCal]?.zone[iCalZone]?.data_temp["5"] === "Unpark") {
                 const valueDT = Number(concept[iCal]?.zone[iCalZone]?.data_temp["38"]?.replace(/,/g, ''))
                 Unpark = Unpark + valueDT
-              }else if(concept[iCal]?.zone[iCalZone]?.data_temp["5"] === "Min_Inventory_Change"){
+              } else if (concept[iCal]?.zone[iCalZone]?.data_temp["5"] === "Min_Inventory_Change") {
                 const valueDT = Number(concept[iCal]?.zone[iCalZone]?.data_temp["38"]?.replace(/,/g, ''))
                 MinInventoryChange = MinInventoryChange + valueDT
-              }else if(concept[iCal]?.zone[iCalZone]?.data_temp["5"] === "Shrinkage_Volume"){
+              } else if (concept[iCal]?.zone[iCalZone]?.data_temp["5"] === "Shrinkage_Volume") {
                 const valueDT = Number(concept[iCal]?.zone[iCalZone]?.data_temp["38"]?.replace(/,/g, ''))
                 ShrinkageVolume = ShrinkageVolume + valueDT
               }
             }
           }
-         
+
           // calcData = nomEntry - nomExit - MinInventoryChange - Park + Unpark - ShrinkageVolume
           calcData = nomEntry - nomExit
 
-       
+
           return calcData;
-        }else{
+        } else {
 
           // weekly ทำที่ weeklyDay
           return 0;
@@ -1877,25 +1877,25 @@ export class QueryShipperNominationFileService {
       const weeklyDay: any = {};
 
       daysOfWeek.forEach((day, index) => {
-        const capacityRightMMBTUDWeek = (date:any, noms:any) => {
-          const areaBJR = noms?.map((brj:any) => brj?.area_text)
-          const matchVersionCode = contractCodeData?.flatMap((ccd:any) => {
-            const ccdVersion = ccd?.booking_version?.map((ccdV:any) => {
+        const capacityRightMMBTUDWeek = (date: any, noms: any) => {
+          const areaBJR = noms?.map((brj: any) => brj?.area_text)
+          const matchVersionCode = contractCodeData?.flatMap((ccd: any) => {
+            const ccdVersion = ccd?.booking_version?.map((ccdV: any) => {
               const dateOne = dayjs(date, "DD/MM/YYYY").format("01/MM/YYYY")
               const keyDate = ccdV?.booking_full_json[0]?.data_temp?.headerExit["Capacity Daily Booking (MMBTU/d)"][dateOne]?.key || null
               // const brjExit = ccdV?.booking_row_json?.filter((f:any) => f?.entry_exit_id === 2)
-              const brjExit = ccdV?.booking_row_json?.filter((f:any) => areaBJR.includes(f?.area_text))
+              const brjExit = ccdV?.booking_row_json?.filter((f: any) => areaBJR.includes(f?.area_text))
               let calcContract = 0
-              if(keyDate){
+              if (keyDate) {
                 calcContract = brjExit.reduce(
                   (accumulator, currentValue) => accumulator + Number(currentValue?.["data_temp"]?.[keyDate]?.replace(/,/g, '') || 0),
                   0,
                 );
-                
+
               }
               return calcContract
             })
-           
+
             return [
               ...ccdVersion,
             ]
@@ -1903,23 +1903,23 @@ export class QueryShipperNominationFileService {
             (accumulator, currentValue) => accumulator + currentValue,
             0,
           );
-  
+
           return matchVersionCode
         };
 
-        const nomCalcWeek = (gasDay:any, noms:any, nomType:any) => {
-          if(nomType === 2){
+        const nomCalcWeek = (gasDay: any, noms: any, nomType: any) => {
+          if (nomType === 2) {
             // weekly
-            const nom = [...noms.map((eNo:any) => eNo?.nominaionPointZone)].flat()
+            const nom = [...noms.map((eNo: any) => eNo?.nominaionPointZone)].flat()
             let calcData = 0
             for (let iCal = 0; iCal < nom.length; iCal++) {
               for (let iCalZone = 0; iCalZone < nom[iCal]?.zone.length; iCalZone++) {
-              
-                const foundEntry = Object.entries(nom[iCal]?.zone[iCalZone]?.headData || {}).find(([key, value]) => { 
+
+                const foundEntry = Object.entries(nom[iCal]?.zone[iCalZone]?.headData || {}).find(([key, value]) => {
                   return value?.toString().trim() === gasDay.toString().trim()
-                 });
+                });
                 const headDataDTKey = foundEntry ? foundEntry[0] : undefined;
-                if(nom[iCal]?.zone[iCalZone]?.data_temp["9"] === "MMBTU/D"){
+                if (nom[iCal]?.zone[iCalZone]?.data_temp["9"] === "MMBTU/D") {
                   const valueDT = headDataDTKey ? Number(nom[iCal]?.zone[iCalZone]?.data_temp[headDataDTKey]?.replace(/,/g, '')) : 0
                   calcData = calcData + valueDT
                 }
@@ -1929,17 +1929,17 @@ export class QueryShipperNominationFileService {
           }
         }
 
-        const imbalanceMMBTUDCalcWeek = (gasDay:any, noms:any, nomType:any) => {
+        const imbalanceMMBTUDCalcWeek = (gasDay: any, noms: any, nomType: any) => {
           // console.log('noms : ', noms);
-          const nom = [...noms.map((eNo:any) => eNo?.nominaionPointZone)].flat()
-          const concept = [...noms.map((eNo:any) => eNo?.conceptPointZone)].flat()
+          const nom = [...noms.map((eNo: any) => eNo?.nominaionPointZone)].flat()
+          const concept = [...noms.map((eNo: any) => eNo?.conceptPointZone)].flat()
           // nom?.nomination_type_id
           // Park
           // Unpark
           // Min_Inventory_Change
           // Shrinkage_Volume
           // entry - exit - Min_Inventory_Change - Park + Unpark - Shrinkage_Volume
-          if(nomType === 2){
+          if (nomType === 2) {
             // weekly
             let calcData = 0
             let nomEntry = 0
@@ -1950,64 +1950,64 @@ export class QueryShipperNominationFileService {
             let ShrinkageVolume = 0
             for (let iCal = 0; iCal < nom.length; iCal++) {
               for (let iCalZone = 0; iCalZone < nom[iCal]?.zone.length; iCalZone++) {
-                const foundEntry = Object.entries(nom[iCal]?.zone[iCalZone]?.headData || {}).find(([key, value]) => { 
+                const foundEntry = Object.entries(nom[iCal]?.zone[iCalZone]?.headData || {}).find(([key, value]) => {
                   return value?.toString().trim() === gasDay.toString().trim()
-                 });
+                });
                 const headDataDTKey = foundEntry ? foundEntry[0] : undefined;
-                 if(nom[iCal]?.zone[iCalZone]?.data_temp["9"] === "MMBTU/D"){
-                  if(nom[iCal]?.zone[iCalZone]?.entry_exit_text === "Entry"){
+                if (nom[iCal]?.zone[iCalZone]?.data_temp["9"] === "MMBTU/D") {
+                  if (nom[iCal]?.zone[iCalZone]?.entry_exit_text === "Entry") {
                     const valueDT = Number(nom[iCal]?.zone[iCalZone]?.data_temp[headDataDTKey]?.replace(/,/g, '')) || 0
                     nomEntry = nomEntry + valueDT
-                  }else{
+                  } else {
                     const valueDT = Number(nom[iCal]?.zone[iCalZone]?.data_temp[headDataDTKey]?.replace(/,/g, '')) || 0
                     nomExit = nomExit + valueDT
                   }
                 }
               }
             }
-  
+
             for (let iCal = 0; iCal < concept.length; iCal++) {
               for (let iCalZone = 0; iCalZone < concept[iCal]?.zone.length; iCalZone++) {
-                const foundEntry = Object.entries(nom[iCal]?.zone[iCalZone]?.headData || {}).find(([key, value]) => { 
+                const foundEntry = Object.entries(nom[iCal]?.zone[iCalZone]?.headData || {}).find(([key, value]) => {
                   return value?.toString().trim() === gasDay.toString().trim()
-                 });
+                });
                 const headDataDTKey = foundEntry ? foundEntry[0] : undefined;
 
-                if(concept[iCal]?.zone[iCalZone]?.data_temp["5"] === "Park"){
+                if (concept[iCal]?.zone[iCalZone]?.data_temp["5"] === "Park") {
                   const valueDT = Number(concept[iCal]?.zone[iCalZone]?.data_temp[headDataDTKey]?.replace(/,/g, '')) || 0
                   Park = Park + valueDT
-                }else if(concept[iCal]?.zone[iCalZone]?.data_temp["5"] === "Unpark"){
+                } else if (concept[iCal]?.zone[iCalZone]?.data_temp["5"] === "Unpark") {
                   const valueDT = Number(concept[iCal]?.zone[iCalZone]?.data_temp[headDataDTKey]?.replace(/,/g, '')) || 0
                   Unpark = Unpark + valueDT
-                }else if(concept[iCal]?.zone[iCalZone]?.data_temp["5"] === "Min_Inventory_Change"){
+                } else if (concept[iCal]?.zone[iCalZone]?.data_temp["5"] === "Min_Inventory_Change") {
                   const valueDT = Number(concept[iCal]?.zone[iCalZone]?.data_temp[headDataDTKey]?.replace(/,/g, '')) || 0
                   MinInventoryChange = MinInventoryChange + valueDT
-                }else if(concept[iCal]?.zone[iCalZone]?.data_temp["5"] === "Shrinkage_Volume"){
+                } else if (concept[iCal]?.zone[iCalZone]?.data_temp["5"] === "Shrinkage_Volume") {
                   const valueDT = Number(concept[iCal]?.zone[iCalZone]?.data_temp[headDataDTKey]?.replace(/,/g, '')) || 0
                   ShrinkageVolume = ShrinkageVolume + valueDT
                 }
               }
             }
-           
+
             // calcData = nomEntry - nomExit - MinInventoryChange - Park + Unpark - ShrinkageVolume
             calcData = nomEntry - nomExit
             return calcData || 0;
-          }else{
+          } else {
             return 0
           }
-  
+
         }
-       
-       const capacityRightMMBTUD = capacityRightMMBTUDWeek(startDate.add(index, 'day').format("DD/MM/YYYY"), resultGroupAreaExt)
-       const imbalanceMMBTUD = imbalanceMMBTUDCalcWeek(startDate.add(index, 'day').format("DD/MM/YYYY"), resultGroupAreaExt, nomination_type_id)
-       const nominatedValueMMBTUD = nomCalcWeek(startDate.add(index, 'day').format("DD/MM/YYYY"), resultGroupAreaExt, nomination_type_id)
-      //  const overusageMMBTUD = nominatedValueMMBTUD - capacityRightMMBTUD > 0 ? (nominatedValueMMBTUD - capacityRightMMBTUD) : 0
-       const overusageMMBTUDWeeklySum = resultGroupAreaExt.reduce(
-        (accumulator, currentValue) => accumulator + Number(currentValue?.weeklyDay[day]?.overusageMMBTUD || 0),
-        0,
-      )
-     
-       weeklyDay[day] = {
+
+        const capacityRightMMBTUD = capacityRightMMBTUDWeek(startDate.add(index, 'day').format("DD/MM/YYYY"), resultGroupAreaExt)
+        const imbalanceMMBTUD = imbalanceMMBTUDCalcWeek(startDate.add(index, 'day').format("DD/MM/YYYY"), resultGroupAreaExt, nomination_type_id)
+        const nominatedValueMMBTUD = nomCalcWeek(startDate.add(index, 'day').format("DD/MM/YYYY"), resultGroupAreaExt, nomination_type_id)
+        //  const overusageMMBTUD = nominatedValueMMBTUD - capacityRightMMBTUD > 0 ? (nominatedValueMMBTUD - capacityRightMMBTUD) : 0
+        const overusageMMBTUDWeeklySum = resultGroupAreaExt.reduce(
+          (accumulator, currentValue) => accumulator + Number(currentValue?.weeklyDay[day]?.overusageMMBTUD || 0),
+          0,
+        )
+
+        weeklyDay[day] = {
           gas_day_text: startDate.add(index, 'day').format("DD/MM/YYYY"),
           capacityRightMMBTUD: capacityRightMMBTUD,
           nominatedValueMMBTUD: nominatedValueMMBTUD,
@@ -2039,7 +2039,7 @@ export class QueryShipperNominationFileService {
     });
     console.timeEnd('resultGroupKeyAddArea');
 
-    
+
     // console.log('response size MB:', JSON.stringify(resultGroupKeyAddArea).length / 1024 / 1024);
     // console.log('resultGroupKeyAddArea : ', resultGroupKeyAddArea);
     // const nresultGroupKeyAddArea = resultGroupKeyAddArea?.map((e:any) => {

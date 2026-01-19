@@ -71,8 +71,18 @@ export class AllocationService {
     private readonly exportFilesService: ExportFilesService,
   ) { }
 
+  private safeParseJSON(data: any, defaultValue: any = null) {
+    if (data === undefined || data === null) return defaultValue;
+    try {
+      return typeof data === 'string' ? JSON.parse(data) : data;
+    } catch (e) {
+      console.error('JSON parse error:', e);
+      return defaultValue;
+    }
+  }
+
   async useReqs(req: any) {
-    const ip = req.headers['x-forwarded-for'] || req.ip;
+    const ip = req?.headers?.['x-forwarded-for'] || req?.ip;
     return {
       ip: ip,
       sub: req?.user?.sub,
@@ -139,7 +149,7 @@ export class AllocationService {
       if (resEviden?.status === 200 && !!resEviden?.data) {
         if (Array.isArray(resEviden.data) && resEviden.data.length > 0) {
           let total_record = undefined;
-          resEviden.data.map((resEvidenData: any) => {
+          resEviden?.data?.map((resEvidenData: any) => {
             if (
               resEvidenData?.data &&
               Array.isArray(resEvidenData.data) &&
@@ -217,7 +227,7 @@ export class AllocationService {
       if (resEviden?.status === 200 && !!resEviden?.data) {
         if (Array.isArray(resEviden.data) && resEviden.data.length > 0) {
           let total_record = undefined;
-          resEviden.data.map((resEvidenData: any) => {
+          resEviden?.data?.map((resEvidenData: any) => {
             if (
               resEvidenData?.data &&
               Array.isArray(resEvidenData.data) &&
@@ -288,7 +298,7 @@ export class AllocationService {
       if (resEviden?.status === 200 && !!resEviden?.data) {
         if (Array.isArray(resEviden.data) && resEviden.data.length > 0) {
           let total_record = undefined;
-          resEviden.data.map((resEvidenData: any) => {
+          resEviden?.data?.map((resEvidenData: any) => {
             if (resEvidenData?.total_record) {
               try {
                 const totalRecord = Number(resEvidenData?.total_record);
@@ -369,7 +379,7 @@ export class AllocationService {
       if (resEviden?.status === 200 && !!resEviden?.data) {
         if (Array.isArray(resEviden.data) && resEviden.data.length > 0) {
           let total_record = undefined;
-          resEviden.data.map((resEvidenData: any) => {
+          resEviden?.data?.map((resEvidenData: any) => {
             if (resEvidenData?.total_record) {
               try {
                 const totalRecord = Number(resEvidenData?.total_record);
@@ -448,7 +458,7 @@ export class AllocationService {
       if (resEviden?.status === 200 && !!resEviden?.data) {
         if (Array.isArray(resEviden.data) && resEviden.data.length > 0) {
           let total_record = undefined;
-          resEviden.data.map((resEvidenData: any) => {
+          resEviden?.data?.map((resEvidenData: any) => {
             if (resEvidenData?.total_record) {
               try {
                 const totalRecord = Number(resEvidenData?.total_record);
@@ -529,7 +539,7 @@ export class AllocationService {
       if (resEviden?.status === 200 && !!resEviden?.data) {
         if (Array.isArray(resEviden.data) && resEviden.data.length > 0) {
           let total_record = undefined;
-          resEviden.data.map((resEvidenData: any) => {
+          resEviden?.data?.map((resEvidenData: any) => {
             if (resEvidenData?.total_record) {
               try {
                 const totalRecord = Number(resEvidenData?.total_record);
@@ -692,18 +702,18 @@ export class AllocationService {
         },
       });
 
-    const convertNomFile = nominationFile.map((e: any) => {
+    const convertNomFile = (nominationFile || []).map((e: any) => {
       // nomination_type_id 1 daily, 2 weekly
       e['gas_day'] = dayjs(e['gas_day']).format('YYYY-MM-DD');
-      e['nomination_version'] = e['nomination_version'].map((nv: any) => {
+      e['nomination_version'] = (e['nomination_version'] || []).map((nv: any) => {
         nv['nomination_full_json'] = nv['nomination_full_json'].map(
           (nj: any) => {
-            nj['data_temp'] = JSON.parse(nj['data_temp']);
+            nj['data_temp'] = this.safeParseJSON(nj['data_temp']);
             return { ...nj };
           },
         );
         nv['nomination_row_json'] = nv['nomination_row_json'].map((nj: any) => {
-          nj['data_temp'] = JSON.parse(nj['data_temp']);
+          nj['data_temp'] = this.safeParseJSON(nj['data_temp']);
           return { ...nj };
         });
         return { ...nv };
@@ -976,7 +986,7 @@ export class AllocationService {
     let meterArr = [];
 
     for (let i = 0; i < ckEvidenUse.length; i++) {
-      const formateMeterG = ckEvidenUse[i]?.meterName.map((e: any) => ({
+      const formateMeterG = ckEvidenUse[i]?.meterName?.map((e: any) => ({
         meterPointId: e,
         gasDay: ckEvidenUse[i]?.gas_day,
       }));
@@ -990,7 +1000,7 @@ export class AllocationService {
       }),
     );
     const reply =
-      (!!meteredMicroData?.reply && JSON.parse(meteredMicroData?.reply)) ||
+      (!!meteredMicroData?.reply && this.safeParseJSON(meteredMicroData?.reply)) ||
       null;
 
     let allocationMaster = await this.prisma.allocation_management.findMany({
@@ -1108,7 +1118,7 @@ export class AllocationService {
 
 
     for (let i = 0; i < ckEvidenUse.length; i++) {
-      const formateMeterG = ckEvidenUse[i]?.meterName.map((e: any) => ({
+      const formateMeterG = ckEvidenUse[i]?.meterName?.map((e: any) => ({
         meterPointId: e,
         gasDay: ckEvidenUse[i]?.gas_day,
       }));
@@ -1305,18 +1315,18 @@ export class AllocationService {
         },
       });
 
-    const convertNomFile = nominationFile.map((e: any) => {
+    const convertNomFile = (nominationFile || []).map((e: any) => {
       // nomination_type_id 1 daily, 2 weekly
       e['gas_day'] = dayjs(e['gas_day']).format('YYYY-MM-DD');
-      e['nomination_version'] = e['nomination_version'].map((nv: any) => {
+      e['nomination_version'] = (e['nomination_version'] || []).map((nv: any) => {
         nv['nomination_full_json'] = nv['nomination_full_json'].map(
           (nj: any) => {
-            nj['data_temp'] = JSON.parse(nj['data_temp']);
+            nj['data_temp'] = this.safeParseJSON(nj['data_temp']);
             return { ...nj };
           },
         );
         nv['nomination_row_json'] = nv['nomination_row_json'].map((nj: any) => {
-          nj['data_temp'] = JSON.parse(nj['data_temp']);
+          nj['data_temp'] = this.safeParseJSON(nj['data_temp']);
           return { ...nj };
         });
         return { ...nv };
@@ -1624,7 +1634,7 @@ export class AllocationService {
     let meterArr = [];
     for (let i = 0; i < nEodPorp.length; i++) {
       if (nEodPorp[i]?.meterName.length > 0) {
-        const formateMeterG = nEodPorp[i]?.meterName.map((e: any) =>
+        const formateMeterG = nEodPorp[i]?.meterName?.map((e: any) =>
           JSON.stringify({
             meterPointId: e,
             gasDay: nEodPorp[i]?.gas_day,
@@ -1637,12 +1647,12 @@ export class AllocationService {
       JSON.stringify({
         case: 'get-last-once',
         mode: 'metering',
-        meter_gas: meterArr?.map((es: any) => JSON.parse(es)) || [],
+        meter_gas: meterArr?.map((es: any) => this.safeParseJSON(es)) || [],
       }),
     );
 
     const reply =
-      (!!meteredMicroData?.reply && JSON.parse(meteredMicroData?.reply)) ||
+      (!!meteredMicroData?.reply && this.safeParseJSON(meteredMicroData?.reply)) ||
       null;
 
     const nEodPorpRes = [];
@@ -1742,12 +1752,12 @@ export class AllocationService {
       where: {
         AND: [
           {
-            gas_day:{
+            gas_day: {
               gte: startDate.toDate(),
             }
           },
           {
-            gas_day:{
+            gas_day: {
               lte: endDate.toDate(),
             }
           },
@@ -1830,18 +1840,18 @@ export class AllocationService {
         },
       });
 
-    const convertNomFile = nominationFile.map((e: any) => {
+    const convertNomFile = (nominationFile || []).map((e: any) => {
       // nomination_type_id 1 daily, 2 weekly
       e['gas_day'] = dayjs(e['gas_day']).format('YYYY-MM-DD');
-      e['nomination_version'] = e['nomination_version'].map((nv: any) => {
+      e['nomination_version'] = (e['nomination_version'] || []).map((nv: any) => {
         nv['nomination_full_json'] = nv['nomination_full_json'].map(
           (nj: any) => {
-            nj['data_temp'] = JSON.parse(nj['data_temp']);
+            nj['data_temp'] = this.safeParseJSON(nj['data_temp']);
             return { ...nj };
           },
         );
         nv['nomination_row_json'] = nv['nomination_row_json'].map((nj: any) => {
-          nj['data_temp'] = JSON.parse(nj['data_temp']);
+          nj['data_temp'] = this.safeParseJSON(nj['data_temp']);
           return { ...nj };
         });
         return { ...nv };
@@ -1872,7 +1882,7 @@ export class AllocationService {
       limit: totalRecord ? totalRecord : limit,
     }) || [];
 
-    const matchWithExecuteList = evidenApiAllocationEod.filter((item:any)=>{
+    const matchWithExecuteList = evidenApiAllocationEod.filter((item: any) => {
       const itemGasDay = getTodayNowYYYYMMDDDfaultAdd7(item.gas_day);
       return executeEodList?.some((executeData: any) => {
         const executeStart = executeData?.start_date_date ? getTodayNowAdd7(executeData.start_date_date) : null;
@@ -1883,7 +1893,7 @@ export class AllocationService {
           executeEnd.isSameOrAfter(itemGasDay, 'day')
       })
     })
-    
+
     const publishData = matchWithExecuteList.filter((evidenData: any) => {
       return !publicationCenterDeletedList?.some((unpublishData: any) => {
         return (
@@ -1895,16 +1905,16 @@ export class AllocationService {
 
     // Get the latest execute_timestamp for each unique combination of gas_day
     const latestPublishData = publishData.reduce((acc: any[], current: any) => {
-      const existingIndex = acc.findIndex(item => 
+      const existingIndex = acc.findIndex(item =>
         item.gas_day === current.gas_day
       );
-      
+
       if (existingIndex < 0) {
         acc.push(current);
       } else if (current.execute_timestamp > acc[existingIndex].execute_timestamp) {
         acc[existingIndex] = current;
       }
-      
+
       return acc;
     }, []);
 
@@ -1998,7 +2008,7 @@ export class AllocationService {
       )
     ).flat();
 
-    const matchWithExecuteIntradayList = intradayEviden.filter((item:any)=>{
+    const matchWithExecuteIntradayList = intradayEviden.filter((item: any) => {
       const itemGasDay = getTodayNowYYYYMMDDDfaultAdd7(item.gas_day);
       return executeIntradayList?.some((executeData: any) => {
         const executeGasDay = getTodayNowAdd7(executeData.gas_day);
@@ -2007,7 +2017,7 @@ export class AllocationService {
           executeGasDay.isSame(itemGasDay, 'day')
       })
     })
-    
+
     const publishIntradayData = matchWithExecuteIntradayList.filter((evidenData: any) => {
       return !publicationCenterDeletedList?.some((unpublishData: any) => {
         return (
@@ -2020,19 +2030,19 @@ export class AllocationService {
 
     // Get the latest execute_timestamp for each unique combination of gas_day
     const latestPublishIntradayData = publishIntradayData.reduce((acc: any[], current: any) => {
-      const existingIndex = acc.findIndex(item => 
+      const existingIndex = acc.findIndex(item =>
         item.gas_day === current.gas_day
       );
-      
+
       if (existingIndex < 0) {
         acc.push(current);
-      } else if(current.gas_hour > acc[existingIndex].gas_hour){
+      } else if (current.gas_hour > acc[existingIndex].gas_hour) {
         acc[existingIndex] = current;
       }
       else if (current.gas_hour == acc[existingIndex].gas_hour && current.execute_timestamp > acc[existingIndex].execute_timestamp) {
         acc[existingIndex] = current;
       }
-      
+
       return acc;
     }, []);
 
@@ -2184,10 +2194,10 @@ export class AllocationService {
       });
 
       let nominationValue = null
-      if(alloc?.nomination_type_id && pointN){
-        if(alloc?.nomination_type_id === 1){
+      if (alloc?.nomination_type_id && pointN) {
+        if (alloc?.nomination_type_id === 1) {
           nominationValue = pointN['data_temp']['38']
-        }else{
+        } else {
           const dayOfWeek = Number(getTodayStartAdd7(eod['gas_day']).format('d')) // The day of the week, with Sunday as 0
           nominationValue = pointN['data_temp'][`${14 + dayOfWeek}`]
         }
@@ -2202,21 +2212,21 @@ export class AllocationService {
       const { data: intraFil = [], ...intradayByGasDay } = intradayDataByGasDay ?? {};
 
       const intraFilValue = intraFil
-      .filter((f: any) => 
-        f?.data?.some((ff: any) => ff?.point === eod?.['point']) &&
-        f?.contract === eod['contract'] &&
-        f?.shipper === eod['shipper']
-      )
-      .map((f: any) => {
-        const data = f?.data?.find((ff: any) => {
-          return ff?.point === eod?.['point'] &&
-          ff?.point_type === eod?.point_type &&
-          ff?.area === eod?.area &&
-          ff?.zone === eod?.zone &&
-          ff?.entry_exit === eod?.entry_exit
-        }) ?? []
-        return {...f, data: data}
-      });
+        .filter((f: any) =>
+          f?.data?.some((ff: any) => ff?.point === eod?.['point']) &&
+          f?.contract === eod['contract'] &&
+          f?.shipper === eod['shipper']
+        )
+        .map((f: any) => {
+          const data = f?.data?.find((ff: any) => {
+            return ff?.point === eod?.['point'] &&
+              ff?.point_type === eod?.point_type &&
+              ff?.area === eod?.area &&
+              ff?.zone === eod?.zone &&
+              ff?.entry_exit === eod?.entry_exit
+          }) ?? []
+          return { ...f, data: data }
+        });
       const { data: dataIntraDay = null, ...nIntraDay } =
         intraFilValue.at(-1) ?? {};
 
@@ -2263,7 +2273,7 @@ export class AllocationService {
     let meterArr = [];
     for (let i = 0; i < nEodPorp.length; i++) {
       if (nEodPorp[i]?.meterName.length > 0) {
-        const formateMeterG = nEodPorp[i]?.meterName.map((e: any) =>
+        const formateMeterG = nEodPorp[i]?.meterName?.map((e: any) =>
           JSON.stringify({
             meterPointId: e,
             gasDay: nEodPorp[i]?.gas_day,
@@ -2276,7 +2286,7 @@ export class AllocationService {
       JSON.stringify({
         case: 'get-last-once',
         mode: 'metering',
-        meter_gas: meterArr?.map((es: any) => JSON.parse(es)) || [],
+        meter_gas: meterArr?.map((es: any) => this.safeParseJSON(es)) || [],
       }),
       {
         activeData,
@@ -2285,7 +2295,7 @@ export class AllocationService {
     );
 
     let reply =
-      (!!meteredMicroData?.reply && JSON.parse(meteredMicroData?.reply)) ||
+      (!!meteredMicroData?.reply && this.safeParseJSON(meteredMicroData?.reply)) ||
       null;
     if (!Array.isArray(reply)) {
       reply = null
@@ -2770,7 +2780,7 @@ export class AllocationService {
       }));
     let meterData: any[] = [];
     try {
-      meterData = JSON.parse(meteredMicroData?.reply ?? '[]');
+      meterData = this.safeParseJSON(meteredMicroData?.reply ?? '[]');
     } catch {
       meterData = [];
     }
@@ -3053,7 +3063,7 @@ export class AllocationService {
           mode: 'metering',
           gas_day: today
         }));
-      const parsedYester = (!!meteredMicroDataYester?.reply && JSON.parse(meteredMicroDataYester.reply)) || null;
+      const parsedYester = (!!meteredMicroDataYester?.reply && this.safeParseJSON(meteredMicroDataYester.reply)) || null;
       let rowsYester: any[] = [];
       rowsYester = parsedYester; // microservice returned an array
       console.log(`meterData (array) length ${rowsYester.length}`);
@@ -3095,7 +3105,7 @@ export class AllocationService {
           mode: 'metering',
           gas_day: today
         }));
-      const parsed = (!!meteredMicroData?.reply && JSON.parse(meteredMicroData.reply)) || null;
+      const parsed = (!!meteredMicroData?.reply && this.safeParseJSON(meteredMicroData.reply)) || null;
       let rows: any[] = [];
       rows = parsed; // microservice returned an array
       console.log(`meterData (array) length ${rows.length}`);
@@ -3121,7 +3131,7 @@ export class AllocationService {
           mode: 'metering',
           gas_day: today
         }));
-      const parsed = (!!meteredMicroData?.reply && JSON.parse(meteredMicroData.reply)) || null;
+      const parsed = (!!meteredMicroData?.reply && this.safeParseJSON(meteredMicroData.reply)) || null;
       let rows: any[] = [];
       rows = Array.isArray(parsed) ? parsed : []; // microservice returned an array
       console.log(`meterData (array) length ${rows.length}`);
@@ -3206,7 +3216,7 @@ export class AllocationService {
           allocation_status_id: 4, // Allocated
         },
       });
-      
+
       await this.prisma.allocation_management_shipper_review.updateMany({
         where: {
           allocation_status_id: 3, // Accepted
@@ -3371,18 +3381,18 @@ export class AllocationService {
         },
       });
 
-    const convertNomFile = nominationFile.map((e: any) => {
+    const convertNomFile = (nominationFile || []).map((e: any) => {
       // nomination_type_id 1 daily, 2 weekly
       e['gas_day'] = dayjs(e['gas_day']).format('YYYY-MM-DD');
-      e['nomination_version'] = e['nomination_version'].map((nv: any) => {
+      e['nomination_version'] = (e['nomination_version'] || []).map((nv: any) => {
         nv['nomination_full_json'] = nv['nomination_full_json'].map(
           (nj: any) => {
-            nj['data_temp'] = JSON.parse(nj['data_temp']);
+            nj['data_temp'] = this.safeParseJSON(nj['data_temp']);
             return { ...nj };
           },
         );
         nv['nomination_row_json'] = nv['nomination_row_json'].map((nj: any) => {
-          nj['data_temp'] = JSON.parse(nj['data_temp']);
+          nj['data_temp'] = this.safeParseJSON(nj['data_temp']);
           return { ...nj };
         });
         return { ...nv };
@@ -3656,7 +3666,7 @@ export class AllocationService {
     let meterArr = [];
 
     for (let i = 0; i < ckEvidenUse.length; i++) {
-      const formateMeterG = ckEvidenUse[i]?.meterName.map((e: any) => ({
+      const formateMeterG = ckEvidenUse[i]?.meterName?.map((e: any) => ({
         meterPointId: e,
         gasDay: ckEvidenUse[i]?.gas_day,
       }));
@@ -3671,11 +3681,11 @@ export class AllocationService {
       }),
     );
     const reply =
-      (!!meteredMicroData?.reply && JSON.parse(meteredMicroData?.reply)) ||
+      (!!meteredMicroData?.reply && this.safeParseJSON(meteredMicroData?.reply)) ||
       null;
 
     for (let i = 0; i < ckEvidenUse.length; i++) {
-      const formateMeterG = ckEvidenUse[i]?.meterName.map((e: any) => ({
+      const formateMeterG = ckEvidenUse[i]?.meterName?.map((e: any) => ({
         meterPointId: e,
         gasDay: ckEvidenUse[i]?.gas_day,
       }));
@@ -3817,18 +3827,18 @@ export class AllocationService {
         },
       });
 
-    const convertNomFile = nominationFile.map((e: any) => {
+    const convertNomFile = (nominationFile || []).map((e: any) => {
       // nomination_type_id 1 daily, 2 weekly
       e['gas_day'] = dayjs(e['gas_day']).format('YYYY-MM-DD');
-      e['nomination_version'] = e['nomination_version'].map((nv: any) => {
+      e['nomination_version'] = (e['nomination_version'] || []).map((nv: any) => {
         nv['nomination_full_json'] = nv['nomination_full_json'].map(
           (nj: any) => {
-            nj['data_temp'] = JSON.parse(nj['data_temp']);
+            nj['data_temp'] = this.safeParseJSON(nj['data_temp']);
             return { ...nj };
           },
         );
         nv['nomination_row_json'] = nv['nomination_row_json'].map((nj: any) => {
-          nj['data_temp'] = JSON.parse(nj['data_temp']);
+          nj['data_temp'] = this.safeParseJSON(nj['data_temp']);
           return { ...nj };
         });
         return { ...nv };
@@ -4040,31 +4050,31 @@ export class AllocationService {
         );
       });
 
-      let nominationValue : number | null = null
-      if(alloc?.nomination_type_id && pointN){
-        if(alloc?.nomination_type_id === 1){
+      let nominationValue: number | null = null
+      if (alloc?.nomination_type_id && pointN) {
+        if (alloc?.nomination_type_id === 1) {
           nominationValue = parseToNumber(pointN['data_temp']['38'])
-          if(eod?.gas_hour){
+          if (eod?.gas_hour) {
             let i = 0
-            let acc : number | null = null
-            do{
-              const valuePerHour : number | null = parseToNumber(pointN['data_temp'][`${14 + i}`])
-              if(acc){
-                if(valuePerHour){
+            let acc: number | null = null
+            do {
+              const valuePerHour: number | null = parseToNumber(pointN['data_temp'][`${14 + i}`])
+              if (acc) {
+                if (valuePerHour) {
                   acc = acc + valuePerHour
                 }
               }
-              else{
+              else {
                 acc = valuePerHour
               }
               i++
-            } while(i < eod?.gas_hour)
+            } while (i < eod?.gas_hour)
             nominationValue = acc
           }
-        }else{
+        } else {
           const dayOfWeek = Number(getTodayStartAdd7(eod['gas_day']).format('d')) // The day of the week, with Sunday as 0
           nominationValue = parseToNumber(pointN['data_temp'][`${14 + dayOfWeek}`])
-          if(eod?.gas_hour){
+          if (eod?.gas_hour) {
             nominationValue = nominationValue / 24 * eod?.gas_hour
           }
         }
@@ -5143,7 +5153,7 @@ export class AllocationService {
 
 
 
-    const convertSheet = JSON.parse(grpcTransform?.jsonDataMultiSheet) || null;
+    const convertSheet = grpcTransform?.jsonDataMultiSheet ? this.safeParseJSON(grpcTransform.jsonDataMultiSheet) : null;
     const sheet =
       convertSheet?.find((f: any) => f?.sheet === 'Allocation Review')?.data ||
       [];
@@ -6336,7 +6346,7 @@ export class AllocationService {
         },
       });
 
-    const dataD = JSON.parse(allMonthly['jsonData']);
+    const dataD = allMonthly['jsonData'] ? this.safeParseJSON(allMonthly['jsonData']) : null;
 
     await this.exportFilesService.exportDataToExcelNewMontly(
       dataD,
@@ -6612,7 +6622,7 @@ export class AllocationService {
             eDataNom['nomination_full_json'] = eDataNom[
               'nomination_full_json'
             ]?.map((eDataNomJson: any) => {
-              eDataNomJson['data_temp'] = JSON.parse(eDataNomJson['data_temp']);
+              eDataNomJson['data_temp'] = eDataNomJson['data_temp'] ? this.safeParseJSON(eDataNomJson['data_temp']) : null;
               return { ...eDataNomJson };
             });
             // eDataNom["nomination_full_json_sheet2"] = eDataNom["nomination_full_json_sheet2"]?.map((eDataNomJson:any) => {
@@ -6622,7 +6632,7 @@ export class AllocationService {
             eDataNom['nomination_row_json'] = eDataNom[
               'nomination_row_json'
             ]?.map((eDataNomJson: any) => {
-              eDataNomJson['data_temp'] = JSON.parse(eDataNomJson['data_temp']);
+              eDataNomJson['data_temp'] = eDataNomJson['data_temp'] ? this.safeParseJSON(eDataNomJson['data_temp']) : null;
               return { ...eDataNomJson };
             });
             return { ...eDataNom };
@@ -7006,7 +7016,7 @@ export class AllocationService {
             eDataNom['nomination_full_json'] = eDataNom[
               'nomination_full_json'
             ]?.map((eDataNomJson: any) => {
-              eDataNomJson['data_temp'] = JSON.parse(eDataNomJson['data_temp']);
+              eDataNomJson['data_temp'] = eDataNomJson['data_temp'] ? this.safeParseJSON(eDataNomJson['data_temp']) : null;
               return { ...eDataNomJson };
             });
             // eDataNom["nomination_full_json_sheet2"] = eDataNom["nomination_full_json_sheet2"]?.map((eDataNomJson:any) => {
@@ -7016,7 +7026,7 @@ export class AllocationService {
             eDataNom['nomination_row_json'] = eDataNom[
               'nomination_row_json'
             ]?.map((eDataNomJson: any) => {
-              eDataNomJson['data_temp'] = JSON.parse(eDataNomJson['data_temp']);
+              eDataNomJson['data_temp'] = eDataNomJson['data_temp'] ? this.safeParseJSON(eDataNomJson['data_temp']) : null;
               return { ...eDataNomJson };
             });
             return { ...eDataNom };
@@ -7932,7 +7942,7 @@ export class AllocationService {
     let startDate = start_date ? getTodayNowYYYYMMDDDfaultAdd7(start_date) : null;
     let endDate = end_date ? getTodayNowYYYYMMDDDfaultAdd7(end_date) : null;
     const today = getTodayEndAdd7();
-    
+
     const { minDate, maxDate } = await findMinMaxExeDate(this.prisma, start_date, end_date);
 
     if (!startDate || !startDate.isValid()) {
@@ -8016,7 +8026,7 @@ export class AllocationService {
         }
       })
 
-      evidenApi = evidenData.filter((item:any)=>{
+      evidenApi = evidenData.filter((item: any) => {
         const itemGasDay = getTodayNowYYYYMMDDDfaultAdd7(item.gas_day);
         return executeEodList?.some((executeData: any) => {
           const executeStart = getTodayNowAdd7(executeData?.start_date_date);
@@ -8057,12 +8067,12 @@ export class AllocationService {
         }
       })
 
-      evidenApi = evidenData.filter((item:any) => {
+      evidenApi = evidenData.filter((item: any) => {
         const itemGasDay = getTodayNowYYYYMMDDDfaultAdd7(item.gas_day);
         return executeIntradayList?.some((executeData: any) => {
           const executeGasDay = getTodayNowAdd7(executeData.gas_day);
           return executeData.request_number_id == item.request_number &&
-            executeGasDay.isSame(itemGasDay, 'day') && 
+            executeGasDay.isSame(itemGasDay, 'day') &&
             executeData.gas_hour == item.gas_hour
         })
       })
@@ -8090,23 +8100,23 @@ export class AllocationService {
 
     // พี่แนนให้เอาตัวกรอก  publication ออกวันที่ 11 ก.ค. 2568
     const latestByGasDay = evidenApi
-    // .filter((item:any)=>{
-    //   return !publicationCenterDeletedList?.some((f: any) => {
-    //     return (
-    //       f?.execute_timestamp === item.execute_timestamp &&
-    //       f?.gas_day_text === item.gas_day
-    //     );
-    //   })
-    // })
-    .reduce((acc: any, current: any) => {
-      const gasDay = current.gas_day;
-      
-      if (!acc[gasDay] || current.execute_timestamp > acc[gasDay].execute_timestamp) {
-        acc[gasDay] = current;
-      }
-      
-      return acc;
-    }, {});
+      // .filter((item:any)=>{
+      //   return !publicationCenterDeletedList?.some((f: any) => {
+      //     return (
+      //       f?.execute_timestamp === item.execute_timestamp &&
+      //       f?.gas_day_text === item.gas_day
+      //     );
+      //   })
+      // })
+      .reduce((acc: any, current: any) => {
+        const gasDay = current.gas_day;
+
+        if (!acc[gasDay] || current.execute_timestamp > acc[gasDay].execute_timestamp) {
+          acc[gasDay] = current;
+        }
+
+        return acc;
+      }, {});
     // Convert back to array and update the response
     const filteredData = Object.values(latestByGasDay)
 
@@ -8143,7 +8153,7 @@ export class AllocationService {
           // })
           .map((dFm2: any) => {
             validatePointByType(dFm2, activeDataForDate);
-            return { ...fmD, ...fmD2, ...dFm2, group: contractValidation.shipperObj};
+            return { ...fmD, ...fmD2, ...dFm2, group: contractValidation.shipperObj };
           });
 
 

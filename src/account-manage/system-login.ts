@@ -27,7 +27,7 @@ export class AccountManageSystemLoginService {
   constructor(
     private readonly accountManageService: AccountManageService,
     private prisma: PrismaService,
-  ) {}
+  ) { }
 
   async systemLogin() {
     const systemLogin = await this.prisma.system_login.findMany({
@@ -174,7 +174,7 @@ export class AccountManageSystemLoginService {
             system_login: {
               some: {
                 // มี system_login ที่ id ตรงกับ Number(id)
-                id: Number(id),
+                id: (id !== undefined && id !== null) ? Number(id) : -1,
               },
             },
           },
@@ -239,7 +239,7 @@ export class AccountManageSystemLoginService {
         },
       },
       where: {
-        id: Number(id),
+        id: (id !== undefined && id !== null) ? Number(id) : -1,
       },
     });
     return systemLogin;
@@ -247,21 +247,24 @@ export class AccountManageSystemLoginService {
 
   async systemLoginConfig(payload: any, userId: any) {
     try {
+      if (!payload) {
+        throw new HttpException('Payload is required', HttpStatus.BAD_REQUEST);
+      }
       const { system_login_account, mode_account_id, role_id, ...dataWithout } =
         payload;
       const roleMasterCreate = await this.prisma.system_login.create({
         data: {
           // ...dataWithout,
-          role: {
+          role: role_id ? {
             connect: {
               id: Number(role_id),
             },
-          },
-          mode_account: {
+          } : undefined,
+          mode_account: mode_account_id ? {
             connect: {
               id: Number(mode_account_id),
             },
-          },
+          } : undefined,
           active: true,
           create_date: getTodayNowAdd7().toDate(),
           // create_by: Number(userId),
@@ -278,7 +281,7 @@ export class AccountManageSystemLoginService {
           //
           await this.prisma.system_login_account.create({
             data: {
-              account_id: Number(payload?.system_login_account[i]?.account_id),
+              account_id: payload?.system_login_account[i]?.account_id ? Number(payload?.system_login_account[i]?.account_id) : 0,
               system_login_id: roleMasterCreate?.id,
               create_date: getTodayNowAdd7().toDate(),
               create_by: Number(userId),
@@ -333,7 +336,7 @@ export class AccountManageSystemLoginService {
 
           await this.prisma.account.updateMany({
             where: {
-              id: Number(payload?.system_login_account[i]?.account_id),
+              id: payload?.system_login_account[i]?.account_id ? Number(payload?.system_login_account[i]?.account_id) : 0,
             },
             data: {
               ...account,
@@ -341,14 +344,14 @@ export class AccountManageSystemLoginService {
           });
           const { password, ...newAccount } = account;
           newAcc.push({
-            account_id: Number(payload?.system_login_account[i]?.account_id),
+            account_id: payload?.system_login_account[i]?.account_id ? Number(payload?.system_login_account[i]?.account_id) : 0,
             ...newAccount,
           });
 
           await this.prisma.account_manage.updateMany({
             where: {
               account: {
-                id: Number(payload?.system_login_account[i]?.account_id),
+                id: payload?.system_login_account[i]?.account_id ? Number(payload?.system_login_account[i]?.account_id) : 0,
               },
             },
             data: {
@@ -390,13 +393,16 @@ export class AccountManageSystemLoginService {
 
   async systemLoginConfigEdit(id: any, payload: any, userId: any, req: any) {
     try {
+      if (!payload) {
+        throw new HttpException('Payload is required', HttpStatus.BAD_REQUEST);
+      }
       const { system_login_account, ...dataWithout } = payload;
       const roleMasterUpdate = await this.prisma.system_login.update({
         where: {
-          id: Number(id),
+          id: (id !== undefined && id !== null) ? Number(id) : -1,
         },
         data: {
-          mode_account_id: Number(dataWithout?.mode_account_id),
+          mode_account_id: dataWithout?.mode_account_id ? Number(dataWithout?.mode_account_id) : undefined,
           // ...dataWithout,
           update_date: getTodayNowAdd7().toDate(),
           update_by: Number(userId),
@@ -407,19 +413,19 @@ export class AccountManageSystemLoginService {
       const newAcc = [];
       if (system_login_account?.length > 0) {
         const sysAccount = await this.prisma.system_login_account.findMany({
-          where: { system_login_id: Number(id) },
+          where: { system_login_id: (id !== undefined && id !== null) ? Number(id) : -1 },
         });
         for (let i = 0; i < system_login_account.length; i++) {
           const findId = sysAccount.filter((f: any) => {
-            return f?.system_login_id === Number(id);
+            return f?.system_login_id === ((id !== undefined && id !== null) ? Number(id) : -1);
           });
           const find = findId.find((f: any) => {
             return f?.account_id === system_login_account[i]?.account_id;
           });
 
           newSystemAccount.push({
-            account_id: Number(system_login_account[i]?.account_id),
-            system_login_id: Number(id),
+            account_id: system_login_account[i]?.account_id ? Number(system_login_account[i]?.account_id) : 0,
+            system_login_id: (id !== undefined && id !== null) ? Number(id) : -1,
             update_date: find ? getTodayNowAdd7().toDate() : null,
             update_by: find ? Number(userId) : null,
             create_date: find
@@ -435,7 +441,7 @@ export class AccountManageSystemLoginService {
           });
         }
         await this.prisma.system_login_account.deleteMany({
-          where: { system_login_id: Number(id) },
+          where: { system_login_id: (id !== undefined && id !== null) ? Number(id) : -1 },
         });
         newSystemAccount.map(async (e: any) => {
           const { account_id, system_login_id, update_by, ...newE } = e;
@@ -444,12 +450,12 @@ export class AccountManageSystemLoginService {
               ...newE,
               account: {
                 connect: {
-                  id: Number(account_id),
+                  id: (account_id !== undefined && account_id !== null) ? Number(account_id) : -1,
                 },
               },
               system_login: {
                 connect: {
-                  id: Number(system_login_id),
+                  id: (system_login_id !== undefined && system_login_id !== null) ? Number(system_login_id) : -1,
                 },
               },
             },
@@ -458,7 +464,7 @@ export class AccountManageSystemLoginService {
         });
       } else {
         await this.prisma.system_login_account.deleteMany({
-          where: { system_login_id: Number(id) },
+          where: { system_login_id: (id !== undefined && id !== null) ? Number(id) : -1 },
         });
       }
       if (dataWithout?.mode_account_id === 1) {
@@ -472,7 +478,7 @@ export class AccountManageSystemLoginService {
           for (let i = 0; i < system_login_account.length; i++) {
             await this.prisma.account.updateMany({
               where: {
-                id: Number(system_login_account[i]?.account_id),
+                id: system_login_account[i]?.account_id ? Number(system_login_account[i]?.account_id) : 0,
               },
               data: {
                 ...account,
@@ -480,14 +486,14 @@ export class AccountManageSystemLoginService {
             });
             const { password, ...newAccount } = account;
             newAcc.push({
-              account_id: Number(system_login_account[i]?.account_id),
+              account_id: system_login_account[i]?.account_id ? Number(system_login_account[i]?.account_id) : 0,
               ...newAccount,
             });
 
             await this.prisma.account_manage.updateMany({
               where: {
                 account: {
-                  id: Number(system_login_account[i]?.account_id),
+                  id: system_login_account[i]?.account_id ? Number(system_login_account[i]?.account_id) : 0,
                 },
               },
               data: {
@@ -496,7 +502,7 @@ export class AccountManageSystemLoginService {
             });
             const accountOne =
               await this.accountManageService.accountLocalGetSure(
-                Number(system_login_account[i]?.account_id),
+                system_login_account[i]?.account_id ? Number(system_login_account[i]?.account_id) : 0,
               );
             await writeReq(
               this.prisma,
@@ -544,12 +550,12 @@ export class AccountManageSystemLoginService {
                 pass_gen_date: nowAt30,
               };
               const findAcc = await this.prisma.account.findUnique({
-                where: { id: system_login_account[i]?.account_id },
+                where: { id: system_login_account[i]?.account_id ? Number(system_login_account[i]?.account_id) : 0 },
               });
             }
             await this.prisma.account.updateMany({
               where: {
-                id: Number(system_login_account[i]?.account_id),
+                id: system_login_account[i]?.account_id ? Number(system_login_account[i]?.account_id) : 0,
               },
               data: {
                 ...account,
@@ -557,14 +563,14 @@ export class AccountManageSystemLoginService {
             });
             const { password, ...newAccount } = account;
             newAcc.push({
-              account_id: Number(system_login_account[i]?.account_id),
+              account_id: system_login_account[i]?.account_id ? Number(system_login_account[i]?.account_id) : 0,
               ...newAccount,
             });
 
             await this.prisma.account_manage.updateMany({
               where: {
                 account: {
-                  id: Number(system_login_account[i]?.account_id),
+                  id: system_login_account[i]?.account_id ? Number(system_login_account[i]?.account_id) : 0,
                 },
               },
               data: {
@@ -573,7 +579,7 @@ export class AccountManageSystemLoginService {
             });
             const accountOne =
               await this.accountManageService.accountLocalGetSure(
-                Number(system_login_account[i]?.account_id),
+                system_login_account[i]?.account_id ? Number(system_login_account[i]?.account_id) : 0,
               );
             await writeReq(
               this.prisma,

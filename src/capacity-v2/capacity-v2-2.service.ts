@@ -118,7 +118,17 @@ export class CapacityV22Service {
     private readonly fileUploadService: FileUploadService, // บริการอัปโหลดไฟล์
     private readonly capacityMiddleService: CapacityMiddleService, // บริการกลางจัดการความจุ
     // @Inject(CACHE_MANAGER) private cacheService: Cache, // บริการ Cache (ปิดใช้งานชั่วคราว)
-  ) {}
+  ) { }
+
+  private safeParseJSON(data: any, defaultValue: any = null) {
+    if (!data) return defaultValue;
+    try {
+      return typeof data === 'string' ? JSON.parse(data) : data;
+    } catch (e) {
+      console.error('JSON parse error:', e);
+      return defaultValue;
+    }
+  }
 
   /**
    * =====================================================================================
@@ -341,8 +351,8 @@ export class CapacityV22Service {
     token: any,
   ) {
     // แปลงข้อมูล JSON จากไฟล์ที่อัปโหลด
-    const resultTranform = (await JSON.parse(data?.json_data)) || null;
-    
+    const resultTranform = this.safeParseJSON(data?.json_data);
+
     // แยกข้อมูลส่วนต่างๆ จากไฟล์ Excel
     const headerEntry = resultTranform?.headerEntry || {}; // หัวตารางข้อมูลเข้า
     const entryValue = resultTranform?.entryValue || []; // ข้อมูลการเข้า
@@ -759,7 +769,7 @@ export class CapacityV22Service {
         const useStart = dayjs(e[keyEntryFrom], 'DD/MM/YYYY');
         const useEnd = dayjs(e[keyEntryTo], 'DD/MM/YYYY');
 
-        if(!useStart.isValid() || !useEnd.isValid()) {
+        if (!useStart.isValid() || !useEnd.isValid()) {
           throw new HttpException(
             {
               status: HttpStatus.BAD_REQUEST,
@@ -783,7 +793,7 @@ export class CapacityV22Service {
           );
         }
 
-        if(useStart.isSameOrAfter(useEnd)) {
+        if (useStart.isSameOrAfter(useEnd)) {
           throw new HttpException(
             {
               status: HttpStatus.BAD_REQUEST,
@@ -965,7 +975,7 @@ export class CapacityV22Service {
         const useStart = dayjs(e[keyExitFrom], 'DD/MM/YYYY');
         const useEnd = dayjs(e[keyExitTo], 'DD/MM/YYYY');
 
-        if(!useStart.isValid() || !useEnd.isValid()) {
+        if (!useStart.isValid() || !useEnd.isValid()) {
           throw new HttpException(
             {
               status: HttpStatus.BAD_REQUEST,
@@ -994,7 +1004,7 @@ export class CapacityV22Service {
           );
         }
 
-        if(useStart.isSameOrAfter(useEnd)) {
+        if (useStart.isSameOrAfter(useEnd)) {
           throw new HttpException(
             {
               status: HttpStatus.BAD_REQUEST,
@@ -1368,30 +1378,30 @@ export class CapacityV22Service {
     console.log(' - - - 1 - - - ');
     const checkContractCodeCheckLast = checkContractCode?.id
       ? await this.prisma.contract_code.findFirst({
-          select: {
-            id: true,
-            status_capacity_request_management_id: true,
-            contract_start_date: true,
-            contract_end_date: true,
-            terminate_date: true,
-            status_capacity_request_management_process_id: true,
-            ref_contract_code_by_main_id: true,
-            ref_contract_code_by_id: true,
-            shadow_period: true,
-            shadow_time: true,
-          },
-          where: {
-            ref_contract_code_by_main_id: checkContractCode?.id,
-          },
-          orderBy: {
-            id: 'desc',
-          },
-        })
+        select: {
+          id: true,
+          status_capacity_request_management_id: true,
+          contract_start_date: true,
+          contract_end_date: true,
+          terminate_date: true,
+          status_capacity_request_management_process_id: true,
+          ref_contract_code_by_main_id: true,
+          ref_contract_code_by_id: true,
+          shadow_period: true,
+          shadow_time: true,
+        },
+        where: {
+          ref_contract_code_by_main_id: checkContractCode?.id,
+        },
+        orderBy: {
+          id: 'desc',
+        },
+      })
       : null;
 
     if (
       checkContractCodeCheckLast?.status_capacity_request_management_process_id ===
-        4 ||
+      4 ||
       checkContractCodeCheckLast?.status_capacity_request_management_id === 5
     ) {
       throw new HttpException(
@@ -1823,7 +1833,7 @@ export class CapacityV22Service {
                 connect: {
                   id:
                     checkContractCodeCheckLast?.status_capacity_request_management_id ===
-                    3
+                      3
                       ? 1
                       : checkContractCodeCheckLast?.status_capacity_request_management_id,
                 },
@@ -1917,7 +1927,7 @@ export class CapacityV22Service {
           userId,
         );
         console.log(' - - - c2');
-        
+
         if (ckUserType?.id === 2 && !notApproved) {
           if (typeSuccess === 1) {
             try {
@@ -2188,7 +2198,7 @@ export class CapacityV22Service {
             userId,
           );
 
-            try {
+          try {
             //terminate เก่า
             // ยังไม่ได้รองรับจากปุ่ม amd เพิ่ม field termidate
             // ละเว้น Error: Cannot read properties of null (reading 'booking_row_json')
@@ -2299,16 +2309,16 @@ export class CapacityV22Service {
       shadow_period, // ระยะเวลาเงา
       reject_reasons, // เหตุผลการปฏิเสธ
     } = payload;
-    
+
     let useData: any = null; // ข้อมูลที่จะใช้ในการอัปเดต
-    
+
     // กำหนดช่วงเวลาปัจจุบัน (+7 วัน)
     const todayStart = getTodayStartAdd7().toDate(); // เริ่มต้นวันนี้ + 7 วัน
     const todayEnd = getTodayEndAdd7().toDate(); // สิ้นสุดวันนี้ + 7 วัน
 
     console.log('process...'); // แสดงสถานะการประมวลผล
     console.time('status'); // เริ่มจับเวลาการประมวลผล
-    
+
     // ตรวจสอบสถานะการจัดการความจุ
     if (status_capacity_request_management_id === 2) {
       // สถานะ: อนุมัติ (Approved)
@@ -2750,7 +2760,7 @@ export class CapacityV22Service {
         orderBy: { id: 'desc' },
       });
 
-      const dataFull = JSON.parse(getData['booking_full_json'][0]?.data_temp);
+      const dataFull = this.safeParseJSON(getData?.['booking_full_json']?.[0]?.data_temp);
       const shipperName = dataFull?.shipperInfo[0]['Shipper Name'] || null;
       const getGroupByName =
         await this.capacityMiddleService.getGroupByName(shipperName);
@@ -2864,7 +2874,7 @@ export class CapacityV22Service {
         },
       },
     });
-    jsonFull['data_temp'] = JSON.parse(jsonFull['data_temp']);
+    if (jsonFull) jsonFull['data_temp'] = this.safeParseJSON(jsonFull?.['data_temp']);
 
     let resultDate = null;
     let startDate = contract_start_date;
@@ -2907,7 +2917,7 @@ export class CapacityV22Service {
       const npath_management_config = path_management_config.map((e: any) => {
         return {
           ...e,
-          temps: JSON.parse(e['temps']),
+          temps: this.safeParseJSON(e?.['temps']),
         };
       });
 
@@ -3008,7 +3018,7 @@ export class CapacityV22Service {
         );
       }
 
-      if(getTodayNowDDMMYYYYAdd7(contract_start_date).isSameOrAfter(getTodayNowDDMMYYYYAdd7(contract_end_date))) {
+      if (getTodayNowDDMMYYYYAdd7(contract_start_date).isSameOrAfter(getTodayNowDDMMYYYYAdd7(contract_end_date))) {
         throw new HttpException(
           {
             status: HttpStatus.BAD_REQUEST,
@@ -3554,7 +3564,7 @@ export class CapacityV22Service {
           Number(contractCode?.term_type_id),
         );
 
-      if(getTodayNowDDMMYYYYAdd7(contract_start_date).isSameOrAfter(getTodayNowDDMMYYYYAdd7(contract_end_date))) {
+      if (getTodayNowDDMMYYYYAdd7(contract_start_date).isSameOrAfter(getTodayNowDDMMYYYYAdd7(contract_end_date))) {
         throw new HttpException(
           {
             status: HttpStatus.BAD_REQUEST,
@@ -3937,7 +3947,7 @@ export class CapacityV22Service {
       fromDate, // วันที่เริ่มต้น
       toDate, // วันที่สิ้นสุด
     } = payload;
-    
+
     // ค้นหาข้อมูลเวอร์ชันการจอง
     const bookingVersion = await this.prisma.booking_version.findFirst({
       where: {
@@ -3967,7 +3977,7 @@ export class CapacityV22Service {
     // กำหนดโหมดวันและเดือน (term_type_id = 4 ใช้โหมด 1, อื่นๆ ใช้โหมด 2)
     const modeDayAndMonth =
       bookingVersion?.contract_code?.term_type_id === 4 ? 1 : 2;
-    
+
     // สร้างข้อมูลระยะเวลาเงา
     const shadowPeriod = this.capacityMiddleService.genMD(
       fromDate,
@@ -4461,21 +4471,21 @@ export class CapacityV22Service {
         booking_row_json: true, // รวมข้อมูลการจองแบบแถว
       },
     });
-    
+
     let newBK: any = null; // ตัวแปรสำหรับเก็บข้อมูลที่แปลงแล้ว
     newBK = bookingVersion;
-    
+
     // แปลงข้อมูล JSON ใน booking_full_json เป็น object
     newBK['booking_full_json'] = await newBK?.booking_full_json.map(
       (e: any) => {
-        const data_temp = JSON.parse(e['data_temp']); // แปลง JSON string เป็น object
+        const data_temp = this.safeParseJSON(e?.['data_temp']); // แปลง JSON string เป็น object
         return { ...e, data_temp: data_temp };
       },
     );
-    
+
     // แปลงข้อมูล JSON ใน booking_row_json เป็น object
     newBK['booking_row_json'] = await newBK?.booking_row_json.map((e: any) => {
-      const data_temp = JSON.parse(e['data_temp']); // แปลง JSON string เป็น object
+      const data_temp = this.safeParseJSON(e?.['data_temp']); // แปลง JSON string เป็น object
       return { ...e, data_temp: data_temp };
     });
 
@@ -4489,14 +4499,14 @@ export class CapacityV22Service {
         return shipperInfo[key]['Shipper Name'];
       })
       .find((item) => item !== undefined);
-    
+
     // ดึงประเภทสัญญา
     const typeOfContract: any = Object.keys(shipperInfo)
       .map((key) => {
         return shipperInfo[key]['Type of Contract'];
       })
       .find((item) => item !== undefined);
-    
+
     // ดึงรหัสสัญญา
     const ContractCode = Object.keys(shipperInfo)
       .map((key) => {
@@ -4507,7 +4517,7 @@ export class CapacityV22Service {
     // ดึงข้อมูล Header Entry สำหรับการจองรายวัน
     const headerEntryInfo1 =
       newBK['booking_full_json'][0]['data_temp']['headerEntry'][
-        'Capacity Daily Booking (MMBTU/d)'
+      'Capacity Daily Booking (MMBTU/d)'
       ];
 
     // สร้างอาร์เรย์ของ Header Entry
@@ -4524,7 +4534,7 @@ export class CapacityV22Service {
       });
     const headerEntryInfo2 =
       newBK['booking_full_json'][0]['data_temp']['headerEntry'][
-        'Maximum Hour Booking (MMBTU/h)'
+      'Maximum Hour Booking (MMBTU/h)'
       ];
     const headerEntryArr2 = Object.keys(headerEntryInfo2)
       .filter((key) => key !== 'key')
@@ -4539,7 +4549,7 @@ export class CapacityV22Service {
       });
     const headerEntryInfo3 =
       newBK['booking_full_json'][0]['data_temp']['headerEntry'][
-        'Capacity Daily Booking (MMscfd)'
+      'Capacity Daily Booking (MMscfd)'
       ];
     const headerEntryArr3 = Object.keys(headerEntryInfo3)
       .filter((key) => key !== 'key')
@@ -4554,7 +4564,7 @@ export class CapacityV22Service {
       });
     const headerEntryInfo4 =
       newBK['booking_full_json'][0]['data_temp']['headerEntry'][
-        'Maximum Hour Booking (MMscfh)'
+      'Maximum Hour Booking (MMscfh)'
       ];
     const headerEntryArr4 = Object.keys(headerEntryInfo4)
       .filter((key) => key !== 'key')
@@ -4587,7 +4597,7 @@ export class CapacityV22Service {
 
     const headerExitInfo1 =
       newBK['booking_full_json'][0]['data_temp']['headerExit'][
-        'Capacity Daily Booking (MMBTU/d)'
+      'Capacity Daily Booking (MMBTU/d)'
       ];
     const headerExitArr1 = Object.keys(headerExitInfo1)
       .filter((key) => key !== 'key')
@@ -4602,7 +4612,7 @@ export class CapacityV22Service {
       });
     const headerExitInfo2 =
       newBK['booking_full_json'][0]['data_temp']['headerExit'][
-        'Capacity Daily Booking (MMBTU/d)'
+      'Capacity Daily Booking (MMBTU/d)'
       ];
     const headerExitArr2 = Object.keys(headerExitInfo2)
       .filter((key) => key !== 'key')
@@ -5076,8 +5086,8 @@ export class CapacityV22Service {
       (metas[i] as any).startISO = this.fm(metas[i].minDate);
       (metas[i] as any).endISO = next
         ? dayjs(next.minDate)
-            .subtract(1, 'day')
-            .format('YYYY-MM-DDTHH:mm:ss.SSS[Z]')
+          .subtract(1, 'day')
+          .format('YYYY-MM-DDTHH:mm:ss.SSS[Z]')
         : this.fm(metas[i].maxDate);
     }
 
@@ -5267,14 +5277,14 @@ export class CapacityV22Service {
   async getPeriod(id: any) {
     // กำหนดขนาดหน้าข้อมูล (ปรับได้ตามความเหมาะสม)
     const pageSize = 2000; // หรือปรับตามเหมาะสม
-    
+
     let resData = []; // ตัวแปรสำหรับเก็บข้อมูลผลลัพธ์
     let skip = 0; // ตัวแปรสำหรับข้ามข้อมูล
     let hasMore = true; // ตัวแปรสำหรับตรวจสอบว่ามีข้อมูลเพิ่มเติมหรือไม่
-    
+
     console.log('get'); // แสดงสถานะการเริ่มต้น
     console.time('start'); // เริ่มจับเวลาการประมวลผล
-    
+
     // วนลูปดึงข้อมูลแบบแบ่งหน้า
     while (hasMore) {
       // ดึงข้อมูลช่วงเวลาการจัดการความจุแบบแบ่งหน้า
@@ -5458,12 +5468,12 @@ export class CapacityV22Service {
           const nextGroup = array[index + 1]; // หา period ถัดไป
           const endDate = nextGroup
             ? dayjs(nextGroup.startDate)
-                .subtract(1, 'day')
-                .format('YYYY-MM-DDTHH:mm:ss.SSS[Z]')
+              .subtract(1, 'day')
+              .format('YYYY-MM-DDTHH:mm:ss.SSS[Z]')
             : group.data
-                .map((item) => dayjs(item.date)) // ใช้วันที่จาก group.data
-                .sort((a, b) => b.valueOf() - a.valueOf())[0] // เรียงตามวันที่มากสุด
-                .format('YYYY-MM-DDTHH:mm:ss.SSS[Z]'); // แปลงเป็น ISO string
+              .map((item) => dayjs(item.date)) // ใช้วันที่จาก group.data
+              .sort((a, b) => b.valueOf() - a.valueOf())[0] // เรียงตามวันที่มากสุด
+              .format('YYYY-MM-DDTHH:mm:ss.SSS[Z]'); // แปลงเป็น ISO string
           return {
             ...group,
             endDate, // ใส่ endDate ที่หาได้

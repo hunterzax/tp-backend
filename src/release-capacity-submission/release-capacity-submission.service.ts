@@ -38,7 +38,17 @@ export class ReleaseCapacitySubmissionService {
     private jwtService: JwtService,
     private prisma: PrismaService,
     // @Inject(CACHE_MANAGER) private cacheService: Cache,
-  ) {}
+  ) { }
+
+  private safeParseJSON(data: any, defaultValue: any = null) {
+    if (!data) return defaultValue;
+    try {
+      return typeof data === 'string' ? JSON.parse(data) : data;
+    } catch (e) {
+      console.error('JSON parse error:', e);
+      return defaultValue;
+    }
+  }
 
   contractCode() {
     return this.prisma.contract_code.findMany({
@@ -114,9 +124,9 @@ export class ReleaseCapacitySubmissionService {
       return [];
     }
 
-    const useData = contractCode?.booking_version[0]?.booking_row_json;
+    const useData = contractCode?.booking_version?.[0]?.booking_row_json;
     const convertData = useData?.map((e: any) => {
-      return { ...e, data_temp: JSON.parse(e['data_temp']) };
+      return { ...e, data_temp: this.safeParseJSON(e?.['data_temp']) };
     });
 
     const nowDates = getTodayNowAdd7().toDate();
@@ -136,9 +146,9 @@ export class ReleaseCapacitySubmissionService {
       },
     });
     console.log('pathManagement : ', pathManagement);
-    const pathEntryExit = pathManagement['path_management_config']?.map(
+    const pathEntryExit = pathManagement?.['path_management_config']?.map(
       (e: any) => {
-        return { ...e, temps: JSON.parse(e['temps']) };
+        return { ...e, temps: this.safeParseJSON(e?.['temps']) };
       },
     );
     console.log('pathEntryExit : ', pathEntryExit);
@@ -369,9 +379,9 @@ export class ReleaseCapacitySubmissionService {
       },
     });
 
-    const pathEntryExit = pathManagement['path_management_config']?.map(
+    const pathEntryExit = pathManagement?.['path_management_config']?.map(
       (e: any) => {
-        return { ...e, temps: JSON.parse(e['temps']) };
+        return { ...e, temps: this.safeParseJSON(e?.['temps']) };
       },
     );
 
@@ -393,38 +403,40 @@ export class ReleaseCapacitySubmissionService {
     });
 
     const convertDataFull =
-      contractCode?.booking_version[0]?.booking_full_json[0];
-    convertDataFull['data_temp'] = JSON.parse(
-      contractCode?.booking_version[0]?.booking_full_json[0]['data_temp'],
-    );
+      contractCode?.['booking_version']?.[0]?.['booking_full_json']?.[0];
+    if (convertDataFull) {
+      convertDataFull['data_temp'] = this.safeParseJSON(
+        contractCode?.['booking_version']?.[0]?.['booking_full_json']?.[0]?.['data_temp'],
+      );
+    }
 
     const convertData = (
-      contractCode?.booking_version[0]?.booking_row_json || []
+      contractCode?.booking_version?.[0]?.booking_row_json || []
     )?.map((e: any) => {
-      return { ...e, data_temp: JSON.parse(e['data_temp']) };
+      return { ...e, data_temp: this.safeParseJSON(e?.['data_temp']) };
     });
 
     const endDate = getTodayNowAdd7(
       contractCode?.terminate_date ??
-        contractCode?.extend_deadline ??
-        contractCode?.contract_end_date,
+      contractCode?.extend_deadline ??
+      contractCode?.contract_end_date,
     );
 
     const headMMBTU =
       convertDataFull['data_temp']['headerEntry'][
-        'Capacity Daily Booking (MMBTU/d)'
+      'Capacity Daily Booking (MMBTU/d)'
       ];
     const headMMSCFD =
       convertDataFull['data_temp']['headerEntry'][
-        'Capacity Daily Booking (MMscfd)'
+      'Capacity Daily Booking (MMscfd)'
       ];
     const headMMBTUH =
       convertDataFull['data_temp']['headerEntry'][
-        'Maximum Hour Booking (MMBTU/h)'
+      'Maximum Hour Booking (MMBTU/h)'
       ];
     const headMMSCFH =
       convertDataFull['data_temp']['headerEntry'][
-        'Maximum Hour Booking (MMscfh)'
+      'Maximum Hour Booking (MMscfh)'
       ];
 
     const keysMMBTU = Object.keys(headMMBTU)
@@ -569,13 +581,13 @@ export class ReleaseCapacitySubmissionService {
                 ? dayjs(eSum['data_temp'][fromTo + 1], 'DD/MM/YYYY')
                 : keysMMBTU.length > 0
                   ? dayjs(keysMMBTU[kix + 1]?.date, 'DD/MM/YYYY').subtract(
-                      1,
-                      'day',
-                    )
+                    1,
+                    'day',
+                  )
                   : dayjs(eSum['data_temp'][fromTo + 1], 'DD/MM/YYYY').subtract(
-                      1,
-                      'day',
-                    );
+                    1,
+                    'day',
+                  );
             if (edDayjs.isAfter(endDate)) {
               edDayjs = endDate.subtract(1, 'day');
             }
@@ -599,13 +611,13 @@ export class ReleaseCapacitySubmissionService {
                 ? dayjs(eSum['data_temp'][fromTo + 1], 'DD/MM/YYYY')
                 : keysMMBTH.length > 0
                   ? dayjs(keysMMBTH[kix + 1]?.date, 'DD/MM/YYYY').subtract(
-                      1,
-                      'day',
-                    )
+                    1,
+                    'day',
+                  )
                   : dayjs(eSum['data_temp'][fromTo + 1], 'DD/MM/YYYY').subtract(
-                      1,
-                      'day',
-                    );
+                    1,
+                    'day',
+                  );
             if (edDayjs.isAfter(endDate)) {
               edDayjs = endDate.subtract(1, 'day');
             }
@@ -623,66 +635,66 @@ export class ReleaseCapacitySubmissionService {
         contracted_mmscfd_array:
           eSum['entry_exit_id'] === 1
             ? keysMMSCFD?.map((ks: any, kix: number) => {
-                const st =
-                  kix === 0 ? eSum['data_temp'][fromTo] : keysMMSCFD[kix]?.date;
-                let edDayjs =
-                  kix === keysMMSCFD.length - 1
-                    ? dayjs(eSum['data_temp'][fromTo + 1], 'DD/MM/YYYY')
-                    : keysMMSCFD.length > 0
-                      ? dayjs(keysMMSCFD[kix + 1]?.date, 'DD/MM/YYYY').subtract(
-                          1,
-                          'day',
-                        )
-                      : dayjs(
-                          eSum['data_temp'][fromTo + 1],
-                          'DD/MM/YYYY',
-                        ).subtract(1, 'day');
-                if (edDayjs.isAfter(endDate)) {
-                  edDayjs = endDate.subtract(1, 'day');
-                }
-                const ed = edDayjs.format('DD/MM/YYYY');
-                return {
-                  ...ks,
-                  value:
-                    (!!result[ks['key']] &&
-                      Number(result[ks['key']].replace(/,/g, ''))) ||
-                    null,
-                  start_date: st,
-                  end_date: ed,
-                };
-              })
+              const st =
+                kix === 0 ? eSum['data_temp'][fromTo] : keysMMSCFD[kix]?.date;
+              let edDayjs =
+                kix === keysMMSCFD.length - 1
+                  ? dayjs(eSum['data_temp'][fromTo + 1], 'DD/MM/YYYY')
+                  : keysMMSCFD.length > 0
+                    ? dayjs(keysMMSCFD[kix + 1]?.date, 'DD/MM/YYYY').subtract(
+                      1,
+                      'day',
+                    )
+                    : dayjs(
+                      eSum['data_temp'][fromTo + 1],
+                      'DD/MM/YYYY',
+                    ).subtract(1, 'day');
+              if (edDayjs.isAfter(endDate)) {
+                edDayjs = endDate.subtract(1, 'day');
+              }
+              const ed = edDayjs.format('DD/MM/YYYY');
+              return {
+                ...ks,
+                value:
+                  (!!result[ks['key']] &&
+                    Number(result[ks['key']].replace(/,/g, ''))) ||
+                  null,
+                start_date: st,
+                end_date: ed,
+              };
+            })
             : [],
         maximum_mmscfd_array:
           eSum['entry_exit_id'] === 1
             ? keysMMSCFH?.map((ks: any, kix: number) => {
-                const st =
-                  kix === 0 ? eSum['data_temp'][fromTo] : keysMMSCFH[kix]?.date;
-                let edDayjs =
-                  kix === keysMMSCFH.length - 1
-                    ? dayjs(eSum['data_temp'][fromTo + 1], 'DD/MM/YYYY')
-                    : keysMMSCFH.length > 0
-                      ? dayjs(keysMMSCFH[kix + 1]?.date, 'DD/MM/YYYY').subtract(
-                          1,
-                          'day',
-                        )
-                      : dayjs(
-                          eSum['data_temp'][fromTo + 1],
-                          'DD/MM/YYYY',
-                        ).subtract(1, 'day');
-                if (edDayjs.isAfter(endDate)) {
-                  edDayjs = endDate.subtract(1, 'day');
-                }
-                const ed = edDayjs.format('DD/MM/YYYY');
-                return {
-                  ...ks,
-                  value:
-                    (!!result[ks['key']] &&
-                      Number(result[ks['key']].replace(/,/g, ''))) ||
-                    null,
-                  start_date: st,
-                  end_date: ed,
-                };
-              })
+              const st =
+                kix === 0 ? eSum['data_temp'][fromTo] : keysMMSCFH[kix]?.date;
+              let edDayjs =
+                kix === keysMMSCFH.length - 1
+                  ? dayjs(eSum['data_temp'][fromTo + 1], 'DD/MM/YYYY')
+                  : keysMMSCFH.length > 0
+                    ? dayjs(keysMMSCFH[kix + 1]?.date, 'DD/MM/YYYY').subtract(
+                      1,
+                      'day',
+                    )
+                    : dayjs(
+                      eSum['data_temp'][fromTo + 1],
+                      'DD/MM/YYYY',
+                    ).subtract(1, 'day');
+              if (edDayjs.isAfter(endDate)) {
+                edDayjs = endDate.subtract(1, 'day');
+              }
+              const ed = edDayjs.format('DD/MM/YYYY');
+              return {
+                ...ks,
+                value:
+                  (!!result[ks['key']] &&
+                    Number(result[ks['key']].replace(/,/g, ''))) ||
+                  null,
+                start_date: st,
+                end_date: ed,
+              };
+            })
             : [],
       };
     }) : [];
@@ -824,16 +836,18 @@ export class ReleaseCapacitySubmissionService {
 
     // แปลงข้อมูลการจองแบบเต็มจาก JSON string เป็น object
     const convertDataFull =
-      contractCode?.booking_version[0]?.booking_full_json[0];
-    convertDataFull['data_temp'] = JSON.parse(
-      contractCode?.booking_version[0]?.booking_full_json[0]['data_temp'],
-    );
+      contractCode?.['booking_version']?.[0]?.['booking_full_json']?.[0];
+    if (convertDataFull) {
+      convertDataFull['data_temp'] = this.safeParseJSON(
+        contractCode?.['booking_version']?.[0]?.['booking_full_json']?.[0]?.['data_temp'],
+      );
+    }
 
     // แปลงข้อมูลการจองแบบแถวจาก JSON string เป็น object
     const convertData = (
-      contractCode?.booking_version[0]?.booking_row_json || []
+      contractCode?.['booking_version']?.[0]?.['booking_row_json'] || []
     )?.map((e: any) => {
-      return { ...e, data_temp: JSON.parse(e['data_temp']) };
+      return { ...e, data_temp: this.safeParseJSON(e?.['data_temp']) };
     });
 
     // จัดกลุ่มจุดเข้าและออกตามโซนเดียวกัน
@@ -1055,12 +1069,12 @@ export class ReleaseCapacitySubmissionService {
           // กำหนดวันที่เริ่มต้นและสิ้นสุดของเดือน โดยพิจารณาจาก minDate และ maxDate
           const monthStart =
             minDate.isSame(currentMonth, 'month') &&
-            minDate.isAfter(startOfMonth)
+              minDate.isAfter(startOfMonth)
               ? minDate
               : startOfMonth;
           const monthEnd =
             maxDate.isSame(currentMonth, 'month') &&
-            maxDate.isBefore(endOfMonth)
+              maxDate.isBefore(endOfMonth)
               ? maxDate
               : endOfMonth;
 
@@ -1147,6 +1161,9 @@ export class ReleaseCapacitySubmissionService {
     userId: any,
     status: any,
   ) {
+    if (contract_code_id === undefined || contract_code_id === null || data === undefined || data === null) {
+      throw new HttpException('Missing contract_code_id or data', HttpStatus.BAD_REQUEST);
+    }
     const dateCre = getTodayNowAdd7();
 
     const counts = await this.prisma.release_capacity_submission.count();
@@ -1472,13 +1489,13 @@ export class ReleaseCapacitySubmissionService {
               'release_capacity_submission_detail'
             ].map((e: any) => {
               if (e['path_management_config_temp']) {
-                e['path_management_config_temp'] = JSON.parse(
+                e['path_management_config_temp'] = this.safeParseJSON(
                   e['path_management_config_temp'],
                 );
               }
-              if (e['path_management_config'] && e['path_management_config']['temps']) {
-                e['path_management_config']['temps'] = JSON.parse(
-                  e['path_management_config']['temps'],
+              if (e?.['path_management_config'] && e['path_management_config']?.['temps']) {
+                e['path_management_config']['temps'] = this.safeParseJSON(
+                  e['path_management_config']?.['temps'],
                 );
               }
               return e;
@@ -1681,7 +1698,7 @@ export class ReleaseCapacitySubmissionService {
       const npath_management_config = path_management_config.map((e: any) => {
         return {
           ...e,
-          temps: JSON.parse(e['temps']),
+          temps: this.safeParseJSON(e?.['temps']),
         };
       });
       // console.log('--------- npath_management_config : ', npath_management_config);
@@ -1728,7 +1745,7 @@ export class ReleaseCapacitySubmissionService {
     );
     const capacity_detail_point_date = fPub?.capacity_detail_point_date || [];
     const path_temp_json: any = fPub?.path_temp_json || [];
-   
+
     function genDateRangeDDMMYYYY(startStr: string, endStr: string): string[] {
       const fmt = 'DD/MM/YYYY';
       const start = dayjs(startStr, fmt, true);
@@ -1752,7 +1769,7 @@ export class ReleaseCapacitySubmissionService {
     console.log('*** data : ', data);
     console.log('*** nCapacityPointDate : ', nCapacityPointDate);
     console.log('*** path_temp_json : ', path_temp_json);
-   
+
 
     let nDateArr = [];
     for (let i = 0; i < data.length; i++) {
@@ -1788,7 +1805,7 @@ export class ReleaseCapacitySubmissionService {
                 ?.includes(f?.id)
             );
           });
-         
+
           for (let ix = 0; ix < exitMainA.length; ix++) {
             const areaPathA =
               path_temp_json?.filter(
@@ -1806,7 +1823,7 @@ export class ReleaseCapacitySubmissionService {
                 ix < areaPathA[ip]?.pathConfig?.findExit?.length;
                 ix++
               ) {
-                const find = areaPathA[ip]?.pathConfig?.findExit?.find((f:any) => f?.source_id === arrArea?.[arrArea?.length - 1]?.area?.id)
+                const find = areaPathA[ip]?.pathConfig?.findExit?.find((f: any) => f?.source_id === arrArea?.[arrArea?.length - 1]?.area?.id)
                 if (
                   find
                 ) {
@@ -1902,7 +1919,7 @@ export class ReleaseCapacitySubmissionService {
       groupedId[key].data.push({ ...curr });
     }
     const resultGroupId: any = Object.values(groupedId);
-   
+
     const nresultGroupId = resultGroupId?.map((iGp: any) => {
       // const sumNew = iGp?.data
       //   ?.filter((f: any) => f?.release !== null)
@@ -1910,7 +1927,7 @@ export class ReleaseCapacitySubmissionService {
       //     (accumulator, currentValue) => accumulator + currentValue?.release,
       //     0,
       //   );
-      const sumNew = Math.max(...iGp?.data?.filter((f: any) => f?.release !== null)?.map((tt:any) => tt?.release));
+      const sumNew = Math.max(...iGp?.data?.filter((f: any) => f?.release !== null)?.map((tt: any) => tt?.release));
       const calcSumRelease =
         iGp?.release_old !== null ? Number(iGp?.release_old) + Number(sumNew) : Number(sumNew);
       return {
@@ -1980,7 +1997,7 @@ export class ReleaseCapacitySubmissionService {
           //     accumulator + currentValue?.total_release_mmbtu_d,
           //   0,
           // );
-          const val = Math.max(...dataDate?.map((tt:any) => tt?.total_release_mmbtu_d));
+          const val = Math.max(...dataDate?.map((tt: any) => tt?.total_release_mmbtu_d));
           return {
             date: date,
             val: val,
@@ -2005,9 +2022,9 @@ export class ReleaseCapacitySubmissionService {
       });
       return [...fDate];
     });
-   
+
     const { min, max } = this.getMinMaxDates(fUsePub);
-   
+
     const capaPublich = await (
       prisma ?? this.prisma
     ).capacity_publication_date.findMany({
@@ -2054,13 +2071,13 @@ export class ReleaseCapacitySubmissionService {
             : String(0 + (fcapacity_publication?.val || 0)),
           value_adjust_use: nc?.value_adjust_use
             ? String(
-                Number(nc?.value_adjust_use) +
-                  (fcapacity_publication?.val || 0),
-              )
+              Number(nc?.value_adjust_use) +
+              (fcapacity_publication?.val || 0),
+            )
             : String(
-                ((nc?.value && Number(nc?.value)) || 0) +
-                  (fcapacity_publication?.val || 0),
-              ),
+              ((nc?.value && Number(nc?.value)) || 0) +
+              (fcapacity_publication?.val || 0),
+            ),
           fcapacity_publication: fcapacity_publication || null,
         };
       })
@@ -2090,6 +2107,9 @@ export class ReleaseCapacitySubmissionService {
   }
 
   async submission(payload: any, userId: any) {
+    if (payload === undefined || payload === null) {
+      throw new HttpException('Missing payload', HttpStatus.BAD_REQUEST);
+    }
     const { contract_code_id, group_id, data, url } = payload;
     const group = await this.prisma.group.findFirst({
       where: {
@@ -2218,6 +2238,9 @@ export class ReleaseCapacitySubmissionService {
   }
 
   async documentFile(id: any) {
+    if (id === undefined || id === null) {
+      return [];
+    }
     const resData =
       await this.prisma.release_capacity_submission_file_document.findMany({
         where: {

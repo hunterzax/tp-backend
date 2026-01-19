@@ -28,24 +28,34 @@ export class PlanningDashboardService {
     private jwtService: JwtService,
     private prisma: PrismaService,
     // @Inject(CACHE_MANAGER) private cacheService: Cache,
-  ) {}
+  ) { }
+
+  private safeParseJSON(data: any, defaultValue: any = null) {
+    if (!data) return defaultValue;
+    try {
+      return typeof data === 'string' ? JSON.parse(data) : data;
+    } catch (e) {
+      console.error('JSON parse error:', e);
+      return defaultValue;
+    }
+  }
 
   groupYearlyData(data) {
     const yearMap = new Map();
 
     data.year.forEach((date, index) => {
-        if (!date) return; // ข้ามค่า null หรือ undefined
-        const match = date.match(/\d{4}$/); // ค้นหาปีจาก YYYY หรือ DD/MM/YYYY
-        if (match) {
-            const year = match[0]; // ดึงปีออกมา
-            const value = data.value[index] || 0; // ถ้า value เป็น undefined ให้เป็น 0
+      if (!date) return; // ข้ามค่า null หรือ undefined
+      const match = date.match(/\d{4}$/); // ค้นหาปีจาก YYYY หรือ DD/MM/YYYY
+      if (match) {
+        const year = match[0]; // ดึงปีออกมา
+        const value = data.value[index] || 0; // ถ้า value เป็น undefined ให้เป็น 0
 
-            if (yearMap.has(year)) {
-                yearMap.set(year, yearMap.get(year) + value); // รวมค่า value
-            } else {
-                yearMap.set(year, value);
-            }
+        if (yearMap.has(year)) {
+          yearMap.set(year, yearMap.get(year) + value); // รวมค่า value
+        } else {
+          yearMap.set(year, value);
         }
+      }
     });
 
     // แปลง Map เป็น array แล้วเรียงลำดับปีจากน้อยไปมาก
@@ -53,12 +63,12 @@ export class PlanningDashboardService {
 
     // แยกเป็นอาร์เรย์ year กับ value
     return {
-        year: sortedYears.map(entry => entry[0]),
-        value: sortedYears.map(entry => entry[1])
+      year: sortedYears.map(entry => entry[0]),
+      value: sortedYears.map(entry => entry[1])
     };
-}
+  }
 
-// period ?
+  // period ?
 
   async dashboardLong(userId: any) {
     const resData =
@@ -80,23 +90,28 @@ export class PlanningDashboardService {
         },
       });
     const convertData = resData.map((e: any) => {
-      const byrow = e['query_shipper_planning_files'][
+      const byrow = (e?.['query_shipper_planning_files']?.[
         'query_shipper_planning_files_temp_row'
-      ]?.map((row: any) => {
-        row['value'] = JSON.parse(row['value']);
-        const maxKey = Math.max(...Object.keys(row['value']).map(key => parseInt(key)));
+      ] || [])?.map((row: any) => {
+        row['value'] = this.safeParseJSON(row?.['value'], {});
+        const keys = Object.keys(row?.['value'] || {}).map(key => parseInt(key)).filter(k => !isNaN(k));
+        const maxKey = keys?.length > 0 ? Math.max(...keys) : 0;
 
         const newData = {};
         for (let i = 6; i <= maxKey; i++) {
-          newData[i] = { year: row['value'][i].year, value: row['value'][i]?.value ? Number(row['value'][i]?.value.replace(/,/g, '')) : 0 };
+          const valObj = row?.['value']?.[i];
+          if (valObj) {
+            newData[i] = { year: valObj?.year, value: valObj?.value ? Number(valObj?.value.toString().replace(/,/g, '')) : 0 };
+          }
         }
 
         // สร้างอ็อบเจ็กต์ที่จัดกลุ่มข้อมูลตามปี
         const groupedData = {};
         // ลูปผ่านข้อมูลเพื่อจัดกลุ่ม
         for (const key in newData) {
-          const year = newData[key].year;
-          const value = newData[key].value;
+          const year = newData[key]?.year;
+          const value = newData[key]?.value;
+          if (!year) continue;
 
           if (!groupedData[year]) {
             groupedData[year] = { year: year, value: [] };
@@ -122,26 +137,26 @@ export class PlanningDashboardService {
         const groupYear = this.groupYearlyData(result)
 
         return {
-          id: row['id'],
-          nomination_point: row['value']['2'],
-          customer: row['value']['3'],
-          area: row['value']['4'],
-          unit: row['value']['5'],
-          entry_exit_id: row['value']['1'] === "Entry" ? 1 : 2,
-          entry_exit: row['value']['1'],
+          id: row?.['id'],
+          nomination_point: row?.['value']?.['2'],
+          customer: row?.['value']?.['3'],
+          area: row?.['value']?.['4'],
+          unit: row?.['value']?.['5'],
+          entry_exit_id: row?.['value']?.['1'] === "Entry" ? 1 : 2,
+          entry_exit: row?.['value']?.['1'],
           ...groupYear
         };
       });
 
-      e['byrow'] = byrow
+      e['byrow'] = byrow || [];
 
-      e['planning_code_id'] = e['query_shipper_planning_files']['id'];
-      e['planning_code'] = e['query_shipper_planning_files']['planning_code'];
-      e['group'] = e['query_shipper_planning_files']['group'];
-      e['start_date'] = e['query_shipper_planning_files']['start_date'];
-      e['end_date'] = e['query_shipper_planning_files']['end_date'];
+      e['planning_code_id'] = e?.['query_shipper_planning_files']?.['id'];
+      e['planning_code'] = e?.['query_shipper_planning_files']?.['planning_code'];
+      e['group'] = e?.['query_shipper_planning_files']?.['group'];
+      e['start_date'] = e?.['query_shipper_planning_files']?.['start_date'];
+      e['end_date'] = e?.['query_shipper_planning_files']?.['end_date'];
       e['shipper_file_submission_date'] =
-        e['query_shipper_planning_files']['shipper_file_submission_date'];
+        e?.['query_shipper_planning_files']?.['shipper_file_submission_date'];
 
       return {
         data: e['byrow'],
@@ -154,30 +169,30 @@ export class PlanningDashboardService {
       };
     });
     console.log('convertData : ', convertData);
-    const areaArr = convertData?.flatMap((e :any) => {
-      const areaSp = e['data'].map((ar:any) => { 
+    const areaArr = convertData?.flatMap((e: any) => {
+      const areaSp = e['data'].map((ar: any) => {
         return ar['area']
       })
       return areaSp
     })
     const areaDb = await this.prisma.area.findMany({
-      where:{
+      where: {
         name: {
           in: areaArr
         }
       },
-      select:{
-        id:true,
-        name:true,
-        color:true,
+      select: {
+        id: true,
+        name: true,
+        color: true,
       }
     })
-    const newConvertData = convertData.map((e:any) => {
-      e['data'] = e['data'].map((eData:any) => {
-        const findArea = areaDb.find((f:any) => { return f?.name === eData['area'] })
-        if(findArea){
+    const newConvertData = convertData.map((e: any) => {
+      e['data'] = e['data'].map((eData: any) => {
+        const findArea = areaDb.find((f: any) => { return f?.name === eData['area'] })
+        if (findArea) {
           eData['area'] = findArea
-        }else{
+        } else {
           eData['area'] = {
             id: null,
             name: eData['area'],
@@ -213,15 +228,19 @@ export class PlanningDashboardService {
       });
 
     const convertData = resData.map((e: any) => {
-      e['byrow'] = e['query_shipper_planning_files'][
+      e['byrow'] = (e?.['query_shipper_planning_files']?.[
         'query_shipper_planning_files_temp_row'
-      ]?.map((row: any) => {
-        row['value'] = JSON.parse(row['value']);
-        const maxKey = Math.max(...Object.keys(row['value']).map(key => parseInt(key)));
+      ] || [])?.map((row: any) => {
+        row['value'] = this.safeParseJSON(row?.['value'], {});
+        const keys = Object.keys(row?.['value'] || {}).map(key => parseInt(key)).filter(k => !isNaN(k));
+        const maxKey = keys?.length > 0 ? Math.max(...keys) : 0;
 
         const newData = {};
         for (let i = 6; i <= maxKey; i++) {
-          newData[i] = { month: row['value'][i].month, value: row['value'][i]?.value ? Number(row['value'][i]?.value.replace(/,/g, '')) : 0 };
+          const valObj = row?.['value']?.[i];
+          if (valObj) {
+            newData[i] = { month: valObj?.month, value: valObj?.value ? Number(valObj?.value.toString().replace(/,/g, '')) : 0 };
+          }
         }
 
         // สร้างอ็อบเจ็กต์ที่จัดกลุ่มข้อมูลตามปี
@@ -229,8 +248,9 @@ export class PlanningDashboardService {
 
         // ลูปผ่านข้อมูลเพื่อจัดกลุ่ม
         for (const key in newData) {
-          const month = newData[key].month;
-          const value = newData[key].value;
+          const month = newData[key]?.month;
+          const value = newData[key]?.value;
+          if (!month) continue;
 
           if (!groupedData[month]) {
             groupedData[month] = { month: month, value: [] };
@@ -253,24 +273,24 @@ export class PlanningDashboardService {
 
 
         return {
-          id: row['id'],
-          nomination_point: row['value']['2'],
-          customer: row['value']['3'],
-          area: row['value']['4'],
-          unit: row['value']['5'],
-          entry_exit_id: row['value']['1'] === "Entry" ? 1 : 2,
-          entry_exit: row['value']['1'],
+          id: row?.['id'],
+          nomination_point: row?.['value']?.['2'],
+          customer: row?.['value']?.['3'],
+          area: row?.['value']?.['4'],
+          unit: row?.['value']?.['5'],
+          entry_exit_id: row?.['value']?.['1'] === "Entry" ? 1 : 2,
+          entry_exit: row?.['value']?.['1'],
           ...result
         };
       });
 
-      e['planning_code_id'] = e['query_shipper_planning_files']['id'];
-      e['planning_code'] = e['query_shipper_planning_files']['planning_code'];
-      e['group'] = e['query_shipper_planning_files']['group'];
-      e['start_date'] = e['query_shipper_planning_files']['start_date'];
-      e['end_date'] = e['query_shipper_planning_files']['end_date'];
+      e['planning_code_id'] = e?.['query_shipper_planning_files']?.['id'];
+      e['planning_code'] = e?.['query_shipper_planning_files']?.['planning_code'];
+      e['group'] = e?.['query_shipper_planning_files']?.['group'];
+      e['start_date'] = e?.['query_shipper_planning_files']?.['start_date'];
+      e['end_date'] = e?.['query_shipper_planning_files']?.['end_date'];
       e['shipper_file_submission_date'] =
-        e['query_shipper_planning_files']['shipper_file_submission_date'];
+        e?.['query_shipper_planning_files']?.['shipper_file_submission_date'];
 
       return {
         data: e['byrow'],
@@ -283,30 +303,30 @@ export class PlanningDashboardService {
       };
     });
 
-    const areaArr = convertData?.flatMap((e :any) => {
-      const areaSp = e['data'].map((ar:any) => { 
+    const areaArr = convertData?.flatMap((e: any) => {
+      const areaSp = e['data'].map((ar: any) => {
         return ar['area']
       })
       return areaSp
     })
     const areaDb = await this.prisma.area.findMany({
-      where:{
+      where: {
         name: {
           in: areaArr
         }
       },
-      select:{
-        id:true,
-        name:true,
-        color:true,
+      select: {
+        id: true,
+        name: true,
+        color: true,
       }
     })
-    const newConvertData = convertData.map((e:any) => {
-      e['data'] = e['data'].map((eData:any) => {
-        const findArea = areaDb.find((f:any) => { return f?.name === eData['area'] })
-        if(findArea){
+    const newConvertData = convertData.map((e: any) => {
+      e['data'] = e['data'].map((eData: any) => {
+        const findArea = areaDb.find((f: any) => { return f?.name === eData['area'] })
+        if (findArea) {
           eData['area'] = findArea
-        }else{
+        } else {
           eData['area'] = {
             id: null,
             name: eData['area'],
@@ -342,15 +362,19 @@ export class PlanningDashboardService {
       });
 
     const convertData = resData.map((e: any) => {
-      e['byrow'] = e['query_shipper_planning_files'][
+      e['byrow'] = (e?.['query_shipper_planning_files']?.[
         'query_shipper_planning_files_temp_row'
-      ]?.map((row: any) => {
-        row['value'] = JSON.parse(row['value']);
-        const maxKey = Math.max(...Object.keys(row['value']).map(key => parseInt(key)));
+      ] || [])?.map((row: any) => {
+        row['value'] = this.safeParseJSON(row?.['value'], {});
+        const keys = Object.keys(row?.['value'] || {}).map(key => parseInt(key)).filter(k => !isNaN(k));
+        const maxKey = keys?.length > 0 ? Math.max(...keys) : 0;
 
         const newData = {};
         for (let i = 6; i <= maxKey; i++) {
-          newData[i] = { day: row['value'][i].day, value: row['value'][i]?.value ? Number(row['value'][i]?.value.replace(/,/g, '')) : 0 };
+          const valObj = row?.['value']?.[i];
+          if (valObj) {
+            newData[i] = { day: valObj?.day, value: valObj?.value ? Number(valObj?.value.toString().replace(/,/g, '')) : 0 };
+          }
         }
 
         // สร้างอ็อบเจ็กต์ที่จัดกลุ่มข้อมูลตามปี
@@ -358,8 +382,9 @@ export class PlanningDashboardService {
 
         // ลูปผ่านข้อมูลเพื่อจัดกลุ่ม
         for (const key in newData) {
-          const day = newData[key].day;
-          const value = newData[key].value;
+          const day = newData[key]?.day;
+          const value = newData[key]?.value;
+          if (!day) continue;
 
           if (!groupedData[day]) {
             groupedData[day] = { day: day, value: [] };
@@ -382,24 +407,24 @@ export class PlanningDashboardService {
 
 
         return {
-          id: row['id'],
-          nomination_point: row['value']['2'],
-          customer: row['value']['3'],
-          area: row['value']['4'],
-          unit: row['value']['5'],
-          entry_exit_id: row['value']['1'] === "Entry" ? 1 : 2,
-          entry_exit: row['value']['1'],
+          id: row?.['id'],
+          nomination_point: row?.['value']?.['2'],
+          customer: row?.['value']?.['3'],
+          area: row?.['value']?.['4'],
+          unit: row?.['value']?.['5'],
+          entry_exit_id: row?.['value']?.['1'] === "Entry" ? 1 : 2,
+          entry_exit: row?.['value']?.['1'],
           ...result
         };
       });
 
-      e['planning_code_id'] = e['query_shipper_planning_files']['id'];
-      e['planning_code'] = e['query_shipper_planning_files']['planning_code'];
-      e['group'] = e['query_shipper_planning_files']['group'];
-      e['start_date'] = e['query_shipper_planning_files']['start_date'];
-      e['end_date'] = e['query_shipper_planning_files']['end_date'];
+      e['planning_code_id'] = e?.['query_shipper_planning_files']?.['id'];
+      e['planning_code'] = e?.['query_shipper_planning_files']?.['planning_code'];
+      e['group'] = e?.['query_shipper_planning_files']?.['group'];
+      e['start_date'] = e?.['query_shipper_planning_files']?.['start_date'];
+      e['end_date'] = e?.['query_shipper_planning_files']?.['end_date'];
       e['shipper_file_submission_date'] =
-        e['query_shipper_planning_files']['shipper_file_submission_date'];
+        e?.['query_shipper_planning_files']?.['shipper_file_submission_date'];
 
       return {
         data: e['byrow'],
@@ -412,30 +437,30 @@ export class PlanningDashboardService {
       };
     });
 
-    const areaArr = convertData?.flatMap((e :any) => {
-      const areaSp = e['data'].map((ar:any) => { 
+    const areaArr = convertData?.flatMap((e: any) => {
+      const areaSp = e['data'].map((ar: any) => {
         return ar['area']
       })
       return areaSp
     })
     const areaDb = await this.prisma.area.findMany({
-      where:{
+      where: {
         name: {
           in: areaArr
         }
       },
-      select:{
-        id:true,
-        name:true,
-        color:true,
+      select: {
+        id: true,
+        name: true,
+        color: true,
       }
     })
-    const newConvertData = convertData.map((e:any) => {
-      e['data'] = e['data'].map((eData:any) => {
-        const findArea = areaDb.find((f:any) => { return f?.name === eData['area'] })
-        if(findArea){
+    const newConvertData = convertData.map((e: any) => {
+      e['data'] = e['data'].map((eData: any) => {
+        const findArea = areaDb.find((f: any) => { return f?.name === eData['area'] })
+        if (findArea) {
           eData['area'] = findArea
-        }else{
+        } else {
           eData['area'] = {
             id: null,
             name: eData['area'],

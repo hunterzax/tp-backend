@@ -47,47 +47,47 @@ function setValueToBookingValueGroup(
     mmbtuh: any,
     mmscfh: any,
     pathConfig?: path_management_config
-){
+) {
     const mmbtudNumber = parseToNumber(mmbtud)
     const mmscfdNumber = parseToNumber(mmscfd)
     const mmbtuhNumber = parseToNumber(mmbtuh)
     const mmscfhNumber = parseToNumber(mmscfh)
-    if(mmbtudNumber){
-        if(group[key].mmbtud){
+    if (mmbtudNumber) {
+        if (group[key].mmbtud) {
             group[key].mmbtud = group[key].mmbtud + mmbtudNumber
         }
-        else{
+        else {
             group[key].mmbtud = mmbtudNumber
         }
     }
-    if(mmscfdNumber){
-        if(group[key].mmscfd){
+    if (mmscfdNumber) {
+        if (group[key].mmscfd) {
             group[key].mmscfd = group[key].mmscfd + mmscfdNumber
         }
-        else{
+        else {
             group[key].mmscfd = mmscfdNumber
         }
     }
-    
-    if(mmbtuhNumber){
-        if(group[key].mmbtuh){
+
+    if (mmbtuhNumber) {
+        if (group[key].mmbtuh) {
             group[key].mmbtuh = group[key].mmbtuh + mmbtuhNumber
         }
-        else{
+        else {
             group[key].mmbtuh = mmbtuhNumber
         }
     }
 
-    if(mmscfhNumber){
-        if(group[key].mmscfh){
+    if (mmscfhNumber) {
+        if (group[key].mmscfh) {
             group[key].mmscfh = group[key].mmscfh + mmscfhNumber
         }
-        else{
+        else {
             group[key].mmscfh = mmscfhNumber
         }
     }
 
-    if(pathConfig){
+    if (pathConfig) {
         group[key].pathConfig = pathConfig
     }
 }
@@ -99,19 +99,19 @@ function getAreaInPathConfigTemps(temps: any): any[] {
 
     const areas = temps.revised_capacity_path;
     const edges = temps.revised_capacity_path_edges;
-    
+
     // Create a map of area_id to area for quick lookup
     const areaMap = new Map();
     areas.forEach((area: any) => {
         areaMap.set(area.area_id, area);
     });
-    
+
     // Find the starting point (entry point with entry_exit_id = 1)
     const entryArea = areas.find((area: any) => area.area.entry_exit_id === 1);
     if (!entryArea) {
         return [];
     }
-    
+
     // Create adjacency list for path traversal
     const adjacencyList = new Map();
     edges.forEach((edge: any) => {
@@ -120,32 +120,32 @@ function getAreaInPathConfigTemps(temps: any): any[] {
         }
         adjacencyList.get(edge.source_id).push(edge.target_id);
     });
-    
+
     // Traverse the path starting from entry point
     const orderedAreas: any[] = [];
     const visited = new Set();
-    
+
     function traverse(currentAreaId: number) {
         if (visited.has(currentAreaId)) {
             return;
         }
-        
+
         const area = areaMap.get(currentAreaId);
         if (area) {
             orderedAreas.push(area);
             visited.add(currentAreaId);
         }
-        
+
         // Get next areas in the path
         const nextAreas = adjacencyList.get(currentAreaId) || [];
         nextAreas.forEach((nextAreaId: number) => {
             traverse(nextAreaId);
         });
     }
-    
+
     // Start traversal from entry area
     traverse(entryArea.area_id);
-    
+
     return orderedAreas;
 }
 
@@ -178,20 +178,20 @@ function getBookingValueForEachDay(
         entryContractPointKey,
         exitContractPointKey
     }
-    :
-    {
-        currentDay: dayjs.Dayjs,
-        allPointInContract: {isEntry: boolean, pointName: string, value: any}[],
-        pathManagementList: pathManagementWithRelations[],
-        contractPointList: contractPointWithRelations[],
-        mmbtuKey: number,
-        mmscfdKey: number,
-        mmbtuhKey: number,
-        mmscfhKey: number,
-        entryContractPointKey: string,
-        exitContractPointKey: string
-    }
-) : bookingValue[] {
+        :
+        {
+            currentDay: dayjs.Dayjs,
+            allPointInContract: { isEntry: boolean, pointName: string, value: any }[],
+            pathManagementList: pathManagementWithRelations[],
+            contractPointList: contractPointWithRelations[],
+            mmbtuKey: number,
+            mmscfdKey: number,
+            mmbtuhKey: number,
+            mmscfhKey: number,
+            entryContractPointKey: string,
+            exitContractPointKey: string
+        }
+): bookingValue[] {
     const result: bookingValueGroup = {}
     try {
         // วนลูปครั้งที่ 1: สร้างโครงสร้างผลลัพธ์และรวบรวม contract points
@@ -204,7 +204,7 @@ function getBookingValueForEachDay(
             const mmscfh = bookData[mmscfhKey]     // MMscfh
             // กำหนดชื่อจุดสัญญาตามประเภท (entry หรือ exit)
             const contractPointName = bookData[point.isEntry ? entryContractPointKey : exitContractPointKey]
-            
+
             // ค้นหาจุดสัญญาที่ตรงกับเงื่อนไข:
             // 1. ชื่อจุดสัญญาตรงกัน
             // 2. วันที่เริ่มต้นสัญญา <= วันที่ปัจจุบัน
@@ -219,12 +219,12 @@ function getBookingValueForEachDay(
                 )
             )
 
-            if(contractPoint){
+            if (contractPoint) {
                 // สร้าง key สำหรับจัดกลุ่มตามชื่อพื้นที่และประเภท (entry/exit)
                 const key = `${contractPoint.area?.name}_${contractPoint.area?.entry_exit_id == 1}`
-                
+
                 // สร้างโครงสร้างผลลัพธ์ใหม่หากยังไม่มี
-                if(!result[key]){
+                if (!result[key]) {
                     result[key] = {
                         area: contractPoint.area,
                         mmbtud: undefined,
@@ -238,7 +238,7 @@ function getBookingValueForEachDay(
                         originalMmscfh: mmscfh
                     }
                 }
-                else{
+                else {
                     // เพิ่ม contract point เข้าไปในรายการที่มีอยู่แล้ว
                     result[key].contractPoint.push(contractPoint)
                 }
@@ -254,10 +254,10 @@ function getBookingValueForEachDay(
             const mmscfd = bookData[mmscfdKey]     // MMscfd
             const mmbtuh = bookData[mmbtuhKey]     // MMBTU/h
             const mmscfh = bookData[mmscfhKey]     // MMscfh
-            
+
             // กำหนดชื่อจุดสัญญาตามประเภท (entry หรือ exit)
             const contractPointName = bookData[point.isEntry ? entryContractPointKey : exitContractPointKey]
-            
+
             // ค้นหาจุดสัญญาที่ตรงกับเงื่อนไข (เช่นเดียวกับลูปแรก)
             const contractPoint = contractPointList.find((contractPoint: any) =>
                 contractPoint.contract_point === contractPointName &&
@@ -269,75 +269,75 @@ function getBookingValueForEachDay(
                 )
             )
 
-            if(contractPoint){
+            if (contractPoint) {
                 // สร้าง key สำหรับจัดกลุ่มตามชื่อพื้นที่และประเภท (entry/exit)
                 const key = `${contractPoint.area?.name}_${contractPoint.area?.entry_exit_id == 1}`
-                
+
                 // หากเป็นจุดออก (exit point) ต้องพิจารณาเส้นทาง
-                if(contractPoint.area?.entry_exit_id == 2){
+                if (contractPoint.area?.entry_exit_id == 2) {
                     // ค้นหาเส้นทางที่ใช้งานได้ล่าสุดที่เริ่มต้นก่อนหรือในวันที่ปัจจุบัน
                     let path: pathManagementWithRelations | null = null
                     const pathList = pathManagementList.filter((path => {
                         return currentDay.isSameOrAfter(path.start_date, 'day') &&
-                            path.path_management_config.some(config => 
-                                config.flag_use && 
+                            path.path_management_config.some(config =>
+                                config.flag_use &&
                                 isMatch(config.exit_name_temp, contractPoint.area.name)
                             )
                     }))
-                    
+
                     // เลือกเส้นทางที่ใหม่ที่สุด
-                    if(pathList.length > 0){
+                    if (pathList.length > 0) {
                         path = pathList.sort((a, b) => new Date(b.start_date).getTime() - new Date(a.start_date).getTime())[0]
                     }
 
-                    if(path){
+                    if (path) {
                         // ค้นหาการกำหนดค่าเส้นทางที่ตรงกับจุดออก
-                        const pathConfig : path_management_config | undefined = path.path_management_config.find(config => 
-                            config.flag_use && 
+                        const pathConfig: path_management_config | undefined = path.path_management_config.find(config =>
+                            config.flag_use &&
                             isMatch(config.exit_name_temp, contractPoint.area.name)
                         )
-                        
-                        if(pathConfig){
+
+                        if (pathConfig) {
                             // เส้นทางจะถูกกำหนดที่จุดออก
                             setValueToBookingValueGroup(result, key, undefined, undefined, undefined, undefined, pathConfig)
 
                             // แปลงข้อมูล temps เป็น JSON และดึงพื้นที่ในเส้นทาง
                             const temps = JSON.parse(pathConfig['temps'])
                             const areaInPathConfigTemps = getAreaInPathConfigTemps(temps)
-                            
+
                             // หาตำแหน่งของจุดปัจจุบันในเส้นทาง
                             const currentPointIndex = areaInPathConfigTemps.findIndex(area => isMatch(area.area.name, contractPoint.area.name))
-                            
+
                             // ตัดพื้นที่ที่อยู่หลังจุดปัจจุบันออก (เพื่อไม่ให้ส่งค่ากลับไป)
-                            if(currentPointIndex !== -1){
+                            if (currentPointIndex !== -1) {
                                 areaInPathConfigTemps.splice(currentPointIndex + 1)
                             }
-                            
+
                             // ส่งค่าการจองไปยังทุกพื้นที่ในเส้นทาง (ก่อนจุดออก)
                             areaInPathConfigTemps.map(item => {
                                 const otherAreaKey = `${item?.area?.name}_${item?.area?.entry_exit_id == 1}`
-                                if(result[otherAreaKey]){
+                                if (result[otherAreaKey]) {
                                     setValueToBookingValueGroup(result, otherAreaKey, mmbtud, mmscfd, mmbtuh, mmscfh)
                                 }
                             })
                         }
-                        else{
+                        else {
                             // หากไม่พบการกำหนดค่าเส้นทาง ให้ส่งค่าไปยังจุดออกโดยตรง
                             setValueToBookingValueGroup(result, key, mmbtud, mmscfd, mmbtuh, mmscfh)
                         }
                     }
-                    else{
+                    else {
                         // หากไม่พบเส้นทาง ให้ส่งค่าไปยังจุดออกโดยตรง
                         setValueToBookingValueGroup(result, key, mmbtud, mmscfd, mmbtuh, mmscfh)
                     }
                 }
-                else{
+                else {
                     // หากเป็นจุดเข้า (entry point) ให้ส่งค่าไปยังจุดนั้นโดยตรง
                     setValueToBookingValueGroup(result, key, mmbtud, mmscfd, mmbtuh, mmscfh)
                 }
             }
         })
-        
+
         return Object.values(result)
     } catch (error) {
         // หากเกิดข้อผิดพลาด ให้คืนค่าผลลัพธ์ที่ว่าง
@@ -353,15 +353,15 @@ export async function getBookingValueWithPath(
         endDate,
         bookingFullJson
     }
-    : {
-        prisma: PrismaService,
-        startDate: dayjs.Dayjs,
-        endDate: dayjs.Dayjs,
-        bookingFullJson: any
-    }
-)  {
+        : {
+            prisma: PrismaService,
+            startDate: dayjs.Dayjs,
+            endDate: dayjs.Dayjs,
+            bookingFullJson: any
+        }
+) {
 
-    try{
+    try {
         const dataTemp = typeof bookingFullJson?.data_temp === 'string' ? JSON.parse(bookingFullJson.data_temp) : bookingFullJson.data_temp
 
         const headMMBTU = dataTemp?.['headerEntry']?.['Capacity Daily Booking (MMBTU/d)'];
@@ -380,19 +380,19 @@ export async function getBookingValueWithPath(
             ...Object.keys(headMMSCFH || {}),
             ...Object.keys(headExitMMBTU || {}),
             ...Object.keys(headExitMMBTUH || {})
-          ])]
-          .filter(date => {
-            const dayjsDate = getTodayNowDDMMYYYYAdd7(date)
-            return date !== 'key' && dayjsDate.isSameOrBefore(endDate, 'month') && dayjsDate.isSameOrAfter(startDate, 'month')
-          })
-          .sort((a, b) => getTodayNowDDMMYYYYAdd7(a).diff(getTodayNowDDMMYYYYAdd7(b)));
+        ])]
+            .filter(date => {
+                const dayjsDate = getTodayNowDDMMYYYYAdd7(date)
+                return date !== 'key' && dayjsDate.isSameOrBefore(endDate, 'month') && dayjsDate.isSameOrAfter(startDate, 'month')
+            })
+            .sort((a, b) => getTodayNowDDMMYYYYAdd7(a).diff(getTodayNowDDMMYYYYAdd7(b)));
 
 
-        const pathManagementList : pathManagementWithRelations[] = await prisma.path_management.findMany({
+        const pathManagementList: pathManagementWithRelations[] = await prisma.path_management.findMany({
             where: {
-            start_date: {
-                lt: endDate.toDate(),
-            },
+                start_date: {
+                    lt: endDate.toDate(),
+                },
             },
             ...pathManagementPopulate,
             orderBy: {
@@ -408,16 +408,16 @@ export async function getBookingValueWithPath(
             }
         }) : [];
         if (dataTemp['exitValue'] && Array.isArray(dataTemp['exitValue'])) {
-          allPointInContract.push(...dataTemp['exitValue'].map((exit: any) => {
-            return {
-                isEntry: false,
-                pointName: exit[exitContractPointKey],
-                value: exit
-            }
-        }))
+            allPointInContract.push(...dataTemp['exitValue'].map((exit: any) => {
+                return {
+                    isEntry: false,
+                    pointName: exit[exitContractPointKey],
+                    value: exit
+                }
+            }))
         }
-        const contractPointNameList =  allPointInContract.map((point: any) => point.pointName)
-        const contractPointList : contractPointWithRelations[] = await prisma.contract_point.findMany({
+        const contractPointNameList = allPointInContract.map((point: any) => point.pointName)
+        const contractPointList: contractPointWithRelations[] = await prisma.contract_point.findMany({
             where: {
                 contract_point: {
                     in: contractPointNameList,
@@ -433,19 +433,19 @@ export async function getBookingValueWithPath(
             ...contractPointPopulate,
         });
 
-        const result : Record<string, bookingValue[]> = {}
+        const result: Record<string, bookingValue[]> = {}
         allDate.map((date) => {
-            const mmbtuKey = Number(headMMBTU[date].key)
-            const mmscfdKey = Number(headMMSCFD[date].key)
-            const mmbtuhKey = Number(headMMBTUH[date].key)
-            const mmscfhKey = Number(headMMSCFH[date].key)
+            const mmbtuKey = Number(headMMBTU?.[date]?.key)
+            const mmscfdKey = Number(headMMSCFD?.[date]?.key)
+            const mmbtuhKey = Number(headMMBTUH?.[date]?.key)
+            const mmscfhKey = Number(headMMSCFH?.[date]?.key)
 
             const currentDate = getTodayNowDDMMYYYYAdd7(date)
 
             // Loop through every day in the same month as currentDate
             const monthStart = currentDate.startOf('month')
             const monthEnd = currentDate.endOf('month')
-            
+
             let currentDay = monthStart
             while (currentDay.isSameOrBefore(monthEnd, 'day')) {
                 const valueForEachDay = getBookingValueForEachDay({

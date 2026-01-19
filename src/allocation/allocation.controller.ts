@@ -62,31 +62,34 @@ export class AllocationController implements OnModuleInit {
     this.exampleService = this.client.getService<ExampleService>('ExampleService');
   }
 
-
+  private safeParseJSON(data: any, defaultValue: any = null) {
+    if (!data) return defaultValue;
+    try {
+      return typeof data === 'string' ? JSON.parse(data) : data;
+    } catch (e) {
+      console.error('JSON parse error:', e);
+      return defaultValue;
+    }
+  }
 
   @GrpcMethod('ExampleService')
   sendData(data: { param: string }): { data: string } {
-    if(data?.param == 'execute allo&bal'){
+    if (data?.param == 'execute allo&bal') {
       const executeData = this.allocationService.executeData(
         null,
         null,
       );
       return { data: 'Executed' };
     }
-    else if(data?.param?.includes('update_execute_status')){
-      let payload = null;
-      try {
-        payload = JSON.parse(data.param.replace('update_execute_status:', ''));
-      } catch (error) {
-        payload = null;
-      };
+    else if (data?.param?.includes('update_execute_status')) {
+      const payload = this.safeParseJSON(data.param.replace('update_execute_status:', ''));
       const updateExecuteStatus = this.meteringManagementService.updateExecuteStatus(
         payload,
         null,
       );
       return { data: 'Update Execute Status' };
     }
-    else{
+    else {
       return { data: 'Failed. Please try again.' };
     }
   }

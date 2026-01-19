@@ -37,16 +37,28 @@ export class CapacityService {
     // @Inject(CACHE_MANAGER) private cacheService: Cache,
   ) { }
 
+  private safeParseJSON(data: any, defaultValue: any = null) {
+    if (!data) return defaultValue;
+    try {
+      return typeof data === 'string' ? JSON.parse(data) : data;
+    } catch (e) {
+      console.error('JSON parse error:', e);
+      return defaultValue;
+    }
+  }
+
   transformedDataObj(data: any) {
+    if (!data || typeof data !== 'object') return [];
     return Object.entries(data).map(([key, value]) => {
       return { key, value };
     });
   }
 
   transformedKeys(data: any) {
+    if (!data || !Array.isArray(data)) return [];
     return data.map((item: any) => {
       const transformedItem = {};
-
+      if (!item) return transformedItem;
       Object.keys(item).forEach((key) => {
         // ดึงเฉพาะตัวเลขจากคีย์ __EMPTY และใช้มันเป็นคีย์ใหม่
         const match = key.match(/__EMPTY(?:_(\d+))?/);
@@ -59,6 +71,7 @@ export class CapacityService {
   }
 
   transformedKeysValue(data: any) {
+    if (!data || typeof data !== 'object') return {};
     return Object.keys(data).reduce((acc, key) => {
       const newKey = data[key]; // ใช้ค่าเดิมเป็นคีย์ใหม่
       acc[newKey] = { key, value: null }; // สร้างอ็อบเจ็กต์ใหม่ที่มี key และ value เป็น null
@@ -67,6 +80,7 @@ export class CapacityService {
   }
 
   objToArray(obj: any) {
+    if (!obj || typeof obj !== 'object') return [];
     return Object.keys(obj).map((key) => ({
       key: key, // ใช้คีย์เดิม
       value: obj[key], // ค่าเดิมของอ็อบเจ็กต์
@@ -74,6 +88,7 @@ export class CapacityService {
   }
 
   getKeyByValue(obj: any, value: any) {
+    if (!obj || typeof obj !== 'object') return undefined;
     return Object.keys(obj).find((key) => obj[key] === value);
   }
 
@@ -468,10 +483,10 @@ export class CapacityService {
       },
     });
   }
-  
-  
+
+
   extendDates(data, shadowPeriod) {
-    const clonedData = JSON.parse(JSON.stringify(data));
+    const clonedData = data ? this.safeParseJSON(JSON.stringify(data)) : null;
 
     // หาวันที่มากที่สุดในข้อมูลเดิม
     const maxDate = dayjs(data[data.length - 1].date);
@@ -569,7 +584,7 @@ export class CapacityService {
     });
   }
 
-  
+
   generateMonthArray(
     startDate: string,
     endDate: string,
@@ -598,7 +613,7 @@ export class CapacityService {
     return result;
   }
 
-  
+
   generateDailyArray(startDate: string, endDate: string): string[] {
     const starts = startDate ? getTodayNowDDMMYYYYAdd7(startDate) : null;
     const ends = endDate ? getTodayNowDDMMYYYYAdd7(endDate) : null;
@@ -615,7 +630,7 @@ export class CapacityService {
     return result;
   }
 
-  
+
   adjustStartDate(startDate: any, fixDay: any) {
     const today = dayjs(); // วันที่ปัจจุบัน
     let start = dayjs(startDate, 'DD/MM/YYYY', true); // วันที่เริ่มต้นจาก input
@@ -636,7 +651,7 @@ export class CapacityService {
     return start.format('DD/MM/YYYY');
   }
 
-  
+
   checkDateRange(
     startDate: string,
     endDate: string,
@@ -666,7 +681,7 @@ export class CapacityService {
     return diff >= min && diff <= max;
   }
 
-  
+
   async getGroupByName(name: any) {
     return await this.prisma.group.findFirst({
       where: {
@@ -676,7 +691,7 @@ export class CapacityService {
     });
   }
 
-  
+
   async getContractPointByName(name: any, group: any) {
     // group เช็ค กับ shipper อีกที
     return await this.prisma.contract_point.findFirst({
@@ -702,7 +717,7 @@ export class CapacityService {
     });
   }
 
-  
+
   generateExpectedDates = (start, end, mode, fixday, todayday) => {
     const dates = [];
     let current = dayjs(start, 'DD/MM/YYYY');
@@ -733,7 +748,7 @@ export class CapacityService {
     return dates;
   };
 
-  
+
   validateDateEntries = (data, mode, fixday, todayday, minDate, maxDate) => {
     const start = data.start;
     const end = data.end;
@@ -776,12 +791,12 @@ export class CapacityService {
     return result;
   };
 
-  
+
   extractValidationResults = (result: any) => {
     return Object.values(result);
   };
 
-  
+
   validateEndDate = ({
     configStart,
     configEnd,
@@ -825,14 +840,14 @@ export class CapacityService {
     return false;
   };
 
-  
+
   async pathDetailCapacityRequestManagementTranformOld(
     data: any,
     userId: any,
     file: any,
     token: any,
   ) {
-    const resultTranform = (await JSON.parse(data?.json_data)) || null;
+    const resultTranform = this.safeParseJSON(data?.json_data);
     console.log('resultTranform : ', resultTranform);
     const headerEntry = resultTranform?.headerEntry || {};
     const entryValue = resultTranform?.entryValue || [];
@@ -2355,14 +2370,14 @@ export class CapacityService {
     };
   }
 
-  
+
   async pathDetailCapacityRequestManagementTranformNew(
     data: any,
     userId: any,
     file: any,
     token: any,
   ) {
-    const resultTranform = (await JSON.parse(data?.json_data)) || null;
+    const resultTranform = this.safeParseJSON(data?.json_data);
     console.log('resultTranform : ', resultTranform);
     const headerEntry = resultTranform?.headerEntry || {};
     const entryValue = resultTranform?.entryValue || [];
@@ -3862,8 +3877,8 @@ export class CapacityService {
       message: 'Success.',
     };
   }
- 
-  
+
+
   async fileCapacityBooking(url: any, contract_code_id: any, userId: any) {
     return await this.prisma.file_capacity_request_management.create({
       data: {
@@ -3875,8 +3890,8 @@ export class CapacityService {
       },
     });
   }
- 
-  
+
+
   deepEqual(obj1, obj2) {
     if (obj1 === obj2) return true;
     if (
@@ -3943,7 +3958,7 @@ export class CapacityService {
     pathManagement['path_management_config'] = pathManagement[
       'path_management_config'
     ].map((e: any) => {
-      return { ...e, temps: JSON.parse(e['temps']) };
+      return { ...e, temps: this.safeParseJSON(e?.['temps']) };
     });
 
     const pathConfig = pathManagement['path_management_config'].map(
@@ -3974,7 +3989,7 @@ export class CapacityService {
       },
       orderBy: { id: 'desc' },
     });
-    const dataFull = JSON.parse(getData['booking_full_json'][0]?.data_temp);
+    const dataFull = this.safeParseJSON(getData?.['booking_full_json']?.[0]?.data_temp);
     const dataRow = getData['booking_row_json'];
     const entryUse = dataRow.filter((f: any) => {
       return f?.entry_exit_id === 1;
@@ -3988,7 +4003,7 @@ export class CapacityService {
 
     for (let i = 0; i < entryUse.length; i++) {
       const contractPoint = await this.prisma.contract_point.findFirst({
-        where: { contract_point: JSON.parse(entryUse[i]?.data_temp)['0'] },
+        where: { contract_point: this.safeParseJSON(entryUse?.[i]?.data_temp)?.['0'] },
         include: {
           area: {
             select: {
@@ -4032,7 +4047,7 @@ export class CapacityService {
     }
     for (let i = 0; i < exitUse.length; i++) {
       const contractPoint = await this.prisma.contract_point.findFirst({
-        where: { contract_point: JSON.parse(exitUse[i]?.data_temp)['0'] },
+        where: { contract_point: this.safeParseJSON(exitUse?.[i]?.data_temp)?.['0'] },
         include: {
           area: {
             select: {
@@ -4558,7 +4573,7 @@ export class CapacityService {
     // ******
   }
 
-  
+
   async updateStatusCapacityRequestManagement(
     id: any,
     payload: any,
@@ -4685,7 +4700,7 @@ export class CapacityService {
       pathManagement['path_management_config'] = pathManagement[
         'path_management_config'
       ].map((e: any) => {
-        return { ...e, temps: JSON.parse(e['temps']) };
+        return { ...e, temps: this.safeParseJSON(e?.['temps']) };
       });
 
       const pathConfig = pathManagement['path_management_config'].map(
@@ -4722,7 +4737,7 @@ export class CapacityService {
         orderBy: { id: 'desc' },
       });
       // console.log('getData : ', getData);
-      const dataFull = JSON.parse(getData['booking_full_json'][0]?.data_temp);
+      const dataFull = this.safeParseJSON(getData?.['booking_full_json']?.[0]?.data_temp);
       const dataRow = getData['booking_row_json'];
       const entryUse = dataRow.filter((f: any) => {
         return f?.entry_exit_id === 1;
@@ -4737,7 +4752,7 @@ export class CapacityService {
 
       for (let i = 0; i < entryUse.length; i++) {
         const contractPoint = await this.prisma.contract_point.findFirst({
-          where: { contract_point: JSON.parse(entryUse[i]?.data_temp)['0'] },
+          where: { contract_point: this.safeParseJSON(entryUse?.[i]?.data_temp)?.['0'] },
           include: {
             area: {
               select: {
@@ -4781,7 +4796,7 @@ export class CapacityService {
       }
       for (let i = 0; i < exitUse.length; i++) {
         const contractPoint = await this.prisma.contract_point.findFirst({
-          where: { contract_point: JSON.parse(exitUse[i]?.data_temp)['0'] },
+          where: { contract_point: this.safeParseJSON(exitUse?.[i]?.data_temp)?.['0'] },
           include: {
             area: {
               select: {
@@ -5569,7 +5584,7 @@ export class CapacityService {
         pathManagement['path_management_config'] = pathManagement[
           'path_management_config'
         ].map((e: any) => {
-          return { ...e, temps: JSON.parse(e['temps']) };
+          return { ...e, temps: this.safeParseJSON(e?.['temps']) };
         });
 
         const pathConfig = pathManagement['path_management_config'].map(
@@ -5602,7 +5617,7 @@ export class CapacityService {
           },
           orderBy: { id: 'desc' },
         });
-        const dataFull = JSON.parse(getData['booking_full_json'][0]?.data_temp);
+        const dataFull = this.safeParseJSON(getData?.['booking_full_json']?.[0]?.data_temp);
         const dataRow = getData['booking_row_json'];
         const entryUse = dataRow.filter((f: any) => {
           return f?.entry_exit_id === 1;
@@ -5616,7 +5631,7 @@ export class CapacityService {
 
         for (let i = 0; i < entryUse.length; i++) {
           const contractPoint = await this.prisma.contract_point.findFirst({
-            where: { contract_point: JSON.parse(entryUse[i]?.data_temp)['0'] },
+            where: { contract_point: this.safeParseJSON(entryUse?.[i]?.data_temp)?.['0'] },
             include: {
               area: {
                 select: {
@@ -5660,7 +5675,7 @@ export class CapacityService {
         }
         for (let i = 0; i < exitUse.length; i++) {
           const contractPoint = await this.prisma.contract_point.findFirst({
-            where: { contract_point: JSON.parse(exitUse[i]?.data_temp)['0'] },
+            where: { contract_point: this.safeParseJSON(exitUse?.[i]?.data_temp)?.['0'] },
             include: {
               area: {
                 select: {
@@ -6153,7 +6168,7 @@ export class CapacityService {
         pathManagement['path_management_config'] = pathManagement[
           'path_management_config'
         ].map((e: any) => {
-          return { ...e, temps: JSON.parse(e['temps']) };
+          return { ...e, temps: this.safeParseJSON(e?.['temps']) };
         });
 
         const pathConfig = pathManagement['path_management_config'].map(
@@ -6186,7 +6201,7 @@ export class CapacityService {
           },
           orderBy: { id: 'desc' },
         });
-        const dataFull = JSON.parse(getData['booking_full_json'][0]?.data_temp);
+        const dataFull = this.safeParseJSON(getData?.['booking_full_json']?.[0]?.data_temp);
         const dataRow = getData['booking_row_json'];
         const entryUse = dataRow.filter((f: any) => {
           return f?.entry_exit_id === 1;
@@ -6200,7 +6215,7 @@ export class CapacityService {
 
         for (let i = 0; i < entryUse.length; i++) {
           const contractPoint = await this.prisma.contract_point.findFirst({
-            where: { contract_point: JSON.parse(entryUse[i]?.data_temp)['0'] },
+            where: { contract_point: this.safeParseJSON(entryUse?.[i]?.data_temp)?.['0'] },
             include: {
               area: {
                 select: {
@@ -6244,7 +6259,7 @@ export class CapacityService {
         }
         for (let i = 0; i < exitUse.length; i++) {
           const contractPoint = await this.prisma.contract_point.findFirst({
-            where: { contract_point: JSON.parse(exitUse[i]?.data_temp)['0'] },
+            where: { contract_point: this.safeParseJSON(exitUse?.[i]?.data_temp)?.['0'] },
             include: {
               area: {
                 select: {
@@ -6743,8 +6758,8 @@ export class CapacityService {
 
     return resData;
   }
- 
-  
+
+
   async updateStatusCapacityRequestManagementCheck(
     id: any,
     payload: any,
@@ -6869,7 +6884,7 @@ export class CapacityService {
       pathManagement['path_management_config'] = pathManagement[
         'path_management_config'
       ].map((e: any) => {
-        return { ...e, temps: JSON.parse(e['temps']) };
+        return { ...e, temps: this.safeParseJSON(e?.['temps']) };
       });
 
       const pathConfig = pathManagement['path_management_config'].map(
@@ -6906,7 +6921,7 @@ export class CapacityService {
         orderBy: { id: 'desc' },
       });
       // console.log('getData : ', getData);
-      const dataFull = JSON.parse(getData['booking_full_json'][0]?.data_temp);
+      const dataFull = this.safeParseJSON(getData?.['booking_full_json']?.[0]?.data_temp);
       const dataRow = getData['booking_row_json'];
       const entryUse = dataRow.filter((f: any) => {
         return f?.entry_exit_id === 1;
@@ -6921,7 +6936,7 @@ export class CapacityService {
 
       for (let i = 0; i < entryUse.length; i++) {
         const contractPoint = await this.prisma.contract_point.findFirst({
-          where: { contract_point: JSON.parse(entryUse[i]?.data_temp)['0'] },
+          where: { contract_point: this.safeParseJSON(entryUse?.[i]?.data_temp)?.['0'] },
           include: {
             area: {
               select: {
@@ -6965,7 +6980,7 @@ export class CapacityService {
       }
       for (let i = 0; i < exitUse.length; i++) {
         const contractPoint = await this.prisma.contract_point.findFirst({
-          where: { contract_point: JSON.parse(exitUse[i]?.data_temp)['0'] },
+          where: { contract_point: this.safeParseJSON(exitUse?.[i]?.data_temp)?.['0'] },
           include: {
             area: {
               select: {
@@ -7415,7 +7430,7 @@ export class CapacityService {
     return true;
   }
 
-  
+
   async extendCapacityRequestManagement(
     id: any,
     payload: any,
@@ -7444,7 +7459,7 @@ export class CapacityService {
         },
       },
     });
-    jsonFull['data_temp'] = JSON.parse(jsonFull['data_temp']);
+    if (jsonFull) jsonFull['data_temp'] = this.safeParseJSON(jsonFull?.['data_temp']);
 
     const jsonRow = await this.prisma.booking_row_json.findMany({
       where: {
@@ -7455,7 +7470,7 @@ export class CapacityService {
       },
     });
     const jsonRowArr = jsonRow.map((e: any) => {
-      return { ...e, data_temp: JSON.parse(e['data_temp']) };
+      return { ...e, data_temp: this.safeParseJSON(e?.['data_temp']) };
     });
 
     let resultDate = null;
@@ -7968,7 +7983,7 @@ export class CapacityService {
       pathManagementT['path_management_config'] = pathManagementT[
         'path_management_config'
       ].map((e: any) => {
-        return { ...e, temps: JSON.parse(e['temps']) };
+        return { ...e, temps: this.safeParseJSON(e?.['temps']) };
       });
 
       const pathConfigT = pathManagementT['path_management_config'].map(
@@ -7999,7 +8014,7 @@ export class CapacityService {
         },
         orderBy: { id: 'desc' },
       });
-      const dataFullT = JSON.parse(getDataT['booking_full_json'][0]?.data_temp);
+      const dataFullT = this.safeParseJSON(getDataT?.['booking_full_json']?.[0]?.data_temp);
       const dataRowT = getDataT['booking_row_json'];
       const entryUseT = dataRowT.filter((f: any) => {
         return f?.entry_exit_id === 1;
@@ -8011,7 +8026,7 @@ export class CapacityService {
       const exitDataT: any = [];
       for (let i = 0; i < entryUseT.length; i++) {
         const contractPoint = await this.prisma.contract_point.findFirst({
-          where: { contract_point: JSON.parse(entryUseT[i]?.data_temp)['0'] },
+          where: { contract_point: this.safeParseJSON(entryUseT?.[i]?.data_temp)?.['0'] },
           include: {
             area: {
               select: {
@@ -8055,7 +8070,7 @@ export class CapacityService {
       }
       for (let i = 0; i < exitUseT.length; i++) {
         const contractPoint = await this.prisma.contract_point.findFirst({
-          where: { contract_point: JSON.parse(exitUseT[i]?.data_temp)['0'] },
+          where: { contract_point: this.safeParseJSON(exitUseT?.[i]?.data_temp)?.['0'] },
           include: {
             area: {
               select: {
@@ -8530,7 +8545,7 @@ export class CapacityService {
       pathManagement['path_management_config'] = pathManagement[
         'path_management_config'
       ].map((e: any) => {
-        return { ...e, temps: JSON.parse(e['temps']) };
+        return { ...e, temps: this.safeParseJSON(e?.['temps']) };
       });
 
       const pathConfig = pathManagement['path_management_config'].map(
@@ -8561,7 +8576,7 @@ export class CapacityService {
         },
         orderBy: { id: 'desc' },
       });
-      const dataFull = JSON.parse(getData['booking_full_json'][0]?.data_temp);
+      const dataFull = this.safeParseJSON(getData?.['booking_full_json']?.[0]?.data_temp);
       const dataRow = getData['booking_row_json'];
       const entryUse = dataRow.filter((f: any) => {
         return f?.entry_exit_id === 1;
@@ -8575,7 +8590,7 @@ export class CapacityService {
 
       for (let i = 0; i < entryUse.length; i++) {
         const contractPoint = await this.prisma.contract_point.findFirst({
-          where: { contract_point: JSON.parse(entryUse[i]?.data_temp)['0'] },
+          where: { contract_point: this.safeParseJSON(entryUse?.[i]?.data_temp)?.['0'] },
           include: {
             area: {
               select: {
@@ -8619,7 +8634,7 @@ export class CapacityService {
       }
       for (let i = 0; i < exitUse.length; i++) {
         const contractPoint = await this.prisma.contract_point.findFirst({
-          where: { contract_point: JSON.parse(exitUse[i]?.data_temp)['0'] },
+          where: { contract_point: this.safeParseJSON(exitUse?.[i]?.data_temp)?.['0'] },
           include: {
             area: {
               select: {
@@ -9625,7 +9640,7 @@ export class CapacityService {
       pathManagementT['path_management_config'] = pathManagementT[
         'path_management_config'
       ].map((e: any) => {
-        return { ...e, temps: JSON.parse(e['temps']) };
+        return { ...e, temps: this.safeParseJSON(e?.['temps']) };
       });
 
       const pathConfigT = pathManagementT['path_management_config'].map(
@@ -9656,7 +9671,7 @@ export class CapacityService {
         },
         orderBy: { id: 'desc' },
       });
-      const dataFullT = JSON.parse(getDataT['booking_full_json'][0]?.data_temp);
+      const dataFullT = this.safeParseJSON(getDataT?.['booking_full_json']?.[0]?.data_temp);
       const dataRowT = getDataT['booking_row_json'];
       const entryUseT = dataRowT.filter((f: any) => {
         return f?.entry_exit_id === 1;
@@ -9668,7 +9683,7 @@ export class CapacityService {
       const exitDataT: any = [];
       for (let i = 0; i < entryUseT.length; i++) {
         const contractPoint = await this.prisma.contract_point.findFirst({
-          where: { contract_point: JSON.parse(entryUseT[i]?.data_temp)['0'] },
+          where: { contract_point: this.safeParseJSON(entryUseT?.[i]?.data_temp)?.['0'] },
           include: {
             area: {
               select: {
@@ -9712,7 +9727,7 @@ export class CapacityService {
       }
       for (let i = 0; i < exitUseT.length; i++) {
         const contractPoint = await this.prisma.contract_point.findFirst({
-          where: { contract_point: JSON.parse(exitUseT[i]?.data_temp)['0'] },
+          where: { contract_point: this.safeParseJSON(exitUseT?.[i]?.data_temp)?.['0'] },
           include: {
             area: {
               select: {
@@ -10188,7 +10203,7 @@ export class CapacityService {
       pathManagement['path_management_config'] = pathManagement[
         'path_management_config'
       ].map((e: any) => {
-        return { ...e, temps: JSON.parse(e['temps']) };
+        return { ...e, temps: this.safeParseJSON(e?.['temps']) };
       });
 
       const pathConfig = pathManagement['path_management_config'].map(
@@ -10219,7 +10234,7 @@ export class CapacityService {
         },
         orderBy: { id: 'desc' },
       });
-      const dataFull = JSON.parse(getData['booking_full_json'][0]?.data_temp);
+      const dataFull = this.safeParseJSON(getData?.['booking_full_json']?.[0]?.data_temp);
       const dataRow = getData['booking_row_json'];
       const entryUse = dataRow.filter((f: any) => {
         return f?.entry_exit_id === 1;
@@ -10233,7 +10248,7 @@ export class CapacityService {
 
       for (let i = 0; i < entryUse.length; i++) {
         const contractPoint = await this.prisma.contract_point.findFirst({
-          where: { contract_point: JSON.parse(entryUse[i]?.data_temp)['0'] },
+          where: { contract_point: this.safeParseJSON(entryUse?.[i]?.data_temp)?.['0'] },
           include: {
             area: {
               select: {
@@ -10277,7 +10292,7 @@ export class CapacityService {
       }
       for (let i = 0; i < exitUse.length; i++) {
         const contractPoint = await this.prisma.contract_point.findFirst({
-          where: { contract_point: JSON.parse(exitUse[i]?.data_temp)['0'] },
+          where: { contract_point: this.safeParseJSON(exitUse?.[i]?.data_temp)?.['0'] },
           include: {
             area: {
               select: {
@@ -10912,7 +10927,7 @@ export class CapacityService {
     };
   }
 
-  
+
   mapKeyOldWithValue(arg1: any, headerEntry: any, rowValueOld: any) {
     const result: any = {};
 
@@ -10934,7 +10949,7 @@ export class CapacityService {
     return result;
   }
 
-  
+
   mapKeyOldWithClosestValue(arg1: any, headerEntry: any, rowValueOld: any) {
     const result: any = {};
 
@@ -11015,7 +11030,7 @@ export class CapacityService {
     return result;
   }
 
-  
+
   sumKeys(entryValue: any[], startKey: number) {
     const result: Record<string, number> = {};
 
@@ -11054,7 +11069,7 @@ export class CapacityService {
     return rowValueOldV2;
   }
 
-  
+
   generateDateKeyMapNew(dates: string[], startKey: number) {
     const dateKeyMap: any = {};
     dates.forEach((date, index) => {
@@ -11063,7 +11078,7 @@ export class CapacityService {
     return dateKeyMap;
   }
 
-  
+
   transformToKeyArrayHValue(data: any) {
     const result: Record<number, { main: string; key: string }> = {};
 
@@ -11133,7 +11148,7 @@ export class CapacityService {
     terminateDate: any,
     amd: any,
   ) {
-    const resultTranform = (await JSON.parse(data?.json_data)) || null;
+    const resultTranform = this.safeParseJSON(data?.json_data);
     const headerEntry = resultTranform?.headerEntry || {};
     const entryValue = resultTranform?.entryValue || [];
     const headerExit = resultTranform?.headerExit || {};

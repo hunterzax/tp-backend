@@ -33,6 +33,15 @@ export class ParkingAllocationService {
     private readonly balancingService: BalancingService,
     // @Inject(CACHE_MANAGER) private cacheService: Cache,
   ) { }
+
+  private safeParseJSON(jsonString: string): any {
+    try {
+      return JSON.parse(jsonString);
+    } catch (error) {
+      console.error('Error parsing JSON:', error);
+      return null;
+    }
+  }
   // parkAllocatedMMBTUD
   async findAll(payload: any) {
     const { gas_day } = payload;
@@ -41,7 +50,7 @@ export class ParkingAllocationService {
     const getUseParkD1 = await this.getUsePark({ gas_day: dayjs(gas_day, "YYYY-MM-DD").subtract(1, "day").format("YYYY-MM-DD") })
     // console.log('getUsePark : ', getUsePark);
     // console.log('getUseParkD1 : ', getUseParkD1);
-        // ['EODValueD-1']: null,
+    // ['EODValueD-1']: null,
 
     const ngetUsePark = getUsePark?.map((e: any) => {
       const findZone = getUseParkD1?.find((f: any) => {
@@ -52,7 +61,7 @@ export class ParkingAllocationService {
       let EODSum = null
       // findZone
       if (findZone) {
-        
+
         const ckNotNull = findZone?.data?.filter((f: any) => f?.EODPark !== null)
         if (ckNotNull.length > 0) {
           // ไม่ใช้ null ทั้งหมด ต้องไม่ส่ง null
@@ -79,7 +88,7 @@ export class ParkingAllocationService {
 
     const todayStart = getTodayStartAdd7().toDate();
     const todayEnd = getTodayEndAdd7().toDate();
-    
+
     const gas_dayS = gas_day
     const targetDate = dayjs(gas_day).startOf('day');
     const nextDate = targetDate.add(1, 'day');
@@ -178,8 +187,8 @@ export class ParkingAllocationService {
     const nomination = nominationMaster.filter(nomination => {
       if (nomination.nomination_type_id === 2) { // If it's a week nomination
         // Check if there's a daily nomination for the same contract_code_id
-        const hasDailyNomination = nominationMaster.some(dailyNom => 
-          dailyNom.nomination_type_id === 1 && 
+        const hasDailyNomination = nominationMaster.some(dailyNom =>
+          dailyNom.nomination_type_id === 1 &&
           dailyNom.contract_code_id === nomination.contract_code_id
         );
         return !hasDailyNomination; // Only keep weekly nominations that not have a corresponding daily nomination
@@ -209,20 +218,20 @@ export class ParkingAllocationService {
     });
 
     const parkAllocatedList = await this.prisma.park_allocated.findMany({
-      where: { 
+      where: {
         flag_use: true,
         gas_day: targetDate.toDate()
-       },
+      },
       include: {
         zone: true,
       },
     });
 
     const yesterdayParkAllocatedList = await this.prisma.park_allocated.findMany({
-      where: { 
+      where: {
         flag_use: true,
         gas_day: targetDate.subtract(1, 'day').toDate()
-       },
+      },
       include: {
         zone: true,
       },
@@ -235,24 +244,24 @@ export class ParkingAllocationService {
       let check_gas_day = false
 
       let gas_day = dayjs(e?.gas_day).format('DD/MM/YYYY');
-      const rowJson = e['nomination_version'][0]?.['nomination_row_json'].map(
+      const rowJson = e?.['nomination_version']?.[0]?.['nomination_row_json']?.map(
         (nJ: any) => {
-          nJ['data_temp'] = JSON.parse(nJ['data_temp']);
+          nJ['data_temp'] = this.safeParseJSON(nJ['data_temp']);
           return { ...nJ };
         },
       );
-     
+
 
       const park = rowJson?.filter((f: any) => {
-        return f?.data_temp['5'] === 'Park';
+        return f?.data_temp?.['5'] === 'Park';
       }) || [];
       const unpark = rowJson?.filter((f: any) => {
-        return f?.data_temp['5'] === 'Unpark';
+        return f?.data_temp?.['5'] === 'Unpark';
       }) || [];
       // console.log('park : ', park);
       // console.log('unpark : ', unpark);
       const { nomination_version, ...nE } = e;
-      
+
       let nNomination_version = null;
       let nomination_full_json = null;
       let nomination_row_json = null;
@@ -278,10 +287,10 @@ export class ParkingAllocationService {
           const contract_code = e?.contract_code;
           const nomination_type = e?.nomination_type;
           const version = nNomination_version;
-          const zone = p['data_temp']['0'];
-          const value = p['data_temp']['38'];
+          const zone = p?.['data_temp']?.['0'];
+          const value = p?.['data_temp']?.['38'];
           const nomination_row_json_id = p?.id;
-  
+
           return {
             nomination_row_json_id,
             nomination_code,
@@ -297,7 +306,7 @@ export class ParkingAllocationService {
             value,
           };
         });
-  
+
         unparkUse = unpark.map((p: any) => {
           const query_shipper_nomination_file_id = e?.id;
           const nomination_code = e?.nomination_code;
@@ -305,10 +314,10 @@ export class ParkingAllocationService {
           const contract_code = e?.contract_code;
           const nomination_type = e?.nomination_type;
           const version = nNomination_version;
-          const zone = p['data_temp']['0'];
-          const value = p['data_temp']['38'];
+          const zone = p?.['data_temp']?.['0'];
+          const value = p?.['data_temp']?.['38'];
           const nomination_row_json_id = p?.id;
-  
+
           return {
             nomination_row_json_id,
             nomination_code,
@@ -324,7 +333,7 @@ export class ParkingAllocationService {
             value,
           };
         });
-        
+
       } else {
         parkUse = park.map((p: any) => {
           const query_shipper_nomination_file_id = e?.id;
@@ -333,47 +342,47 @@ export class ParkingAllocationService {
           const contract_code = e?.contract_code;
           const nomination_type = e?.nomination_type;
           const version = nNomination_version;
-          const zone = p['data_temp']['0'];
+          const zone = p?.['data_temp']?.['0'];
           // let value = p['data_temp']['14'];
           let value = ""
           const nomination_row_json_id = p?.id;
           // gas_day Thu May 15 2025 20:35:37 GMT+0700 (Indochina Time) dayjs(gas_day).toDate()
           // gas_day
           // dayjs(f?.gas_day).format("YYYY-MM-DD")
-       
+
           if (dayjs(e?.gas_day).add(0, "day").format("YYYY-MM-DD") === dayjs(gas_day, "DD/MM/YYYY").format("YYYY-MM-DD")) {
-            value = p['data_temp']['14']
-           check_gas_day = true
+            value = p?.['data_temp']?.['14']
+            check_gas_day = true
 
 
           } else if (dayjs(e?.gas_day).add(1, "day").format("YYYY-MM-DD") === dayjs(gas_day, "DD/MM/YYYY").format("YYYY-MM-DD")) {
-            value = p['data_temp']['15']
-           check_gas_day = true
+            value = p?.['data_temp']?.['15']
+            check_gas_day = true
 
 
           } else if (dayjs(e?.gas_day).add(2, "day").format("YYYY-MM-DD") === dayjs(gas_day, "DD/MM/YYYY").format("YYYY-MM-DD")) {
-            value = p['data_temp']['16']
-           check_gas_day = true
+            value = p?.['data_temp']?.['16']
+            check_gas_day = true
 
 
           } else if (dayjs(e?.gas_day).add(3, "day").format("YYYY-MM-DD") === dayjs(gas_day, "DD/MM/YYYY").format("YYYY-MM-DD")) {
-            value = p['data_temp']['17']
-           check_gas_day = true
+            value = p?.['data_temp']?.['17']
+            check_gas_day = true
 
 
           } else if (dayjs(e?.gas_day).add(4, "day").format("YYYY-MM-DD") === dayjs(gas_day, "DD/MM/YYYY").format("YYYY-MM-DD")) {
-            value = p['data_temp']['18']
-           check_gas_day = true
+            value = p?.['data_temp']?.['18']
+            check_gas_day = true
 
 
           } else if (dayjs(e?.gas_day).add(5, "day").format("YYYY-MM-DD") === dayjs(gas_day, "DD/MM/YYYY").format("YYYY-MM-DD")) {
-            value = p['data_temp']['19']
-           check_gas_day = true
+            value = p?.['data_temp']?.['19']
+            check_gas_day = true
 
 
           } else if (dayjs(e?.gas_day).add(6, "day").format("YYYY-MM-DD") === dayjs(gas_day, "DD/MM/YYYY").format("YYYY-MM-DD")) {
-            value = p['data_temp']['20']
-           check_gas_day = true
+            value = p?.['data_temp']?.['20']
+            check_gas_day = true
 
 
           } else {
@@ -400,7 +409,7 @@ export class ParkingAllocationService {
           };
         })?.filter((f: any) => { return f !== null });
 
-  
+
         unparkUse = unpark.map((p: any) => {
           const query_shipper_nomination_file_id = e?.id;
           const nomination_code = e?.nomination_code;
@@ -414,37 +423,37 @@ export class ParkingAllocationService {
           const nomination_row_json_id = p?.id;
 
           if (dayjs(e?.gas_day).add(0, "day").format("YYYY-MM-DD") === dayjs(gas_day, "DD/MM/YYYY").format("YYYY-MM-DD")) {
-            value = p['data_temp']['14']
+            value = p?.['data_temp']?.['14']
             check_gas_day = true
 
 
           } else if (dayjs(e?.gas_day).add(1, "day").format("YYYY-MM-DD") === dayjs(gas_day, "DD/MM/YYYY").format("YYYY-MM-DD")) {
-            value = p['data_temp']['15']
+            value = p?.['data_temp']?.['15']
             check_gas_day = true
 
 
           } else if (dayjs(e?.gas_day).add(2, "day").format("YYYY-MM-DD") === dayjs(gas_day, "DD/MM/YYYY").format("YYYY-MM-DD")) {
-            value = p['data_temp']['16']
+            value = p?.['data_temp']?.['16']
             check_gas_day = true
 
 
           } else if (dayjs(e?.gas_day).add(3, "day").format("YYYY-MM-DD") === dayjs(gas_day, "DD/MM/YYYY").format("YYYY-MM-DD")) {
-            value = p['data_temp']['17']
+            value = p?.['data_temp']?.['17']
             check_gas_day = true
 
 
           } else if (dayjs(e?.gas_day).add(4, "day").format("YYYY-MM-DD") === dayjs(gas_day, "DD/MM/YYYY").format("YYYY-MM-DD")) {
-            value = p['data_temp']['18']
+            value = p?.['data_temp']?.['18']
             check_gas_day = true
 
 
           } else if (dayjs(e?.gas_day).add(5, "day").format("YYYY-MM-DD") === dayjs(gas_day, "DD/MM/YYYY").format("YYYY-MM-DD")) {
-            value = p['data_temp']['19']
+            value = p?.['data_temp']?.['19']
             check_gas_day = true
 
 
           } else if (dayjs(e?.gas_day).add(6, "day").format("YYYY-MM-DD") === dayjs(gas_day, "DD/MM/YYYY").format("YYYY-MM-DD")) {
-            value = p['data_temp']['20']
+            value = p?.['data_temp']?.['20']
             check_gas_day = true
 
 
@@ -454,7 +463,7 @@ export class ParkingAllocationService {
           if (check_gas_day) {
             gas_day = dayjs(gas_dayS, "YYYY-MM-DD").format("DD/MM/YYYY")
           }
-  
+
           return {
             nomination_row_json_id,
             nomination_code,
@@ -523,21 +532,29 @@ export class ParkingAllocationService {
       );
 
       const parkUseCaleSumAll = groupedByNom
-        ?.flatMap((puc: any) => [...puc?.data])
+        ?.flatMap((puc: any) => [...(puc?.data || [])])
         ?.filter((fPuc: any) => fPuc?.type === 'Park')
-        .reduce((ar: any, mr: any) => ar + Number(Number(mr?.value?.replace(/,/g, '')).toFixed(3)), 0);
+        .reduce((ar: any, mr: any) => {
+          const val = Number(mr?.value?.toString()?.replace(/,/g, '') || 0);
+          return ar + (isNaN(val) ? 0 : Number(val.toFixed(3)));
+        }, 0);
 
       const nGroupedByNom = groupedByNom.map((nG: any) => {
-        let parkAllocatedMMBTUD = null;
+        let parkAllocatedMMBTUD: any = null;
         const parkOnce = nG?.data
           ?.filter((fPuc: any) => fPuc?.type === 'Park')
-          .reduce((ar: any, mr: any) => ar + Number(Number(mr?.value?.replace(/,/g, '')).toFixed(3)), 0);
-       
-        if (findAllocated) {
+          .reduce((ar: any, mr: any) => {
+            const val = Number(mr?.value?.toString()?.replace(/,/g, '') || 0);
+            return ar + (isNaN(val) ? 0 : Number(val.toFixed(3)));
+          }, 0);
+
+        if (findAllocated && parkUseCaleSumAll && parkUseCaleSumAll !== 0) {
           console.log('parkOnce : ', parkOnce);
           console.log('parkUseCaleSumAll : ', parkUseCaleSumAll);
           console.log(parkOnce / parkUseCaleSumAll);
           parkAllocatedMMBTUD = parkOnce !== 0 ? Number((parkOnce / parkUseCaleSumAll) * Number(findAllocated?.total_parking_value)).toFixed(3) : 0;
+        } else if (parkOnce === 0) {
+          parkAllocatedMMBTUD = 0;
         }
 
         return { parkAllocatedMMBTUD, ...nG };
@@ -554,8 +571,8 @@ export class ParkingAllocationService {
         parkDefault = parkDefaultAll.find((f: any) => { return f?.system_parameter_id === 34 })
       }
 
-      const group = nGroupedByNom[0]?.data[0]?.group
-      const contract_code = nGroupedByNom[0]?.data[0]?.contract_code
+      const group = nGroupedByNom?.[0]?.data?.[0]?.group || null;
+      const contract_code = nGroupedByNom?.[0]?.data?.[0]?.contract_code || null;
 
       return { ...eN, zoneObj, group, contract_code, parkDefault, lastUserParkValue, data: nGroupedByNom };
     });
@@ -575,7 +592,7 @@ export class ParkingAllocationService {
             contract_data: cd?.contract,
             values: cd?.values,
             shipper: sd?.shipper,
-            valuesAll: sd?.values, 
+            valuesAll: sd?.values,
           }
         })
         return [
@@ -593,15 +610,15 @@ export class ParkingAllocationService {
 
       const { data, contract_code, group, ...nE } = e
 
-      
+
       const nData = data?.map((d: any) => {
         const { data: dataPU, ...nD } = d
         const find = flatbalData?.find((f: any) => {
           return (
             f?.shipper === dataPU?.[0]?.group?.id_name &&
             f?.contract_data === dataPU?.[0]?.contract_code?.contract_code
-          )
-        })
+          );
+        });
         const findValue = find && find?.values || []
         let eodValue = null
         if (e?.zone.toUpperCase() === "EAST") {
@@ -715,7 +732,7 @@ export class ParkingAllocationService {
   async parkDefaultAll() {
     const todayStart = getTodayStartAdd7().toDate();
     const todayEnd = getTodayEndAdd7().toDate();
-  
+
 
     return this.prisma.system_parameter.findMany({
       where: {

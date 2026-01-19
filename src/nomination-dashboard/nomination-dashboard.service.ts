@@ -39,6 +39,16 @@ export class NominationDashboardService {
     // @Inject(CACHE_MANAGER) private cacheService: Cache,
   ) { }
 
+  private safeParseJSON(data: any, defaultValue: any = null) {
+    if (!data) return defaultValue;
+    try {
+      return typeof data === 'string' ? JSON.parse(data) : data;
+    } catch (e) {
+      console.error('JSON parse error:', e);
+      return defaultValue;
+    }
+  }
+
 
   async findAll(payload: any = null) {
     const { gas_day } = payload ?? {}
@@ -317,7 +327,7 @@ export class NominationDashboardService {
         const validateData = (validateCut || [])?.map((e: any) => e?.newObj)
         // console.log('validateData : ', validateData);
         const sheet2 = daily[i]?.nomination_version?.[0]?.nomination_full_json_sheet2
-        const convertSheet2 = (sheet2 || [])?.length > 0 ? JSON.parse(sheet2?.[0]?.data_temp) : null
+        const convertSheet2 = (sheet2 || [])?.length > 0 ? this.safeParseJSON(sheet2?.[0]?.data_temp) : null
         // console.log('convertSheet2 : ', convertSheet2);
         // fnCheckSheet2
         // DW entry_quality -- sheet 2 nom
@@ -597,8 +607,8 @@ export class NominationDashboardService {
         const validateCut = (validate || [])?.filter((f: any) => f?.query_shipper_nomination_type_id === 1)
         const validateData = (validateCut || [])?.map((e: any) => e?.newObj)
         // console.log('w validateData : ', validateData);
-        const sheet2 = daily[i]?.nomination_version?.[0]?.nomination_full_json_sheet2
-        const convertSheet2 = (sheet2 || [])?.length > 0 ? JSON.parse(sheet2?.[0]?.data_temp) : null
+        const sheet2 = daily?.[i]?.nomination_version?.[0]?.nomination_full_json_sheet2
+        const convertSheet2 = (sheet2 || [])?.length > 0 ? this.safeParseJSON(sheet2?.[0]?.data_temp) : null
         // DW entry_quality
         // -- sheet 2 nom
         let entry_quality = false

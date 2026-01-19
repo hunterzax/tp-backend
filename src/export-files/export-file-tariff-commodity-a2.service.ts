@@ -22,9 +22,9 @@ export interface GasDeliveryParams {
 
 @Injectable()
 export class ExportFileTariffCommodityA2Service {
-    constructor(
-      private prisma: PrismaService,
-    ) {}
+  constructor(
+    private prisma: PrismaService,
+  ) { }
 
   dcimal3 = (number: any) => {
     // console.log('number : ', number);
@@ -42,7 +42,7 @@ export class ExportFileTariffCommodityA2Service {
 
     return `${withCommas}.${decimalPart}`;
   };
-  
+
   /**
    * Export Gas Delivery Report to Excel
    */
@@ -68,44 +68,44 @@ export class ExportFileTariffCommodityA2Service {
         { width: 12 }, // Zone
       ];
 
-    const todayStart = getTodayStartAdd7().toDate();
-    const todayEnd = getTodayEndAdd7().toDate();
+      const todayStart = getTodayStartAdd7().toDate();
+      const todayEnd = getTodayEndAdd7().toDate();
 
-    const nominationMaster = await this.prisma.nomination_point.findMany({
-      where: {
-        AND: [
-          {
-            start_date: {
-              lte: todayEnd, // start_date ต้องก่อนหรือเท่ากับสิ้นสุดวันนี้
+      const nominationMaster = await this.prisma.nomination_point.findMany({
+        where: {
+          AND: [
+            {
+              start_date: {
+                lte: todayEnd, // start_date ต้องก่อนหรือเท่ากับสิ้นสุดวันนี้
+              },
             },
-          },
-          {
-            OR: [
-              { end_date: null }, // ถ้า end_date เป็น null
-              { end_date: { gt: todayStart } }, //  // https://app.clickup.com/t/86etzcgr9 //end_date ให้  - 1 (end จริง คือไม่ได้)
-            ],
-          },
-        ],
-      },
-      include: {
-        customer_type: true,
-      },
-    });
-    // console.log('nominationMaster : ', nominationMaster);
+            {
+              OR: [
+                { end_date: null }, // ถ้า end_date เป็น null
+                { end_date: { gt: todayStart } }, //  // https://app.clickup.com/t/86etzcgr9 //end_date ให้  - 1 (end จริง คือไม่ได้)
+              ],
+            },
+          ],
+        },
+        include: {
+          customer_type: true,
+        },
+      });
+      // console.log('nominationMaster : ', nominationMaster);
 
-    const ndata = data?.map((e:any) => {
-      const find = nominationMaster?.find((f:any) => f?.nomination_point === e?.point)
-      // let energy = e?.calcNotRound && this.dcimal3(e?.calcNotRound) || "-"
-      const energy = e?.calcNotRound && Number(e?.calcNotRound).toFixed(0) || 0
-      const name = find?.description || "-"
-      const group = find?.customer_type?.name || "-"
-      return {
-        ...e,
-        name: name || null,
-        energy: energy || null,
-        group: group || null,
-      }
-    })
+      const ndata = data?.map((e: any) => {
+        const find = nominationMaster?.find((f: any) => f?.nomination_point === e?.point)
+        // let energy = e?.calcNotRound && this.dcimal3(e?.calcNotRound) || "-"
+        const energy = e?.calcNotRound && Number(e?.calcNotRound).toFixed(0) || 0
+        const name = find?.description || "-"
+        const group = find?.customer_type?.name || "-"
+        return {
+          ...e,
+          name: name || null,
+          energy: energy || null,
+          group: group || null,
+        }
+      })
 
       // Header Section
       this.addHeaderSection(worksheet, params);
@@ -154,7 +154,7 @@ export class ExportFileTariffCommodityA2Service {
 
   private addTableHeader(worksheet: ExcelJS.Worksheet): void {
     const headerRow = worksheet.getRow(4);
-    
+
     const headers = [
       { cell: 'A4', value: 'FID' },
       { cell: 'B4', value: 'NAME' },
@@ -187,9 +187,9 @@ export class ExportFileTariffCommodityA2Service {
   }
 
   private addDataRows(worksheet: ExcelJS.Worksheet, data: GasDeliveryData[]): void {
-    data.forEach((rowData:any, index) => {
+    data.forEach((rowData: any, index) => {
       const row = worksheet.getRow(index + 5); // Start from row 5 (after header)
-      
+
       // FID (Column A)
       const fidCell = row.getCell(1);
       fidCell.value = rowData?.point;
@@ -208,7 +208,7 @@ export class ExportFileTariffCommodityA2Service {
       // if (rowData.volumeMMSCF !== null) {
       //   volumeCell.value = rowData.volumeMMSCF;
       //   volumeCell.numFmt = '#,##0.000000';
-        volumeCell.alignment = { horizontal: 'right' };
+      volumeCell.alignment = { horizontal: 'right' };
       // } else {
       //   volumeCell.value = '-';
       //   volumeCell.alignment = { horizontal: 'center' };
@@ -256,8 +256,8 @@ export class ExportFileTariffCommodityA2Service {
     const totalRow = worksheet.getRow(totalRowIndex);
 
     // Calculate totals
-    const totalVolume = data.reduce((sum, row) => sum + (row.volumeMMSCF || 0), 0);
-    const totalEnergy = data.reduce((sum, row) => sum + (row.energy !== "-" && Number(row.energy) || 0), 0);
+    const totalVolume = data?.reduce((sum, row) => sum + (row?.volumeMMSCF || 0), 0) || 0;
+    const totalEnergy = data?.reduce((sum, row) => sum + (row?.energy !== "-" && Number(row?.energy) || 0), 0) || 0;
 
     // Total label (Column A)
     const totalLabelCell = totalRow.getCell(1);

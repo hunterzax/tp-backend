@@ -42,7 +42,7 @@ export class QualityPlanningService {
     private prisma: PrismaService,
     // @Inject(CACHE_MANAGER) private cacheService: Cache,
     private readonly meteredMicroService: MeteredMicroService,
-  ) {}
+  ) { }
 
   async findAllOld() {
     // https://app.clickup.com/t/86etuazuc
@@ -219,14 +219,14 @@ export class QualityPlanningService {
             (f: any) =>
               f?.name === filAreaGF[0]?.nomination_row_json?.zone_text &&
               (f?.entry_exit_id === 1 ? 'Entry' : 'Exit') ===
-                filAreaGF[0]?.nomination_row_json?.data_temp['10'],
+              filAreaGF[0]?.nomination_row_json?.data_temp['10'],
           ) || null;
         const areaTextObj =
           areaData.find(
             (f: any) =>
               f?.name === filAreaGF[0]?.nomination_row_json?.area_text &&
               (f?.entry_exit_id === 1 ? 'Entry' : 'Exit') ===
-                filAreaGF[0]?.nomination_row_json?.data_temp['10'],
+              filAreaGF[0]?.nomination_row_json?.data_temp['10'],
           ) || null;
         const gasDayText = filAreaGF[0]?.gas_day_text || null;
         const contractCodeId =
@@ -240,33 +240,33 @@ export class QualityPlanningService {
         const hvXvi =
           aFil.length > 0
             ? aFil.reduce(
-                (sum, item) =>
-                  sum +
-                  parseToNumber(item.nomination_row_json?.data_temp['12']) *
-                    parseToNumber(item.nomination_row_json?.data_temp['38']),
-                0,
-              )
+              (sum, item) =>
+                sum +
+                parseToNumber(item.nomination_row_json?.data_temp['12']) *
+                parseToNumber(item.nomination_row_json?.data_temp['38']),
+              0,
+            )
             : null; //wi excl
         const viAll =
           aFil.length > 0
             ? aFil.reduce(
-                (sum, item) =>
-                  sum +
-                  parseToNumber(item.nomination_row_json?.data_temp['38']),
-                0,
-              )
+              (sum, item) =>
+                sum +
+                parseToNumber(item.nomination_row_json?.data_temp['38']),
+              0,
+            )
             : null; //wi excl
         // // https://app.clickup.com/t/86etzch5z
         // const sgXvi = aFil.length > 0 && viAll ? aFil.reduce((sum, item) => sum + (Number(viAll) * parseToNumber(item.nomination_row_json?.data_temp["38"])), 0) : null; //wi excl
         const sgXvi =
           aFil.length > 0
             ? aFil.reduce(
-                (sum, item) =>
-                  sum +
-                  parseToNumber(item.nomination_row_json?.data_temp['13']) *
-                    parseToNumber(item.nomination_row_json?.data_temp['38']),
-                0,
-              )
+              (sum, item) =>
+                sum +
+                parseToNumber(item.nomination_row_json?.data_temp['13']) *
+                parseToNumber(item.nomination_row_json?.data_temp['38']),
+              0,
+            )
             : null; //wi excl
 
         // hv = sum(hv*vi)/ vi all
@@ -329,14 +329,14 @@ export class QualityPlanningService {
             (f: any) =>
               f?.name === filAreaGF[0]?.nomination_row_json?.zone_text &&
               (f?.entry_exit_id === 1 ? 'Entry' : 'Exit') ===
-                filAreaGF[0]?.nomination_row_json?.data_temp['10'],
+              filAreaGF[0]?.nomination_row_json?.data_temp['10'],
           ) || null;
         const areaTextObj =
           areaData.find(
             (f: any) =>
               f?.name === filAreaGF[0]?.nomination_row_json?.area_text &&
               (f?.entry_exit_id === 1 ? 'Entry' : 'Exit') ===
-                filAreaGF[0]?.nomination_row_json?.data_temp['10'],
+              filAreaGF[0]?.nomination_row_json?.data_temp['10'],
           ) || null;
         const gasDayText = filAreaGF[0]?.gas_day_text || null;
         const contractCodeId =
@@ -393,24 +393,24 @@ export class QualityPlanningService {
         const hvXvi1 =
           aFil.length > 0
             ? aFil.reduce(
-                (sum, item) =>
-                  sum +
-                  parseToNumber(item.nomination_row_json?.data_temp['12']) *
-                    vi1,
-                0,
-              )
+              (sum, item) =>
+                sum +
+                parseToNumber(item.nomination_row_json?.data_temp['12']) *
+                vi1,
+              0,
+            )
             : null;
         const viAll1 =
           aFil.length > 0 ? aFil.reduce((sum, item) => sum + vi1, 0) : null;
         const sgXvi1 =
           aFil.length > 0
             ? aFil.reduce(
-                (sum, item) =>
-                  sum +
-                  parseToNumber(item.nomination_row_json?.data_temp['13']) *
-                    vi1,
-                0,
-              )
+              (sum, item) =>
+                sum +
+                parseToNumber(item.nomination_row_json?.data_temp['13']) *
+                vi1,
+              0,
+            )
             : null;
         // const sgXvi1 = aFil.length > 0 && viAll1 ? aFil.reduce((sum, item) => sum + (parseToNumber(item.nomination_row_json?.data_temp["13"]) * Number(viAll1)), 0) : null;
         // console.log('hvXvi1 : ', hvXvi1);
@@ -419,144 +419,144 @@ export class QualityPlanningService {
         const hvXvi2 =
           aFil.length > 0
             ? aFil.reduce(
-                (sum, item) =>
-                  sum +
-                  parseToNumber(item.nomination_row_json?.data_temp['12']) *
-                    vi2,
-                0,
-              )
+              (sum, item) =>
+                sum +
+                parseToNumber(item.nomination_row_json?.data_temp['12']) *
+                vi2,
+              0,
+            )
             : null;
         const viAll2 =
           aFil.length > 0 ? aFil.reduce((sum, item) => sum + vi2, 0) : null;
         const sgXvi2 =
           aFil.length > 0
             ? aFil.reduce(
-                (sum, item) =>
-                  sum +
-                  parseToNumber(item.nomination_row_json?.data_temp['13']) *
-                    vi2,
-                0,
-              )
+              (sum, item) =>
+                sum +
+                parseToNumber(item.nomination_row_json?.data_temp['13']) *
+                vi2,
+              0,
+            )
             : null;
         // const sgXvi2 = aFil.length > 0 ? aFil.reduce((sum, item) => sum + (parseToNumber(item.nomination_row_json?.data_temp["13"]) * Number(viAll2)), 0) : null;
 
         const hvXvi3 =
           aFil.length > 0
             ? aFil.reduce(
-                (sum, item) =>
-                  sum +
-                  parseToNumber(item.nomination_row_json?.data_temp['12']) *
-                    vi3,
-                0,
-              )
+              (sum, item) =>
+                sum +
+                parseToNumber(item.nomination_row_json?.data_temp['12']) *
+                vi3,
+              0,
+            )
             : null;
         const viAll3 =
           aFil.length > 0 ? aFil.reduce((sum, item) => sum + vi3, 0) : null;
         const sgXvi3 =
           aFil.length > 0
             ? aFil.reduce(
-                (sum, item) =>
-                  sum +
-                  parseToNumber(item.nomination_row_json?.data_temp['13']) *
-                    vi3,
-                0,
-              )
+              (sum, item) =>
+                sum +
+                parseToNumber(item.nomination_row_json?.data_temp['13']) *
+                vi3,
+              0,
+            )
             : null;
         // const sgXvi3 = aFil.length > 0 ? aFil.reduce((sum, item) => sum + (parseToNumber(item.nomination_row_json?.data_temp["13"]) * Number(viAll3)), 0) : null;
 
         const hvXvi4 =
           aFil.length > 0
             ? aFil.reduce(
-                (sum, item) =>
-                  sum +
-                  parseToNumber(item.nomination_row_json?.data_temp['12']) *
-                    vi4,
-                0,
-              )
+              (sum, item) =>
+                sum +
+                parseToNumber(item.nomination_row_json?.data_temp['12']) *
+                vi4,
+              0,
+            )
             : null;
         const viAll4 =
           aFil.length > 0 ? aFil.reduce((sum, item) => sum + vi4, 0) : null;
         const sgXvi4 =
           aFil.length > 0
             ? aFil.reduce(
-                (sum, item) =>
-                  sum +
-                  parseToNumber(item.nomination_row_json?.data_temp['13']) *
-                    vi4,
-                0,
-              )
+              (sum, item) =>
+                sum +
+                parseToNumber(item.nomination_row_json?.data_temp['13']) *
+                vi4,
+              0,
+            )
             : null;
         // const sgXvi4 = aFil.length > 0 ? aFil.reduce((sum, item) => sum + (parseToNumber(item.nomination_row_json?.data_temp["13"]) * Number(viAll4)), 0) : null;
 
         const hvXvi5 =
           aFil.length > 0
             ? aFil.reduce(
-                (sum, item) =>
-                  sum +
-                  parseToNumber(item.nomination_row_json?.data_temp['12']) *
-                    vi5,
-                0,
-              )
+              (sum, item) =>
+                sum +
+                parseToNumber(item.nomination_row_json?.data_temp['12']) *
+                vi5,
+              0,
+            )
             : null;
         const viAll5 =
           aFil.length > 0 ? aFil.reduce((sum, item) => sum + vi5, 0) : null;
         const sgXvi5 =
           aFil.length > 0
             ? aFil.reduce(
-                (sum, item) =>
-                  sum +
-                  parseToNumber(item.nomination_row_json?.data_temp['13']) *
-                    vi5,
-                0,
-              )
+              (sum, item) =>
+                sum +
+                parseToNumber(item.nomination_row_json?.data_temp['13']) *
+                vi5,
+              0,
+            )
             : null;
         // const sgXvi5 = aFil.length > 0 ? aFil.reduce((sum, item) => sum + (parseToNumber(item.nomination_row_json?.data_temp["13"]) * Number(viAll5)), 0) : null;
 
         const hvXvi6 =
           aFil.length > 0
             ? aFil.reduce(
-                (sum, item) =>
-                  sum +
-                  parseToNumber(item.nomination_row_json?.data_temp['12']) *
-                    vi6,
-                0,
-              )
+              (sum, item) =>
+                sum +
+                parseToNumber(item.nomination_row_json?.data_temp['12']) *
+                vi6,
+              0,
+            )
             : null;
         const viAll6 =
           aFil.length > 0 ? aFil.reduce((sum, item) => sum + vi6, 0) : null;
         const sgXvi6 =
           aFil.length > 0
             ? aFil.reduce(
-                (sum, item) =>
-                  sum +
-                  parseToNumber(item.nomination_row_json?.data_temp['13']) *
-                    vi6,
-                0,
-              )
+              (sum, item) =>
+                sum +
+                parseToNumber(item.nomination_row_json?.data_temp['13']) *
+                vi6,
+              0,
+            )
             : null;
         // const sgXvi6 = aFil.length > 0 ? aFil.reduce((sum, item) => sum + (parseToNumber(item.nomination_row_json?.data_temp["13"]) * Number(viAll6)), 0) : null;
 
         const hvXvi7 =
           aFil.length > 0
             ? aFil.reduce(
-                (sum, item) =>
-                  sum +
-                  parseToNumber(item.nomination_row_json?.data_temp['12']) *
-                    vi7,
-                0,
-              )
+              (sum, item) =>
+                sum +
+                parseToNumber(item.nomination_row_json?.data_temp['12']) *
+                vi7,
+              0,
+            )
             : null;
         const viAll7 =
           aFil.length > 0 ? aFil.reduce((sum, item) => sum + vi7, 0) : null;
         const sgXvi7 =
           aFil.length > 0
             ? aFil.reduce(
-                (sum, item) =>
-                  sum +
-                  parseToNumber(item.nomination_row_json?.data_temp['13']) *
-                    vi7,
-                0,
-              )
+              (sum, item) =>
+                sum +
+                parseToNumber(item.nomination_row_json?.data_temp['13']) *
+                vi7,
+              0,
+            )
             : null;
         // const sgXvi7 = aFil.length > 0 && viAll7 ? aFil.reduce((sum, item) => sum + (parseToNumber(item.nomination_row_json?.data_temp["13"]) * Number(viAll7)), 0) : null;
 
@@ -893,10 +893,10 @@ export class QualityPlanningService {
           const hvXvi =
             hourCalc.length > 0
               ? hourCalc.reduce(
-                  (sum, item) =>
-                    sum + Number(item.heatingValue) * Number(item.volume),
-                  0,
-                )
+                (sum, item) =>
+                  sum + Number(item.heatingValue) * Number(item.volume),
+                0,
+              )
               : null;
           const viAll =
             hourCalc.length > 0
@@ -905,9 +905,9 @@ export class QualityPlanningService {
           const sgXvi =
             hourCalc.length > 0 && viAll
               ? hourCalc.reduce(
-                  (sum, item) => sum + Number(item.sg) * Number(viAll),
-                  0,
-                )
+                (sum, item) => sum + Number(item.sg) * Number(viAll),
+                0,
+              )
               : null;
           // const sgXvi = hourCalc.length > 0 ? hourCalc.reduce((sum, item) => sum + (Number(item.sg) * Number(item.volume)), 0) : null;
           // hv = sum(hv*vi)/ vi all
@@ -1206,14 +1206,14 @@ export class QualityPlanningService {
             (f: any) =>
               f?.name === filAreaGF[0]?.nomination_row_json?.zone_text &&
               (f?.entry_exit_id === 1 ? 'Entry' : 'Exit') ===
-                filAreaGF[0]?.nomination_row_json?.data_temp['10'],
+              filAreaGF[0]?.nomination_row_json?.data_temp['10'],
           ) || null;
         const areaTextObj =
           areaData.find(
             (f: any) =>
               f?.name === filAreaGF[0]?.nomination_row_json?.area_text &&
               (f?.entry_exit_id === 1 ? 'Entry' : 'Exit') ===
-                filAreaGF[0]?.nomination_row_json?.data_temp['10'],
+              filAreaGF[0]?.nomination_row_json?.data_temp['10'],
           ) || null;
         const gasDayText = filAreaGF[0]?.gas_day_text || null;
         const contractCodeId =
@@ -1227,33 +1227,33 @@ export class QualityPlanningService {
         const hvXvi =
           aFil.length > 0
             ? aFil.reduce(
-                (sum, item) =>
-                  sum +
-                  parseToNumber(item.nomination_row_json?.data_temp['12']) *
-                    parseToNumber(item.nomination_row_json?.data_temp['38']),
-                0,
-              )
+              (sum, item) =>
+                sum +
+                parseToNumber(item.nomination_row_json?.data_temp['12']) *
+                parseToNumber(item.nomination_row_json?.data_temp['38']),
+              0,
+            )
             : null; //wi excl
         const viAll =
           aFil.length > 0
             ? aFil.reduce(
-                (sum, item) =>
-                  sum +
-                  parseToNumber(item.nomination_row_json?.data_temp['38']),
-                0,
-              )
+              (sum, item) =>
+                sum +
+                parseToNumber(item.nomination_row_json?.data_temp['38']),
+              0,
+            )
             : null; //wi excl
         // // https://app.clickup.com/t/86etzch5z
         // const sgXvi = aFil.length > 0 && viAll ? aFil.reduce((sum, item) => sum + (Number(viAll) * parseToNumber(item.nomination_row_json?.data_temp["38"])), 0) : null; //wi excl
         const sgXvi =
           aFil.length > 0
             ? aFil.reduce(
-                (sum, item) =>
-                  sum +
-                  parseToNumber(item.nomination_row_json?.data_temp['13']) *
-                    parseToNumber(item.nomination_row_json?.data_temp['38']),
-                0,
-              )
+              (sum, item) =>
+                sum +
+                parseToNumber(item.nomination_row_json?.data_temp['13']) *
+                parseToNumber(item.nomination_row_json?.data_temp['38']),
+              0,
+            )
             : null; //wi excl
 
         // hv = sum(hv*vi)/ vi all
@@ -1316,14 +1316,14 @@ export class QualityPlanningService {
             (f: any) =>
               f?.name === filAreaGF[0]?.nomination_row_json?.zone_text &&
               (f?.entry_exit_id === 1 ? 'Entry' : 'Exit') ===
-                filAreaGF[0]?.nomination_row_json?.data_temp['10'],
+              filAreaGF[0]?.nomination_row_json?.data_temp['10'],
           ) || null;
         const areaTextObj =
           areaData.find(
             (f: any) =>
               f?.name === filAreaGF[0]?.nomination_row_json?.area_text &&
               (f?.entry_exit_id === 1 ? 'Entry' : 'Exit') ===
-                filAreaGF[0]?.nomination_row_json?.data_temp['10'],
+              filAreaGF[0]?.nomination_row_json?.data_temp['10'],
           ) || null;
         const gasDayText = filAreaGF[0]?.gas_day_text || null;
         const contractCodeId =
@@ -1374,7 +1374,7 @@ export class QualityPlanningService {
             (f: any) => f?.contract_code_id === contract_code_id,
           );
           const viUse = filAreaGF_?.nomination_row_json?.data_temp[day_]
-            ? parseToNumber(filAreaGF_.nomination_row_json.data_temp[day_])
+            ? parseToNumber(filAreaGF_?.nomination_row_json?.data_temp[day_])
             : null;
           return viUse;
         };
@@ -1390,32 +1390,32 @@ export class QualityPlanningService {
         const hvxViFN = (day_: any) => {
           return aFil.length > 0
             ? aFil.reduce(
-                (sum, item) =>
-                  sum +
-                  parseToNumber(item.nomination_row_json?.data_temp['12']) *
-                    viFind(item?.contract_code_id, day_),
-                0,
-              )
+              (sum, item) =>
+                sum +
+                parseToNumber(item.nomination_row_json?.data_temp['12']) *
+                viFind(item?.contract_code_id, day_),
+              0,
+            )
             : null;
         };
         const viAllFN = (day_: any) => {
           return aFil.length > 0
             ? aFil.reduce(
-                (sum, item) => sum + viFind(item?.contract_code_id, 14),
-                0,
-              )
+              (sum, item) => sum + viFind(item?.contract_code_id, 14),
+              0,
+            )
             : null;
         };
         const sgxViFN = (day_: any) => {
           return aFil.length > 0
             ? aFil.reduce((sum, item) => {
-                const calc = parseToNumber(
-                  parseToNumber3Decimal(
-                    item.nomination_row_json?.data_temp['13'],
-                  ) * viFind(item?.contract_code_id, day_),
-                );
-                return sum + calc;
-              }, 0)
+              const calc = parseToNumber(
+                parseToNumber3Decimal(
+                  item.nomination_row_json?.data_temp['13'],
+                ) * viFind(item?.contract_code_id, day_),
+              );
+              return sum + calc;
+            }, 0)
             : null;
         };
         const hvXvi1 = hvxViFN(14);
@@ -1731,17 +1731,17 @@ export class QualityPlanningService {
       let fH23 = fHrIn0(filData, '22');
       let fH24 = fHrIn0(filData, '23');
 
-  //     parseToNumber,
-  // parseToNumber3Decimal,
+      //     parseToNumber,
+      // parseToNumber3Decimal,
       const calcParameter = (hourCalc: any) => {
         if (hourCalc.length > 0) {
           const hvXvi =
             hourCalc.length > 0
               ? hourCalc.reduce(
-                  (sum, item) =>
-                    sum + parseToNumber(item.heatingValue) * parseToNumber(item.volume),
-                  0,
-                )
+                (sum, item) =>
+                  sum + parseToNumber(item.heatingValue) * parseToNumber(item.volume),
+                0,
+              )
               : null;
           const viAll =
             hourCalc.length > 0
@@ -1750,9 +1750,9 @@ export class QualityPlanningService {
           const sgXvi =
             hourCalc.length > 0 && viAll
               ? hourCalc.reduce(
-                  (sum, item) => sum + parseToNumber(item.sg) * parseToNumber(viAll),
-                  0,
-                )
+                (sum, item) => sum + parseToNumber(item.sg) * parseToNumber(viAll),
+                0,
+              )
               : null;
           const hv = hvXvi / viAll;
           const wi = (hvXvi / 0.982596) / Math.sqrt(sgXvi * viAll);
@@ -2012,14 +2012,14 @@ export class QualityPlanningService {
             (f: any) =>
               f?.name === filAreaGF[0]?.nomination_row_json?.zone_text &&
               (f?.entry_exit_id === 1 ? 'Entry' : 'Exit') ===
-                filAreaGF[0]?.nomination_row_json?.data_temp['10'],
+              filAreaGF[0]?.nomination_row_json?.data_temp['10'],
           ) || null;
         const areaTextObj =
           areaData.find(
             (f: any) =>
               f?.name === filAreaGF[0]?.nomination_row_json?.area_text &&
               (f?.entry_exit_id === 1 ? 'Entry' : 'Exit') ===
-                filAreaGF[0]?.nomination_row_json?.data_temp['10'],
+              filAreaGF[0]?.nomination_row_json?.data_temp['10'],
           ) || null;
         const gasDayText = filAreaGF[0]?.gas_day_text || null;
         const contractCodeId =
@@ -2036,31 +2036,31 @@ export class QualityPlanningService {
         const hvXvi =
           aFil.length > 0
             ? aFil.reduce(
-                (sum, item) =>
-                  sum +
-                  parseToNumber(item.nomination_row_json?.data_temp['12']) *
-                    parseToNumber(item.nomination_row_json?.data_temp['38']),
-                0,
-              )
+              (sum, item) =>
+                sum +
+                parseToNumber(item.nomination_row_json?.data_temp['12']) *
+                parseToNumber(item.nomination_row_json?.data_temp['38']),
+              0,
+            )
             : null; //wi excl
         const viAll =
           aFil.length > 0
             ? aFil.reduce(
-                (sum, item) =>
-                  sum +
-                  parseToNumber(item.nomination_row_json?.data_temp['38']),
-                0,
-              )
+              (sum, item) =>
+                sum +
+                parseToNumber(item.nomination_row_json?.data_temp['38']),
+              0,
+            )
             : null; //wi excl
         const sgXvi =
           aFil.length > 0 && viAll
             ? aFil.reduce(
-                (sum, item) =>
-                  sum +
-                  Number(viAll) *
-                    parseToNumber(item.nomination_row_json?.data_temp['38']),
-                0,
-              )
+              (sum, item) =>
+                sum +
+                Number(viAll) *
+                parseToNumber(item.nomination_row_json?.data_temp['38']),
+              0,
+            )
             : null; //wi excl
         // const sgXvi = aFil.length > 0 ? aFil.reduce((sum, item) => sum + (parseToNumber(item.nomination_row_json?.data_temp["13"]) * parseToNumber(item.nomination_row_json?.data_temp["38"])), 0) : null; //wi excl
 
@@ -2134,14 +2134,14 @@ export class QualityPlanningService {
             (f: any) =>
               f?.name === filAreaGF[0]?.nomination_row_json?.zone_text &&
               (f?.entry_exit_id === 1 ? 'Entry' : 'Exit') ===
-                filAreaGF[0]?.nomination_row_json?.data_temp['10'],
+              filAreaGF[0]?.nomination_row_json?.data_temp['10'],
           ) || null;
         const areaTextObj =
           areaData.find(
             (f: any) =>
               f?.name === filAreaGF[0]?.nomination_row_json?.area_text &&
               (f?.entry_exit_id === 1 ? 'Entry' : 'Exit') ===
-                filAreaGF[0]?.nomination_row_json?.data_temp['10'],
+              filAreaGF[0]?.nomination_row_json?.data_temp['10'],
           ) || null;
         const gasDayText = filAreaGF[0]?.gas_day_text || null;
         const contractCodeId =
@@ -2195,12 +2195,12 @@ export class QualityPlanningService {
         const hvXvi1 =
           aFil.length > 0
             ? aFil.reduce(
-                (sum, item) =>
-                  sum +
-                  parseToNumber(item.nomination_row_json?.data_temp['12']) *
-                    vi1,
-                0,
-              )
+              (sum, item) =>
+                sum +
+                parseToNumber(item.nomination_row_json?.data_temp['12']) *
+                vi1,
+              0,
+            )
             : null;
         const viAll1 =
           aFil.length > 0 ? aFil.reduce((sum, item) => sum + vi1, 0) : null;
@@ -2208,23 +2208,23 @@ export class QualityPlanningService {
         const sgXvi1 =
           aFil.length > 0 && viAll1
             ? aFil.reduce(
-                (sum, item) =>
-                  sum +
-                  parseToNumber(item.nomination_row_json?.data_temp['13']) *
-                    Number(viAll1),
-                0,
-              )
+              (sum, item) =>
+                sum +
+                parseToNumber(item.nomination_row_json?.data_temp['13']) *
+                Number(viAll1),
+              0,
+            )
             : null;
 
         const hvXvi2 =
           aFil.length > 0
             ? aFil.reduce(
-                (sum, item) =>
-                  sum +
-                  parseToNumber(item.nomination_row_json?.data_temp['12']) *
-                    vi2,
-                0,
-              )
+              (sum, item) =>
+                sum +
+                parseToNumber(item.nomination_row_json?.data_temp['12']) *
+                vi2,
+              0,
+            )
             : null;
         const viAll2 =
           aFil.length > 0 ? aFil.reduce((sum, item) => sum + vi2, 0) : null;
@@ -2232,23 +2232,23 @@ export class QualityPlanningService {
         const sgXvi2 =
           aFil.length > 0 && viAll2
             ? aFil.reduce(
-                (sum, item) =>
-                  sum +
-                  parseToNumber(item.nomination_row_json?.data_temp['13']) *
-                    Number(viAll2),
-                0,
-              )
+              (sum, item) =>
+                sum +
+                parseToNumber(item.nomination_row_json?.data_temp['13']) *
+                Number(viAll2),
+              0,
+            )
             : null;
 
         const hvXvi3 =
           aFil.length > 0
             ? aFil.reduce(
-                (sum, item) =>
-                  sum +
-                  parseToNumber(item.nomination_row_json?.data_temp['12']) *
-                    vi3,
-                0,
-              )
+              (sum, item) =>
+                sum +
+                parseToNumber(item.nomination_row_json?.data_temp['12']) *
+                vi3,
+              0,
+            )
             : null;
         const viAll3 =
           aFil.length > 0 ? aFil.reduce((sum, item) => sum + vi3, 0) : null;
@@ -2256,23 +2256,23 @@ export class QualityPlanningService {
         const sgXvi3 =
           aFil.length > 0 && viAll3
             ? aFil.reduce(
-                (sum, item) =>
-                  sum +
-                  parseToNumber(item.nomination_row_json?.data_temp['13']) *
-                    Number(viAll3),
-                0,
-              )
+              (sum, item) =>
+                sum +
+                parseToNumber(item.nomination_row_json?.data_temp['13']) *
+                Number(viAll3),
+              0,
+            )
             : null;
 
         const hvXvi4 =
           aFil.length > 0
             ? aFil.reduce(
-                (sum, item) =>
-                  sum +
-                  parseToNumber(item.nomination_row_json?.data_temp['12']) *
-                    vi4,
-                0,
-              )
+              (sum, item) =>
+                sum +
+                parseToNumber(item.nomination_row_json?.data_temp['12']) *
+                vi4,
+              0,
+            )
             : null;
         const viAll4 =
           aFil.length > 0 ? aFil.reduce((sum, item) => sum + vi4, 0) : null;
@@ -2280,23 +2280,23 @@ export class QualityPlanningService {
         const sgXvi4 =
           aFil.length > 0 && viAll4
             ? aFil.reduce(
-                (sum, item) =>
-                  sum +
-                  parseToNumber(item.nomination_row_json?.data_temp['13']) *
-                    Number(viAll4),
-                0,
-              )
+              (sum, item) =>
+                sum +
+                parseToNumber(item.nomination_row_json?.data_temp['13']) *
+                Number(viAll4),
+              0,
+            )
             : null;
 
         const hvXvi5 =
           aFil.length > 0
             ? aFil.reduce(
-                (sum, item) =>
-                  sum +
-                  parseToNumber(item.nomination_row_json?.data_temp['12']) *
-                    vi5,
-                0,
-              )
+              (sum, item) =>
+                sum +
+                parseToNumber(item.nomination_row_json?.data_temp['12']) *
+                vi5,
+              0,
+            )
             : null;
         const viAll5 =
           aFil.length > 0 ? aFil.reduce((sum, item) => sum + vi5, 0) : null;
@@ -2304,23 +2304,23 @@ export class QualityPlanningService {
         const sgXvi5 =
           aFil.length > 0
             ? aFil.reduce(
-                (sum, item) =>
-                  sum +
-                  parseToNumber(item.nomination_row_json?.data_temp['13']) *
-                    Number(viAll5),
-                0,
-              )
+              (sum, item) =>
+                sum +
+                parseToNumber(item.nomination_row_json?.data_temp['13']) *
+                Number(viAll5),
+              0,
+            )
             : null;
 
         const hvXvi6 =
           aFil.length > 0
             ? aFil.reduce(
-                (sum, item) =>
-                  sum +
-                  parseToNumber(item.nomination_row_json?.data_temp['12']) *
-                    vi6,
-                0,
-              )
+              (sum, item) =>
+                sum +
+                parseToNumber(item.nomination_row_json?.data_temp['12']) *
+                vi6,
+              0,
+            )
             : null;
         const viAll6 =
           aFil.length > 0 ? aFil.reduce((sum, item) => sum + vi6, 0) : null;
@@ -2328,23 +2328,23 @@ export class QualityPlanningService {
         const sgXvi6 =
           aFil.length > 0
             ? aFil.reduce(
-                (sum, item) =>
-                  sum +
-                  parseToNumber(item.nomination_row_json?.data_temp['13']) *
-                    Number(viAll6),
-                0,
-              )
+              (sum, item) =>
+                sum +
+                parseToNumber(item.nomination_row_json?.data_temp['13']) *
+                Number(viAll6),
+              0,
+            )
             : null;
 
         const hvXvi7 =
           aFil.length > 0
             ? aFil.reduce(
-                (sum, item) =>
-                  sum +
-                  parseToNumber(item.nomination_row_json?.data_temp['12']) *
-                    vi7,
-                0,
-              )
+              (sum, item) =>
+                sum +
+                parseToNumber(item.nomination_row_json?.data_temp['12']) *
+                vi7,
+              0,
+            )
             : null;
         const viAll7 =
           aFil.length > 0 ? aFil.reduce((sum, item) => sum + vi7, 0) : null;
@@ -2352,12 +2352,12 @@ export class QualityPlanningService {
         const sgXvi7 =
           aFil.length > 0
             ? aFil.reduce(
-                (sum, item) =>
-                  sum +
-                  parseToNumber(item.nomination_row_json?.data_temp['13']) *
-                    Number(viAll7),
-                0,
-              )
+              (sum, item) =>
+                sum +
+                parseToNumber(item.nomination_row_json?.data_temp['13']) *
+                Number(viAll7),
+              0,
+            )
             : null;
 
         // hv = sum(hv*vi)/ vi all
@@ -2669,10 +2669,10 @@ export class QualityPlanningService {
           const hvXvi =
             hourCalc.length > 0
               ? hourCalc.reduce(
-                  (sum, item) =>
-                    sum + Number(item.heatingValue) * Number(item.volume),
-                  0,
-                )
+                (sum, item) =>
+                  sum + Number(item.heatingValue) * Number(item.volume),
+                0,
+              )
               : null;
           const viAll =
             hourCalc.length > 0
@@ -2682,9 +2682,9 @@ export class QualityPlanningService {
           const sgXvi =
             hourCalc.length > 0 && viAll
               ? hourCalc.reduce(
-                  (sum, item) => sum + Number(item.sg) * Number(viAll),
-                  0,
-                )
+                (sum, item) => sum + Number(item.sg) * Number(viAll),
+                0,
+              )
               : null;
           // hv = sum(hv*vi)/ vi all
           const hv = hvXvi / viAll;
@@ -2929,14 +2929,14 @@ export class QualityPlanningService {
             (f: any) =>
               f?.name === filAreaGF[0]?.nomination_row_json?.zone_text &&
               (f?.entry_exit_id === 1 ? 'Entry' : 'Exit') ===
-                filAreaGF[0]?.nomination_row_json?.data_temp['10'],
+              filAreaGF[0]?.nomination_row_json?.data_temp['10'],
           ) || null;
         const areaTextObj =
           areaData.find(
             (f: any) =>
               f?.name === filAreaGF[0]?.nomination_row_json?.area_text &&
               (f?.entry_exit_id === 1 ? 'Entry' : 'Exit') ===
-                filAreaGF[0]?.nomination_row_json?.data_temp['10'],
+              filAreaGF[0]?.nomination_row_json?.data_temp['10'],
           ) || null;
         const gasDayText = filAreaGF[0]?.gas_day_text || null;
         const contractCodeId =
@@ -2953,32 +2953,32 @@ export class QualityPlanningService {
         const hvXvi =
           aFil.length > 0
             ? aFil.reduce(
-                (sum, item) =>
-                  sum +
-                  parseToNumber(item.nomination_row_json?.data_temp['12']) *
-                    parseToNumber(item.nomination_row_json?.data_temp['38']),
-                0,
-              )
+              (sum, item) =>
+                sum +
+                parseToNumber(item.nomination_row_json?.data_temp['12']) *
+                parseToNumber(item.nomination_row_json?.data_temp['38']),
+              0,
+            )
             : null; //wi excl
         const viAll =
           aFil.length > 0
             ? aFil.reduce(
-                (sum, item) =>
-                  sum +
-                  parseToNumber(item.nomination_row_json?.data_temp['38']),
-                0,
-              )
+              (sum, item) =>
+                sum +
+                parseToNumber(item.nomination_row_json?.data_temp['38']),
+              0,
+            )
             : null; //wi excl
         // const sgXvi = aFil.length > 0 ? aFil.reduce((sum, item) => sum + (parseToNumber(item.nomination_row_json?.data_temp["13"]) * parseToNumber(item.nomination_row_json?.data_temp["38"])), 0) : null; //wi excl
         const sgXvi =
           aFil.length > 0 && viAll
             ? aFil.reduce(
-                (sum, item) =>
-                  sum +
-                  Number(viAll) *
-                    parseToNumber(item.nomination_row_json?.data_temp['38']),
-                0,
-              )
+              (sum, item) =>
+                sum +
+                Number(viAll) *
+                parseToNumber(item.nomination_row_json?.data_temp['38']),
+              0,
+            )
             : null; //wi excl
 
         // console.log(filAreaGF[0]?.nomination_row_json?.area_text);
@@ -3189,14 +3189,14 @@ export class QualityPlanningService {
             (f: any) =>
               f?.name === filAreaGF[0]?.nomination_row_json?.zone_text &&
               (f?.entry_exit_id === 1 ? 'Entry' : 'Exit') ===
-                filAreaGF[0]?.nomination_row_json?.data_temp['10'],
+              filAreaGF[0]?.nomination_row_json?.data_temp['10'],
           ) || null;
         const areaTextObj =
           areaData.find(
             (f: any) =>
               f?.name === filAreaGF[0]?.nomination_row_json?.area_text &&
               (f?.entry_exit_id === 1 ? 'Entry' : 'Exit') ===
-                filAreaGF[0]?.nomination_row_json?.data_temp['10'],
+              filAreaGF[0]?.nomination_row_json?.data_temp['10'],
           ) || null;
         const gasDayText = filAreaGF[0]?.gas_day_text || null;
         const contractCodeId =
@@ -3250,12 +3250,12 @@ export class QualityPlanningService {
         const hvXvi1 =
           aFil.length > 0
             ? aFil.reduce(
-                (sum, item) =>
-                  sum +
-                  parseToNumber(item.nomination_row_json?.data_temp['12']) *
-                    vi1,
-                0,
-              )
+              (sum, item) =>
+                sum +
+                parseToNumber(item.nomination_row_json?.data_temp['12']) *
+                vi1,
+              0,
+            )
             : null;
         const viAll1 =
           aFil.length > 0 ? aFil.reduce((sum, item) => sum + vi1, 0) : null;
@@ -3263,23 +3263,23 @@ export class QualityPlanningService {
         const sgXvi1 =
           aFil.length > 0 && viAll1
             ? aFil.reduce(
-                (sum, item) =>
-                  sum +
-                  parseToNumber(item.nomination_row_json?.data_temp['13']) *
-                    Number(viAll1),
-                0,
-              )
+              (sum, item) =>
+                sum +
+                parseToNumber(item.nomination_row_json?.data_temp['13']) *
+                Number(viAll1),
+              0,
+            )
             : null;
 
         const hvXvi2 =
           aFil.length > 0
             ? aFil.reduce(
-                (sum, item) =>
-                  sum +
-                  parseToNumber(item.nomination_row_json?.data_temp['12']) *
-                    vi2,
-                0,
-              )
+              (sum, item) =>
+                sum +
+                parseToNumber(item.nomination_row_json?.data_temp['12']) *
+                vi2,
+              0,
+            )
             : null;
         const viAll2 =
           aFil.length > 0 ? aFil.reduce((sum, item) => sum + vi2, 0) : null;
@@ -3287,23 +3287,23 @@ export class QualityPlanningService {
         const sgXvi2 =
           aFil.length > 0 && viAll2
             ? aFil.reduce(
-                (sum, item) =>
-                  sum +
-                  parseToNumber(item.nomination_row_json?.data_temp['13']) *
-                    Number(viAll2),
-                0,
-              )
+              (sum, item) =>
+                sum +
+                parseToNumber(item.nomination_row_json?.data_temp['13']) *
+                Number(viAll2),
+              0,
+            )
             : null;
 
         const hvXvi3 =
           aFil.length > 0
             ? aFil.reduce(
-                (sum, item) =>
-                  sum +
-                  parseToNumber(item.nomination_row_json?.data_temp['12']) *
-                    vi3,
-                0,
-              )
+              (sum, item) =>
+                sum +
+                parseToNumber(item.nomination_row_json?.data_temp['12']) *
+                vi3,
+              0,
+            )
             : null;
         const viAll3 =
           aFil.length > 0 ? aFil.reduce((sum, item) => sum + vi3, 0) : null;
@@ -3311,23 +3311,23 @@ export class QualityPlanningService {
         const sgXvi3 =
           aFil.length > 0 && viAll3
             ? aFil.reduce(
-                (sum, item) =>
-                  sum +
-                  parseToNumber(item.nomination_row_json?.data_temp['13']) *
-                    Number(viAll3),
-                0,
-              )
+              (sum, item) =>
+                sum +
+                parseToNumber(item.nomination_row_json?.data_temp['13']) *
+                Number(viAll3),
+              0,
+            )
             : null;
 
         const hvXvi4 =
           aFil.length > 0
             ? aFil.reduce(
-                (sum, item) =>
-                  sum +
-                  parseToNumber(item.nomination_row_json?.data_temp['12']) *
-                    vi4,
-                0,
-              )
+              (sum, item) =>
+                sum +
+                parseToNumber(item.nomination_row_json?.data_temp['12']) *
+                vi4,
+              0,
+            )
             : null;
         const viAll4 =
           aFil.length > 0 ? aFil.reduce((sum, item) => sum + vi4, 0) : null;
@@ -3335,23 +3335,23 @@ export class QualityPlanningService {
         const sgXvi4 =
           aFil.length > 0 && viAll4
             ? aFil.reduce(
-                (sum, item) =>
-                  sum +
-                  parseToNumber(item.nomination_row_json?.data_temp['13']) *
-                    Number(viAll4),
-                0,
-              )
+              (sum, item) =>
+                sum +
+                parseToNumber(item.nomination_row_json?.data_temp['13']) *
+                Number(viAll4),
+              0,
+            )
             : null;
 
         const hvXvi5 =
           aFil.length > 0
             ? aFil.reduce(
-                (sum, item) =>
-                  sum +
-                  parseToNumber(item.nomination_row_json?.data_temp['12']) *
-                    vi5,
-                0,
-              )
+              (sum, item) =>
+                sum +
+                parseToNumber(item.nomination_row_json?.data_temp['12']) *
+                vi5,
+              0,
+            )
             : null;
         const viAll5 =
           aFil.length > 0 ? aFil.reduce((sum, item) => sum + vi5, 0) : null;
@@ -3359,23 +3359,23 @@ export class QualityPlanningService {
         const sgXvi5 =
           aFil.length > 0
             ? aFil.reduce(
-                (sum, item) =>
-                  sum +
-                  parseToNumber(item.nomination_row_json?.data_temp['13']) *
-                    Number(viAll5),
-                0,
-              )
+              (sum, item) =>
+                sum +
+                parseToNumber(item.nomination_row_json?.data_temp['13']) *
+                Number(viAll5),
+              0,
+            )
             : null;
 
         const hvXvi6 =
           aFil.length > 0
             ? aFil.reduce(
-                (sum, item) =>
-                  sum +
-                  parseToNumber(item.nomination_row_json?.data_temp['12']) *
-                    vi6,
-                0,
-              )
+              (sum, item) =>
+                sum +
+                parseToNumber(item.nomination_row_json?.data_temp['12']) *
+                vi6,
+              0,
+            )
             : null;
         const viAll6 =
           aFil.length > 0 ? aFil.reduce((sum, item) => sum + vi6, 0) : null;
@@ -3383,23 +3383,23 @@ export class QualityPlanningService {
         const sgXvi6 =
           aFil.length > 0
             ? aFil.reduce(
-                (sum, item) =>
-                  sum +
-                  parseToNumber(item.nomination_row_json?.data_temp['13']) *
-                    Number(viAll6),
-                0,
-              )
+              (sum, item) =>
+                sum +
+                parseToNumber(item.nomination_row_json?.data_temp['13']) *
+                Number(viAll6),
+              0,
+            )
             : null;
 
         const hvXvi7 =
           aFil.length > 0
             ? aFil.reduce(
-                (sum, item) =>
-                  sum +
-                  parseToNumber(item.nomination_row_json?.data_temp['12']) *
-                    vi7,
-                0,
-              )
+              (sum, item) =>
+                sum +
+                parseToNumber(item.nomination_row_json?.data_temp['12']) *
+                vi7,
+              0,
+            )
             : null;
         const viAll7 =
           aFil.length > 0 ? aFil.reduce((sum, item) => sum + vi7, 0) : null;
@@ -3407,12 +3407,12 @@ export class QualityPlanningService {
         const sgXvi7 =
           aFil.length > 0
             ? aFil.reduce(
-                (sum, item) =>
-                  sum +
-                  parseToNumber(item.nomination_row_json?.data_temp['13']) *
-                    Number(viAll7),
-                0,
-              )
+              (sum, item) =>
+                sum +
+                parseToNumber(item.nomination_row_json?.data_temp['13']) *
+                Number(viAll7),
+              0,
+            )
             : null;
 
         // hv = sum(hv*vi)/ vi all

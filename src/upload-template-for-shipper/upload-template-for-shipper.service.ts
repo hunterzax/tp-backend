@@ -199,7 +199,7 @@ export class UploadTemplateForShipperService {
   ) { }
 
   async useReqs(req: any) {
-    const ip = req.headers['x-forwarded-for'] || req.ip;
+    const ip = req?.headers?.['x-forwarded-for'] || req?.ip;
     return {
       ip: ip,
       sub: req?.user?.sub,
@@ -674,7 +674,7 @@ export class UploadTemplateForShipperService {
     const { shipper_id, contract_code_id, nomination_type_id, comment } =
       payload;
 
-    const findData = JSON.parse(file?.jsonDataMultiSheet);
+    const findData = file?.jsonDataMultiSheet ? JSON.parse(file.jsonDataMultiSheet) : null;
     const checkType = findData.reduce((acc: string | null, f: any) => {
       if (f?.sheet === 'Daily Nomination') return 'Daily Nomination';
       if (f?.sheet === 'Weekly Nomination') return 'Weekly Nomination';
@@ -1101,7 +1101,7 @@ export class UploadTemplateForShipperService {
   ) {
     const { shipper_id, contract_code_id, nomination_type_id, comment } =
       payload;
-      
+
 
     const checkTemplate =
       await this.prisma.upload_template_for_shipper.findFirst({
@@ -1119,7 +1119,7 @@ export class UploadTemplateForShipperService {
 
     let uploadResponse: any = null
     if (file) {
-      const findData = JSON.parse(file?.jsonDataMultiSheet);
+      const findData = file?.jsonDataMultiSheet ? JSON.parse(file.jsonDataMultiSheet) : null;
       const checkType = findData.reduce((acc: string | null, f: any) => {
         if (f?.sheet === 'Daily Nomination') return 'Daily Nomination';
         if (f?.sheet === 'Weekly Nomination') return 'Weekly Nomination';
@@ -1394,7 +1394,7 @@ export class UploadTemplateForShipperService {
         },
       });
       if (uploadTemplateId) {
-        
+
         if (file) {
           console.log('comment : ', comment);
           if (!!comment && comment !== 'null') {
@@ -1484,7 +1484,7 @@ export class UploadTemplateForShipperService {
         },
       });
       if (create) {
-        
+
         if (file) {
           if (!!comment && comment !== 'null') {
             console.log('cm.....');

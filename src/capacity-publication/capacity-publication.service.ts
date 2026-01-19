@@ -29,7 +29,7 @@ export class CapacityPublicationService {
     private prisma: PrismaService,
     // @Inject(CACHE_MANAGER) private cacheService: Cache,
     private readonly tranfService: TranfClientService
-  ) {}
+  ) { }
 
   generateData(data: any) {
 
@@ -42,12 +42,12 @@ export class CapacityPublicationService {
 
       while (currentDate.isBefore(endDate)) {
         const formattedDate = currentDate.format('YYYY-MM-DD'); // dd/MM/yyyy
-        let valueAd = item.area_nominal_capacity;
-        if (item?.capacity_publication.length > 0) {
+        let valueAd = item?.area_nominal_capacity;
+        if (item?.capacity_publication && item.capacity_publication.length > 0) {
           const finds =
-            item?.capacity_publication[0]?.capacity_publication_date.find(
+            item?.capacity_publication?.[0]?.capacity_publication_date?.find(
               (f: any) => {
-                return dayjs(f?.date_day).format('YYYY-MM-DD') === formattedDate;
+                return f?.date_day && dayjs(f?.date_day).format('YYYY-MM-DD') === formattedDate;
               },
             );
           if (finds) {
@@ -77,24 +77,24 @@ export class CapacityPublicationService {
     const areaAll = await this.prisma.area.findMany({
       include: {
         entry_exit: {
-          select:{
-            id:true,
-            name:true,
-            color:true,
+          select: {
+            id: true,
+            name: true,
+            color: true,
           }
         },
         zone: {
-          select:{
-            id:true,
-            name:true,
-            color:true,
+          select: {
+            id: true,
+            name: true,
+            color: true,
           }
         },
         capacity_publication: {
           select: {
-            id:true,
-            zone_id:true,
-            area_id:true,
+            id: true,
+            zone_id: true,
+            area_id: true,
             capacity_publication_date: true,
           },
         },
@@ -114,24 +114,24 @@ export class CapacityPublicationService {
     const areaAll = await this.prisma.area.findMany({
       include: {
         entry_exit: {
-          select:{
-            id:true,
-            name:true,
-            color:true,
+          select: {
+            id: true,
+            name: true,
+            color: true,
           }
         },
         zone: {
-          select:{
-            id:true,
-            name:true,
-            color:true,
+          select: {
+            id: true,
+            name: true,
+            color: true,
           }
         },
         capacity_publication: {
           select: {
-            id:true,
-            zone_id:true,
-            area_id:true,
+            id: true,
+            zone_id: true,
+            area_id: true,
             capacity_publication_date: true,
           },
         },
@@ -180,13 +180,13 @@ export class CapacityPublicationService {
 
     if (ckArea) {
       await this.prisma.capacity_publication_detail.create({
-        data:{
-            area: {
-              connect: {
-                id: Number(area_id),
-              },
+        data: {
+          area: {
+            connect: {
+              id: Number(area_id),
             },
-            avaliable_capacity_mmbtu_d: String(avaliable_capacitor_d),
+          },
+          avaliable_capacity_mmbtu_d: String(avaliable_capacitor_d),
           // active: true,
           start_date: start_date ? getTodayNowAdd7(start_date).toDate() : null,
           end_date: end_date ? getTodayNowAdd7(end_date).toDate() : null,
@@ -219,7 +219,7 @@ export class CapacityPublicationService {
               date_day: data.date_day,
             },
           });
-      
+
           if (existingRecord) {
             // ถ้ามีข้อมูลอยู่แล้ว ทำการอัปเดต
             await this.prisma.capacity_publication_date.updateMany({
@@ -249,15 +249,15 @@ export class CapacityPublicationService {
     } else {
       // create
       const findArea = await this.prisma.area.findFirst({
-        where:{
+        where: {
           id: Number(area_id),
         },
-        select:{
-          id:true,
-          entry_exit_id:true,
+        select: {
+          id: true,
+          entry_exit_id: true,
         }
       })
-      if(!findArea){
+      if (!findArea) {
         throw new HttpException(
           {
             status: HttpStatus.BAD_REQUEST,
@@ -267,7 +267,7 @@ export class CapacityPublicationService {
         );
       }
       const createCPArea = await this.prisma.capacity_publication.create({
-        data:{
+        data: {
           area: {
             connect: {
               id: findArea?.id,
@@ -278,17 +278,17 @@ export class CapacityPublicationService {
               id: findArea?.entry_exit_id,
             },
           },
-      }
+        }
       })
 
       await this.prisma.capacity_publication_detail.create({
-        data:{
-            area: {
-              connect: {
-                id: Number(area_id),
-              },
+        data: {
+          area: {
+            connect: {
+              id: Number(area_id),
             },
-            avaliable_capacity_mmbtu_d: String(avaliable_capacitor_d),
+          },
+          avaliable_capacity_mmbtu_d: String(avaliable_capacitor_d),
           // active: true,
           start_date: start_date ? getTodayNowAdd7(start_date).toDate() : null,
           end_date: end_date ? getTodayNowAdd7(end_date).toDate() : null,
@@ -320,7 +320,7 @@ export class CapacityPublicationService {
               date_day: data.date_day,
             },
           });
-      
+
           if (existingRecord) {
             // ถ้ามีข้อมูลอยู่แล้ว ทำการอัปเดต
             await this.prisma.capacity_publication_date.updateMany({
@@ -367,8 +367,8 @@ export class CapacityPublicationService {
     const resData = await this.prisma.capacity_publication_detail.findMany({
       include: {
         area: {
-          include:{
-            zone:true,
+          include: {
+            zone: true,
           }
         },
       },
@@ -393,11 +393,11 @@ export class CapacityPublicationService {
 
       daysInMonth.forEach((currentDate) => {
         const formattedDate = currentDate.format('YYYY-MM-DD'); // รูปแบบวันที่
-        let valueAd = item.area_nominal_capacity;
+        let valueAd = item?.area_nominal_capacity;
 
         if (item?.capacity_publication && item.capacity_publication.length > 0) {
           const finds =
-            (item?.capacity_publication[0]?.capacity_publication_date && Array.isArray(item.capacity_publication[0].capacity_publication_date)) ? item.capacity_publication[0].capacity_publication_date.find(
+            (item?.capacity_publication?.[0]?.capacity_publication_date && Array.isArray(item.capacity_publication?.[0]?.capacity_publication_date)) ? item.capacity_publication[0].capacity_publication_date.find(
               (f: any) => f?.date_day && dayjs(f.date_day).format('YYYY-MM-DD') === formattedDate
             ) : null;
 
@@ -428,13 +428,13 @@ export class CapacityPublicationService {
     });
   }
 
-  async getDays(date:any) {
+  async getDays(date: any) {
 
     const todayStart = getTodayStartAdd7().toDate();
     const todayEnd = getTodayEndAdd7().toDate();
 
     const areaAll = await this.prisma.area.findMany({
-      where:{
+      where: {
         AND: [
           {
             start_date: {
@@ -451,24 +451,24 @@ export class CapacityPublicationService {
       },
       include: {
         entry_exit: {
-          select:{
-            id:true,
-            name:true,
-            color:true,
+          select: {
+            id: true,
+            name: true,
+            color: true,
           }
         },
         zone: {
-          select:{
-            id:true,
-            name:true,
-            color:true,
+          select: {
+            id: true,
+            name: true,
+            color: true,
           }
         },
         capacity_publication: {
           select: {
-            id:true,
-            zone_id:true,
-            area_id:true,
+            id: true,
+            zone_id: true,
+            area_id: true,
             capacity_publication_date: true,
           },
         },
@@ -493,27 +493,27 @@ export class CapacityPublicationService {
     const lastMonth = dayjs(endMonth).endOf('month');
 
     while (currentMonth.isBefore(lastMonth) || currentMonth.isSame(lastMonth, 'month')) {
-        months.push(currentMonth.format('YYYY-MM'));
-        currentMonth = currentMonth.add(1, 'month');
+      months.push(currentMonth.format('YYYY-MM'));
+      currentMonth = currentMonth.add(1, 'month');
     }
 
     return data.map((item) => {
       const monthData: Record<string, { area_nominal_capacity: number }> = {};
 
       months.forEach((monthKey) => {
-        let valueAd = item.area_nominal_capacity;
+        let valueAd = item?.area_nominal_capacity;
 
-        if (item?.capacity_publication.length > 0) {
+        if (item?.capacity_publication && item.capacity_publication.length > 0) {
           // ดึงค่าทั้งหมดในเดือนนั้น
-          const valuesInMonth = item.capacity_publication[0]?.capacity_publication_date
-            .filter((f: any) => dayjs(f?.date_day).format('YYYY-MM') === monthKey)
+          const valuesInMonth = (item.capacity_publication?.[0]?.capacity_publication_date && Array.isArray(item.capacity_publication?.[0]?.capacity_publication_date)) ? item.capacity_publication[0].capacity_publication_date
+            .filter((f: any) => f?.date_day && dayjs(f?.date_day).format('YYYY-MM') === monthKey)
             .map((f: any) => {
               if (f?.value_adjust_use) return Number(f?.value_adjust_use);
               if (f?.value_adjust) return Number(f?.value_adjust);
               if (f?.value) return Number(f?.value);
               return null;
             })
-            .filter((value: any) => value !== null); // กรองค่า null ออก
+            .filter((value: any) => value !== null) : []; // กรองค่า null ออก
 
           // หาค่าที่น้อยที่สุดในเดือนนั้น (ถ้ามี)
           if (valuesInMonth.length > 0) {
@@ -537,15 +537,15 @@ export class CapacityPublicationService {
     });
   }
 
-  async getMonthly(startMonth:any, endMonth:any) {
-    
+  async getMonthly(startMonth: any, endMonth: any) {
+
     const todayStart = getTodayStartAdd7().toDate();
     const todayEnd = getTodayEndAdd7().toDate();
 
     console.log('todayStart : ', todayStart);
 
     const areaAll = await this.prisma.area.findMany({
-      where:{
+      where: {
         AND: [
           {
             start_date: {
@@ -562,24 +562,24 @@ export class CapacityPublicationService {
       },
       include: {
         entry_exit: {
-          select:{
-            id:true,
-            name:true,
-            color:true,
+          select: {
+            id: true,
+            name: true,
+            color: true,
           }
         },
         zone: {
-          select:{
-            id:true,
-            name:true,
-            color:true,
+          select: {
+            id: true,
+            name: true,
+            color: true,
           }
         },
         capacity_publication: {
           select: {
-            id:true,
-            zone_id:true,
-            area_id:true,
+            id: true,
+            zone_id: true,
+            area_id: true,
             capacity_publication_date: true,
           },
         },
@@ -595,22 +595,22 @@ export class CapacityPublicationService {
 
     return resDay;
   }
-  
+
 
   generateDataYearly(data: any, startYear: number, endYear: number) {
     // สร้าง array ของปี เช่น [2024, 2025, ..., 2034]
     const years = Array.from({ length: endYear - startYear + 1 }, (_, i) => startYear + i);
-  
+
     return data.map((item) => {
       const yearData: Record<string, { area_nominal_capacity: number }> = {};
-  
+
       years.forEach((year) => {
         const yearKey = `${year}`;
-        let valueAd = item.area_nominal_capacity;
-  
+        let valueAd = item?.area_nominal_capacity;
+
         if (item?.capacity_publication && item.capacity_publication.length > 0) {
           // ดึงค่าทั้งหมดในปีนั้น
-          const valuesInYear = (item.capacity_publication[0]?.capacity_publication_date && Array.isArray(item.capacity_publication[0].capacity_publication_date)) ? item.capacity_publication[0].capacity_publication_date
+          const valuesInYear = (item?.capacity_publication?.[0]?.capacity_publication_date && Array.isArray(item?.capacity_publication?.[0]?.capacity_publication_date)) ? item.capacity_publication[0].capacity_publication_date
             .filter((f: any) => f?.date_day && dayjs(f.date_day).year() === year)
             .map((f: any) => {
               if (f?.value_adjust_use) return Number(f?.value_adjust_use);
@@ -619,37 +619,37 @@ export class CapacityPublicationService {
               return null;
             })
             .filter((value: any) => value !== null) : []; // กรองค่า null ออก
-  
+
           // หาค่าที่น้อยที่สุดในปีนั้น (ถ้ามี)
           if (valuesInYear.length > 0) {
             valueAd = Math.min(...valuesInYear);
           }
         }
-  
+
         // บันทึกค่าในปีนั้น
         yearData[yearKey] = { area_nominal_capacity: valueAd };
       });
-  
+
       // แปลง yearData ให้เป็น array ของ object
       const formattedYearData = Object.keys(yearData).map((yearKey) => ({
         [yearKey]: yearData[yearKey],
       }));
-  
+
       return {
         ...item,
         year_data: formattedYearData,
       };
     });
   }
-  
 
-  async getYearly(startYear:any, endYear:any) {
+
+  async getYearly(startYear: any, endYear: any) {
 
     const todayStart = getTodayStartAdd7().toDate();
     const todayEnd = getTodayEndAdd7().toDate();
 
     const areaAll = await this.prisma.area.findMany({
-      where:{
+      where: {
         AND: [
           {
             start_date: {
@@ -666,24 +666,24 @@ export class CapacityPublicationService {
       },
       include: {
         entry_exit: {
-          select:{
-            id:true,
-            name:true,
-            color:true,
+          select: {
+            id: true,
+            name: true,
+            color: true,
           }
         },
         zone: {
-          select:{
-            id:true,
-            name:true,
-            color:true,
+          select: {
+            id: true,
+            name: true,
+            color: true,
           }
         },
         capacity_publication: {
           select: {
-            id:true,
-            zone_id:true,
-            area_id:true,
+            id: true,
+            zone_id: true,
+            area_id: true,
             capacity_publication_date: true,
           },
         },
@@ -711,14 +711,14 @@ export class CapacityPublicationService {
       acc[key].push(item);
       return acc;
     }, {});
-    
+
     // get lastest object by start_date
     const latestByArea = Object.entries(groupArea).reduce((acc: any, [key, items]: [string, any[]]) => {
       // Sort items by start_date in descending order and take the first one
-      const latest = [...items].sort((a, b) => 
+      const latest = [...items].sort((a, b) =>
         dayjs(b.start_date).valueOf() - dayjs(a.start_date).valueOf()
       )[0];
-      
+
       acc[key] = latest;
       return acc;
     }, {});
@@ -754,13 +754,13 @@ export class CapacityPublicationService {
           .map((areaData: any) => {
             if (areaData?.capacity_publication && areaData.capacity_publication.length > 0) {
               const finds =
-                areaData.capacity_publication[0]?.capacity_publication_date &&
-                Array.isArray(areaData.capacity_publication[0].capacity_publication_date)
+                (areaData?.capacity_publication?.[0]?.capacity_publication_date &&
+                  Array.isArray(areaData?.capacity_publication?.[0]?.capacity_publication_date))
                   ? areaData.capacity_publication[0].capacity_publication_date.find(
-                      (f: any) =>
-                        f?.date_day &&
-                        dayjs(f.date_day).format('YYYY-MM-DD') === formattedDate,
-                    )
+                    (f: any) =>
+                      f?.date_day &&
+                      dayjs(f.date_day).format('YYYY-MM-DD') === formattedDate,
+                  )
                   : null;
 
               if (finds) {
@@ -784,7 +784,7 @@ export class CapacityPublicationService {
         [dayKey]: dayData[dayKey],
       }));
 
-      if(isClearData){
+      if (isClearData) {
         const { capacity_publication, ...rest } = item;
 
         return {
@@ -792,7 +792,7 @@ export class CapacityPublicationService {
           day_data: formattedDayData,
         };
       }
-      else{
+      else {
         return {
           ...item,
           day_data: formattedDayData,
@@ -801,13 +801,13 @@ export class CapacityPublicationService {
     });
   }
 
-  async getDays2(date:any) {
+  async getDays2(date: any) {
 
     const todayStart = getTodayNowYYYYMMDDDfaultAdd7(date).startOf('month').toDate();
     const todayEnd = getTodayNowYYYYMMDDDfaultAdd7(date).endOf('month').toDate();
 
     const areaAll = await this.prisma.area.findMany({
-      where:{
+      where: {
         AND: [
           {
             start_date: {
@@ -824,24 +824,24 @@ export class CapacityPublicationService {
       },
       include: {
         entry_exit: {
-          select:{
-            id:true,
-            name:true,
-            color:true,
+          select: {
+            id: true,
+            name: true,
+            color: true,
           }
         },
         zone: {
-          select:{
-            id:true,
-            name:true,
-            color:true,
+          select: {
+            id: true,
+            name: true,
+            color: true,
           }
         },
         capacity_publication: {
           select: {
-            id:true,
-            zone_id:true,
-            area_id:true,
+            id: true,
+            zone_id: true,
+            area_id: true,
             capacity_publication_date: {
               where: {
                 date_day: {
@@ -858,10 +858,10 @@ export class CapacityPublicationService {
       },
     });
 
-    if(areaAll.length === 0){
+    if (areaAll.length === 0) {
       return [];
     }
-    
+
     const resDay = await this.generateDataDay2(areaAll, date);
 
     return resDay;
@@ -883,14 +883,14 @@ export class CapacityPublicationService {
       acc[key].push(item);
       return acc;
     }, {});
-    
+
     // get lastest object by start_date
     const latestByArea = Object.entries(groupArea).reduce((acc: any, [key, items]: [string, any[]]) => {
       // Sort items by start_date in descending order and take the first one
-      const latest = [...items].sort((a, b) => 
+      const latest = [...items].sort((a, b) =>
         dayjs(b.start_date).valueOf() - dayjs(a.start_date).valueOf()
       )[0];
-      
+
       acc[key] = latest;
       return acc;
     }, {});
@@ -899,8 +899,8 @@ export class CapacityPublicationService {
     const areaList = Object.values(latestByArea);
 
     while (currentMonth.isBefore(lastMonth) || currentMonth.isSame(lastMonth, 'month')) {
-        months.push(currentMonth.format('YYYY-MM'));
-        currentMonth = currentMonth.add(1, 'month');
+      months.push(currentMonth.format('YYYY-MM'));
+      currentMonth = currentMonth.add(1, 'month');
     }
 
     // เรียงลำดับ area list ตามชื่อและแปลงข้อมูลแต่ละ area
@@ -916,30 +916,30 @@ export class CapacityPublicationService {
         // กรองข้อมูล area ที่มีช่วงวันที่ทับซ้อนกับเดือนที่กำลังประมวลผล
         // เงื่อนไข: ชื่อ area ตรงกัน และ start_date <= สิ้นเดือน และ (ไม่มี end_date หรือ end_date > ต้นเดือน)
         const activeAreaList = data.filter((areaData: any) => {
-          return item.name == areaData.name && areaData.start_date <= endOfMonth.toDate() && ( areaData.end_date === null || areaData.end_date > startOfMonth.toDate())
+          return item.name == areaData.name && areaData.start_date <= endOfMonth.toDate() && (areaData.end_date === null || areaData.end_date > startOfMonth.toDate())
         })
         // หาค่า area_nominal_capacity ต่ำสุดจาก activeAreaList (ถ้ามี)
         let valueAd = activeAreaList.length > 0 ? Math.min(...activeAreaList.map((areaData: any) => areaData.area_nominal_capacity)) : null;
 
         // สร้างข้อมูลรายวันสำหรับเดือนนี้ (ใช้ timezone Asia/Bangkok)
         const dataEachDayByArea = this.generateDataDay2(activeAreaList, startOfMonth.tz('Asia/Bangkok').format('YYYY-MM-DD'))
-        
+
 
         // วนลูปผ่านข้อมูลแต่ละวัน
         dataEachDayByArea.map((dataEachDay: any) => {
           // ดึงค่า area_nominal_capacity จากข้อมูลรายวัน
           // โดยใช้ flatMap เพื่อแปลง nested array และกรองเฉพาะค่าที่มี area_nominal_capacity
-          const areaNominalCapacity = dataEachDay.day_data.flatMap((dayData: any) => 
+          const areaNominalCapacity = dataEachDay.day_data.flatMap((dayData: any) =>
             Object.values(dayData)
-            .filter((dayValue: any) => dayValue.area_nominal_capacity)
-            .map((dayValue: any) => dayValue.area_nominal_capacity)
+              .filter((dayValue: any) => dayValue.area_nominal_capacity)
+              .map((dayValue: any) => dayValue.area_nominal_capacity)
           )
           // ถ้ามีข้อมูล capacity
-          if(areaNominalCapacity.length > 0){
+          if (areaNominalCapacity.length > 0) {
             // หาค่าต่ำสุดของ area_nominal_capacity ในวันนั้น
             const minAreaNominalCapacity = Math.min(...areaNominalCapacity)
             // ถ้าค่าต่ำสุดที่พบน้อยกว่าค่าปัจจุบัน ให้อัพเดท valueAd
-            if(minAreaNominalCapacity < valueAd){
+            if (minAreaNominalCapacity < valueAd) {
               valueAd = minAreaNominalCapacity
             }
           }
@@ -963,12 +963,12 @@ export class CapacityPublicationService {
   }
 
   async getMonthly2(startMonth: any, endMonth: any) {
-    
+
     const todayStart = dayjs(startMonth, 'YYYY-MM').startOf('month').toDate();
     const todayEnd = dayjs(endMonth, 'YYYY-MM').endOf('month').toDate();
 
     const areaAll = await this.prisma.area.findMany({
-      where:{
+      where: {
         AND: [
           {
             start_date: {
@@ -985,24 +985,24 @@ export class CapacityPublicationService {
       },
       include: {
         entry_exit: {
-          select:{
-            id:true,
-            name:true,
-            color:true,
+          select: {
+            id: true,
+            name: true,
+            color: true,
           }
         },
         zone: {
-          select:{
-            id:true,
-            name:true,
-            color:true,
+          select: {
+            id: true,
+            name: true,
+            color: true,
           }
         },
         capacity_publication: {
           select: {
-            id:true,
-            zone_id:true,
-            area_id:true,
+            id: true,
+            zone_id: true,
+            area_id: true,
             capacity_publication_date: {
               where: {
                 date_day: {
@@ -1023,7 +1023,7 @@ export class CapacityPublicationService {
 
     return resDay;
   }
-  
+
   async getYearly2(startYear: any, endYear: any) {
     const todayStart = dayjs(startYear, 'YYYY').startOf('year').toDate();
     const todayEnd = dayjs(endYear, 'YYYY').endOf('year').toDate();
@@ -1143,19 +1143,19 @@ function generateDataYearly2Helper(data: any, startYear: number, endYear: number
             );
           })
           .map((areaData: any) => {
-            if (areaData?.capacity_publication.length > 0) {
+            if (areaData?.capacity_publication && areaData.capacity_publication.length > 0) {
               const valuesInYear =
-                item.capacity_publication[0]?.capacity_publication_date &&
-                Array.isArray(item.capacity_publication[0].capacity_publication_date)
+                (item?.capacity_publication?.[0]?.capacity_publication_date &&
+                  Array.isArray(item?.capacity_publication?.[0]?.capacity_publication_date))
                   ? item.capacity_publication[0].capacity_publication_date
-                      .filter((f: any) => dayjs(f?.date_day).year() === year)
-                      .map((f: any) => {
-                        if (f?.value_adjust_use) return Number(f?.value_adjust_use);
-                        if (f?.value_adjust) return Number(f?.value_adjust);
-                        if (f?.value) return Number(f?.value);
-                        return null;
-                      })
-                      .filter((value: any) => value !== null)
+                    .filter((f: any) => f?.date_day && dayjs(f?.date_day).year() === year)
+                    .map((f: any) => {
+                      if (f?.value_adjust_use) return Number(f?.value_adjust_use);
+                      if (f?.value_adjust) return Number(f?.value_adjust);
+                      if (f?.value) return Number(f?.value);
+                      return null;
+                    })
+                    .filter((value: any) => value !== null)
                   : [];
 
               if (valuesInYear.length > 0) {

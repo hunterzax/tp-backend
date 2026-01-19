@@ -29,10 +29,10 @@ export class PlanningFileSubmissionTemplateService {
     private jwtService: JwtService,
     private prisma: PrismaService,
     // @Inject(CACHE_MANAGER) private cacheService: Cache,
-  ) {}
+  ) { }
 
   async useReqs(req: any) {
-    const ip = req.headers['x-forwarded-for'] || req.ip;
+    const ip = req?.headers?.['x-forwarded-for'] || req?.ip;
     return {
       ip: ip,
       sub: req?.user?.sub,
@@ -180,14 +180,14 @@ export class PlanningFileSubmissionTemplateService {
     const group = group_id
       ? { id: group_id }
       : await this.prisma.group.findFirst({
-          where: {
-            account_manage: {
-              some: {
-                account_id: Number(userId),
-              },
+        where: {
+          account_manage: {
+            some: {
+              account_id: Number(userId),
             },
           },
-        });
+        },
+      });
 
     const checkSE =
       await this.prisma.planning_file_submission_template.findMany({
@@ -289,14 +289,14 @@ export class PlanningFileSubmissionTemplateService {
     const group = group_id
       ? { id: group_id }
       : await this.prisma.group.findFirst({
-          where: {
-            account_manage: {
-              some: {
-                account_id: Number(userId),
-              },
+        where: {
+          account_manage: {
+            some: {
+              account_id: Number(userId),
             },
           },
-        });
+        },
+      });
 
     const checkSE =
       await this.prisma.planning_file_submission_template.findMany({

@@ -29,7 +29,16 @@ export class MinimumInventorySummaryService {
     private jwtService: JwtService,
     private prisma: PrismaService,
     // @Inject(CACHE_MANAGER) private cacheService: Cache,
-  ) {}
+  ) { }
+
+  private safeParseJSON(jsonString: string): any {
+    try {
+      return JSON.parse(jsonString);
+    } catch (error) {
+      console.error('Error parsing JSON:', error);
+      return null;
+    }
+  }
 
   async findAll(payload: any) {
     const { gas_day } = payload;
@@ -155,20 +164,20 @@ export class MinimumInventorySummaryService {
     const newData = nomination.flatMap((e: any) => {
       // console.log('e : ', e);
       const gas_day = dayjs(e?.gas_day).format('DD/MM/YYYY');
-      const rowJson = e['nomination_version'][0]?.['nomination_row_json'].map(
+      const rowJson = e?.['nomination_version']?.[0]?.['nomination_row_json']?.map(
         (nJ: any) => {
-          nJ['data_temp'] = JSON.parse(nJ['data_temp']);
+          nJ['data_temp'] = this.safeParseJSON(nJ['data_temp']);
           return { ...nJ };
         },
-      );
+      ) || [];
       // Min_Inventory_Change
       // Exchange_Mininventory
-      const MinInventoryChange = rowJson.filter((f: any) => {
-        return f?.data_temp['5'] === 'Min_Inventory_Change';
-      });
-      const ExchangeMininventory = rowJson.filter((f: any) => {
-        return f?.data_temp['5'] === 'Exchange_Mininventory';
-      });
+      const MinInventoryChange = rowJson?.filter((f: any) => {
+        return f?.data_temp?.['5'] === 'Min_Inventory_Change';
+      }) || [];
+      const ExchangeMininventory = rowJson?.filter((f: any) => {
+        return f?.data_temp?.['5'] === 'Exchange_Mininventory';
+      }) || [];
       // console.log('MinInventoryChange : ', MinInventoryChange);
       // console.log('ExchangeMininventory : ', ExchangeMininventory);
       const { nomination_version, ...nE } = e;
@@ -176,7 +185,7 @@ export class MinimumInventorySummaryService {
         nomination_full_json,
         nomination_row_json,
         ...nNomination_version
-      } = nomination_version[0];
+      } = nomination_version?.[0] || {};
 
       let MinInventoryChangeUse = [];
       let ExchangeMininventoryUse = [];
@@ -189,8 +198,8 @@ export class MinimumInventorySummaryService {
           const contract_code = e?.contract_code;
           const nomination_type = e?.nomination_type;
           const version = nNomination_version;
-          const zone = p['data_temp']['0'];
-          let value = p['data_temp']['38']  || null;
+          const zone = p?.['data_temp']?.['0'];
+          let value = p?.['data_temp']?.['38'] || null;
           value = value?.trim()?.replace(/,/g, '');
           // Check if value is wrapped in parentheses and convert to negative
           if (value && value.startsWith('(') && value.endsWith(')')) {
@@ -204,7 +213,7 @@ export class MinimumInventorySummaryService {
             nomination_row_json_id,
             nomination_code,
             gas_day,
-            gas_day_main:gas_day,
+            gas_day_main: gas_day,
             zone,
             query_shipper_nomination_file_id,
             group,
@@ -225,8 +234,8 @@ export class MinimumInventorySummaryService {
           const contract_code = e?.contract_code;
           const nomination_type = e?.nomination_type;
           const version = nNomination_version;
-          const zone = p['data_temp']['0'];
-          const value = p['data_temp']['38'] || null;
+          const zone = p?.['data_temp']?.['0'];
+          const value = p?.['data_temp']?.['38'] || null;
           const nomination_row_json_id = p?.id;
 
           const nomType = 'daily';
@@ -235,7 +244,7 @@ export class MinimumInventorySummaryService {
             nomination_row_json_id,
             nomination_code,
             gas_day,
-            gas_day_main:gas_day,
+            gas_day_main: gas_day,
             zone,
             query_shipper_nomination_file_id,
             group,
@@ -257,8 +266,8 @@ export class MinimumInventorySummaryService {
             const contract_code = e?.contract_code;
             const nomination_type = e?.nomination_type;
             const version = nNomination_version;
-            const zone = p['data_temp']['0'];
-            let value = p['data_temp'][`${14 + index}`] || null;
+            const zone = p?.['data_temp']?.['0'];
+            let value = p?.['data_temp']?.[`${14 + index}`] || null;
             value = value?.trim()?.replace(/,/g, '');
             // Check if value is wrapped in parentheses and convert to negative
             if (value && value.startsWith('(') && value.endsWith(')')) {
@@ -273,7 +282,7 @@ export class MinimumInventorySummaryService {
               nomination_row_json_id,
               nomination_code,
               gas_day: startDate.add(index, 'day').format('DD/MM/YYYY'),
-              gas_day_main:gas_day,
+              gas_day_main: gas_day,
               zone,
               query_shipper_nomination_file_id,
               group,
@@ -310,8 +319,8 @@ export class MinimumInventorySummaryService {
             const contract_code = e?.contract_code;
             const nomination_type = e?.nomination_type;
             const version = nNomination_version;
-            const zone = p['data_temp']['0'];
-            const value = p['data_temp'][`${14 + index}`] || null;
+            const zone = p?.['data_temp']?.['0'];
+            const value = p?.['data_temp']?.[`${14 + index}`] || null;
             const nomination_row_json_id = p?.id;
 
             const nomType = day;
@@ -321,7 +330,7 @@ export class MinimumInventorySummaryService {
               nomination_row_json_id,
               nomination_code,
               gas_day: startDate.add(index, 'day').format('DD/MM/YYYY'),
-              gas_day_main:gas_day,
+              gas_day_main: gas_day,
               zone,
               query_shipper_nomination_file_id,
               group,
@@ -386,7 +395,7 @@ export class MinimumInventorySummaryService {
               f?.gas_day === data?.[iW]?.gas_day &&
               f?.group?.name === data?.[iW]?.group?.name &&
               f?.contract_code?.contract_code ===
-                data?.[iW]?.contract_code?.contract_code
+              data?.[iW]?.contract_code?.contract_code
             );
           });
           if (!find) {
@@ -433,7 +442,7 @@ export class MinimumInventorySummaryService {
     //   );
     // });
 
-    const groupCX = groupNom?.map((e:any) => {
+    const groupCX = groupNom?.map((e: any) => {
 
       const groupedByDaily = Object.values(
         e["daily"].reduce((acc, item) => {
@@ -448,9 +457,9 @@ export class MinimumInventorySummaryService {
               data: [],
             };
           }
-          if(item.type === 'Min_Inventory_Change'){
+          if (item.type === 'Min_Inventory_Change') {
             acc[key].minInven = acc[key].minInven ? acc[key].minInven + item.value : item.value;
-          }else if(item.type === 'Exchange_Mininventory'){
+          } else if (item.type === 'Exchange_Mininventory') {
             acc[key].exchangeMinInven = acc[key].exchangeMinInven ? acc[key].exchangeMinInven + item.value : item.value;
           }
           acc[key].data.push(item);
@@ -473,9 +482,9 @@ export class MinimumInventorySummaryService {
               data: [],
             };
           }
-          if(item.type === 'Min_Inventory_Change'){
+          if (item.type === 'Min_Inventory_Change') {
             acc[key].minInven = acc[key].minInven ? acc[key].minInven + item.value : item.value;
-          }else if(item.type === 'Exchange_Mininventory'){
+          } else if (item.type === 'Exchange_Mininventory') {
             acc[key].exchangeMinInven = acc[key].exchangeMinInven ? acc[key].exchangeMinInven + item.value : item.value;
           }
           acc[key].data.push(item);
@@ -499,8 +508,8 @@ export class MinimumInventorySummaryService {
     // groupedByDaily
     // groupedByWeekly
     // console.log('dayjs(gas_day).format("DD/MM/YYYY") : ', dayjs(gas_day).format("DD/MM/YYYY"));
-    const filgroupCX = groupCX?.map((e:any) => {
-      e["groupedByDaily"] = e["groupedByDaily"]?.filter((f:any) => {
+    const filgroupCX = groupCX?.map((e: any) => {
+      e["groupedByDaily"] = e["groupedByDaily"]?.filter((f: any) => {
         return (
           f?.gas_day === dayjs(gas_day).format("DD/MM/YYYY")
         )
@@ -515,7 +524,7 @@ export class MinimumInventorySummaryService {
       }
     })
 
-    const groupAll = filgroupCX?.map((e:any) => {
+    const groupAll = filgroupCX?.map((e: any) => {
 
       // สร้าง set หรือ map เพื่อใช้ตรวจสอบรายการที่มีอยู่ใน daily
       const dailyKeySet = new Set(
@@ -541,8 +550,8 @@ export class MinimumInventorySummaryService {
 
     // console.log('groupAll : ', groupAll);
 
-     const filgroupAll = groupAll?.map((e:any) => {
-      e["groupedByAll"] = e["groupedByAll"]?.filter((f:any) => {
+    const filgroupAll = groupAll?.map((e: any) => {
+      e["groupedByAll"] = e["groupedByAll"]?.filter((f: any) => {
         return (
           f?.gas_day === dayjs(gas_day).format("DD/MM/YYYY")
         )

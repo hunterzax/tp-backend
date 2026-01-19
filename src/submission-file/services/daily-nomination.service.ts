@@ -23,7 +23,16 @@ export interface DailyNominationResult {
 
 @Injectable()
 export class DailyNominationService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
+
+  private safeParseJSON(jsonString: string): any {
+    try {
+      return JSON.parse(jsonString);
+    } catch (error) {
+      console.error('Error parsing JSON:', error);
+      return null;
+    }
+  }
 
   /**
    * STEP 23-28: DAILY NOMINATION PROCESSING
@@ -65,13 +74,13 @@ export class DailyNominationService {
             HttpStatus.BAD_REQUEST,
           );
         }
-        
+
         // ===== STEP 24: DEADLINE CHECK FOR DAILY NOMINATION =====
         const renom = this.ckDateInfoNomDailyAndWeeklyNew(
-          getTodayNow(), 
-          startDateExConv, 
-          nominationDeadlineSubmission, 
-          nominationDeadlineReceptionOfRenomination, 
+          getTodayNow(),
+          startDateExConv,
+          nominationDeadlineSubmission,
+          nominationDeadlineReceptionOfRenomination,
           1
         );
 
@@ -160,7 +169,7 @@ export class DailyNominationService {
    * @param type - ประเภท (1 = Daily)
    * @returns Renomination flag
    */
-  
+
   private ckDateInfoNomDailyAndWeeklyNew(
     nowAts: any,
     startDateExConv: any,
@@ -259,7 +268,7 @@ export class DailyNominationService {
    * @param data - ข้อมูล header
    * @returns Boolean indicating if header is valid
    */
- 
+
   private validateDataDaily(sheetData: any) {
     console.log('STEP 25: Daily header validation completed');
     // ตรวจสอบค่าตั้งแต่ key 14 ถึง 37
@@ -307,8 +316,8 @@ export class DailyNominationService {
     console.log('********* start *********');
 
     // Parse booking full JSON data from contract
-    const bookingFullJson = JSON.parse(contractCode?.booking_version[0]?.booking_full_json[0]?.data_temp);
-    
+    const bookingFullJson = this.safeParseJSON(contractCode?.booking_version?.[0]?.booking_full_json?.[0]?.data_temp);
+
     // Extract capacity daily booking headers for entry and exit
     const headerEntryCDBMMBTUD = bookingFullJson?.headerEntry['Capacity Daily Booking (MMBTU/d)'];
     delete headerEntryCDBMMBTUD['key']; // Remove key field
@@ -324,7 +333,7 @@ export class DailyNominationService {
     const entryValue = bookingFullJson?.entryValue;
     const exitValue = bookingFullJson?.exitValue;
     const filePeriodMode = contractCode?.file_period_mode;
-    
+
     const zoneQualityMaster = await this.prisma.zone.findMany({
       where: {
         AND: [
@@ -381,13 +390,13 @@ export class DailyNominationService {
         console.log('day');
         console.log('startDateExConv : ', startDateExConv);
         console.log('headerEntryCDBMMBTUH : ', bookingData.headerEntryCDBMMBTUH);
-        
+
         // Find matching keys for entry/exit use and per day values
         const resultEntryExitUse = this.findExactMatchingKeyDDMMYYYY(startDateExConv, bookingData.headerEntryCDBMMBTUH);
         const resultEntryExitUsePerDay = this.findExactMatchingKeyDDMMYYYY(startDateExConv, bookingData.headerEntryCDBMMBTUD);
         console.log('✅ Matching Keys Found:', resultEntryExitUse);
         console.log('✅ Matching Keys Per Day Found:', resultEntryExitUsePerDay);
-        
+
         // Validate that matching keys exist
         if (!resultEntryExitUse || !resultEntryExitUsePerDay) {
           throw new HttpException(

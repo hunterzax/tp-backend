@@ -51,7 +51,20 @@ export class CapacityV2Service {
     // @Inject(CACHE_MANAGER) private cacheService: Cache,
   ) { }
 
+  private safeParseJSON(data: any, defaultValue: any = null) {
+    if (!data) return defaultValue;
+    try {
+      return typeof data === 'string' ? JSON.parse(data) : data;
+    } catch (e) {
+      console.error('JSON parse error:', e);
+      return defaultValue;
+    }
+  }
+
   async capacityRequestManagementOnce(id: any) {
+    if (id === undefined || id === null) {
+      return [];
+    }
     const resData = await this.prisma.contract_code.findMany({
       where: {
         id: Number(id),
@@ -203,7 +216,7 @@ export class CapacityV2Service {
     file: any,
     token: any,
   ) {
-    const resultTranform = (await JSON.parse(data?.json_data)) || null;
+    const resultTranform = this.safeParseJSON(data?.json_data);
     // console.log('resultTranform : ', resultTranform);
     const headerEntry = resultTranform?.headerEntry || {};
     const entryValue = resultTranform?.entryValue || [];
@@ -345,13 +358,13 @@ export class CapacityV2Service {
     ];
 
     const missingEntry = requiredEntry.filter(k => !headerEntry?.[k]);
-    const missingExit  = requiredExit.filter(k => !headerExit?.[k]);
+    const missingExit = requiredExit.filter(k => !headerExit?.[k]);
 
     const missing = [
       ...missingEntry.map(k => `Entry.${k}`),
       ...missingExit.map(k => `Exit.${k}`),
     ];
-  
+
     if (missing.length > 0) {
       throw new HttpException(
         {
@@ -436,7 +449,7 @@ export class CapacityV2Service {
                 sum =
                   Math.round(
                     (sum + Number(entry[entryKey]?.replace(/,/g, '')) || 0) *
-                      1000,
+                    1000,
                   ) / 1000;
                 //  const num = parseFloat(entry[entryKey]?.replace(/,/g, '')) || 0;
                 //   sum += Math.round(num * factor);
@@ -474,7 +487,7 @@ export class CapacityV2Service {
                 sum =
                   Math.round(
                     (sum + Number(exit[exitKey]?.replace(/,/g, '')) || 0) *
-                      1000,
+                    1000,
                   ) / 1000;
                 // sum += Math.round(parseFloat(exit[exitKey]) * factor) / factor || 0;
               }
@@ -667,7 +680,7 @@ export class CapacityV2Service {
       }
     }
 
-    function parseNumericStrict(v: unknown, ctx: {capacityKey: string; dateKey: string; ePointName: string; stamp: string}) {
+    function parseNumericStrict(v: unknown, ctx: { capacityKey: string; dateKey: string; ePointName: string; stamp: string }) {
       // รับ number ตรง ๆ
       if (typeof v === 'number') {
         if (!Number.isFinite(v)) {
@@ -720,13 +733,13 @@ export class CapacityV2Service {
       entryValue.map(async (e: any, i: any) => {
         const entryPointName = e[keyEntryPoint];
 
-      
+
 
         const newStartDayPlus = dayjs(todayStart);
         const useStart = dayjs(e[keyEntryFrom], 'DD/MM/YYYY');
         const useEnd = dayjs(e[keyEntryTo], 'DD/MM/YYYY');
 
-        if(!useStart.isValid() || !useEnd.isValid()) {
+        if (!useStart.isValid() || !useEnd.isValid()) {
           throw new HttpException(
             {
               status: HttpStatus.BAD_REQUEST,
@@ -750,7 +763,7 @@ export class CapacityV2Service {
           );
         }
 
-        if(useStart.isSameOrAfter(useEnd)) {
+        if (useStart.isSameOrAfter(useEnd)) {
           throw new HttpException(
             {
               status: HttpStatus.BAD_REQUEST,
@@ -828,12 +841,12 @@ export class CapacityV2Service {
                     );
                   }
 
-                    const s = String(e[keyValue]).trim();
-                    if (s === '') {
-                        warningData.push(
-                        `${capacityKey} for [Date : ${dateKey}] is ${e[keyValue]} at ${entryPointName} ${dayjs(newData, 'YYYY/MM/DD HH:mm').format('DD/MM/YYYY HH:mm')}`,
-                      );
-                    }
+                  const s = String(e[keyValue]).trim();
+                  if (s === '') {
+                    warningData.push(
+                      `${capacityKey} for [Date : ${dateKey}] is ${e[keyValue]} at ${entryPointName} ${dayjs(newData, 'YYYY/MM/DD HH:mm').format('DD/MM/YYYY HH:mm')}`,
+                    );
+                  }
 
                   const checkNoNum = parseNumericStrict(e[keyValue], {
                     capacityKey,
@@ -951,7 +964,7 @@ export class CapacityV2Service {
       }),
     );
 
-   
+
 
     // warningData
 
@@ -964,7 +977,7 @@ export class CapacityV2Service {
         const useStart = dayjs(e[keyExitFrom], 'DD/MM/YYYY');
         const useEnd = dayjs(e[keyExitTo], 'DD/MM/YYYY');
 
-        if(!useStart.isValid() || !useEnd.isValid()) {
+        if (!useStart.isValid() || !useEnd.isValid()) {
           throw new HttpException(
             {
               status: HttpStatus.BAD_REQUEST,
@@ -973,7 +986,7 @@ export class CapacityV2Service {
             HttpStatus.BAD_REQUEST,
           );
         }
-        
+
         const isCheckMoreDate = useStart.isAfter(newStartDayPlus);
         let checkMinMax = false;
 
@@ -993,7 +1006,7 @@ export class CapacityV2Service {
           );
         }
 
-        if(useStart.isSameOrAfter(useEnd)) {
+        if (useStart.isSameOrAfter(useEnd)) {
           throw new HttpException(
             {
               status: HttpStatus.BAD_REQUEST,
@@ -1058,12 +1071,12 @@ export class CapacityV2Service {
                     );
                   }
 
-                    const s = String(e[keyValue]).trim();
-                    if (s === '') {
-                        warningData.push(
-                        `${capacityKey} for [Date : ${dateKey}] is ${e[keyValue]} at ${exitPointName} ${dayjs(newData, 'YYYY/MM/DD HH:mm').format('DD/MM/YYYY HH:mm')}`,
-                      );
-                    }
+                  const s = String(e[keyValue]).trim();
+                  if (s === '') {
+                    warningData.push(
+                      `${capacityKey} for [Date : ${dateKey}] is ${e[keyValue]} at ${exitPointName} ${dayjs(newData, 'YYYY/MM/DD HH:mm').format('DD/MM/YYYY HH:mm')}`,
+                    );
+                  }
 
                   const checkNoNum = parseNumericStrict(e[keyValue], {
                     capacityKey,
@@ -1158,7 +1171,7 @@ export class CapacityV2Service {
           },
         });
 
-         if (!exitPointName) {
+        if (!exitPointName) {
           throw new HttpException(
             {
               status: HttpStatus.BAD_REQUEST,
@@ -1396,30 +1409,30 @@ export class CapacityV2Service {
     console.log(' - - - 1 - - - ');
     const checkContractCodeCheckLast = checkContractCode?.id
       ? await this.prisma.contract_code.findFirst({
-          select: {
-            id: true,
-            status_capacity_request_management_id: true,
-            contract_start_date: true,
-            contract_end_date: true,
-            terminate_date: true,
-            status_capacity_request_management_process_id: true,
-            ref_contract_code_by_main_id: true,
-            ref_contract_code_by_id: true,
-            shadow_period: true,
-            shadow_time: true,
-          },
-          where: {
-            ref_contract_code_by_main_id: checkContractCode?.id,
-          },
-          orderBy: {
-            id: 'desc',
-          },
-        })
+        select: {
+          id: true,
+          status_capacity_request_management_id: true,
+          contract_start_date: true,
+          contract_end_date: true,
+          terminate_date: true,
+          status_capacity_request_management_process_id: true,
+          ref_contract_code_by_main_id: true,
+          ref_contract_code_by_id: true,
+          shadow_period: true,
+          shadow_time: true,
+        },
+        where: {
+          ref_contract_code_by_main_id: checkContractCode?.id,
+        },
+        orderBy: {
+          id: 'desc',
+        },
+      })
       : null;
 
     if (
       checkContractCodeCheckLast?.status_capacity_request_management_process_id ===
-        4 ||
+      4 ||
       checkContractCodeCheckLast?.status_capacity_request_management_id === 5
     ) {
       //
@@ -1865,12 +1878,12 @@ export class CapacityV2Service {
                 connect: {
                   id:
                     checkContractCodeCheckLast?.status_capacity_request_management_id ===
-                    3
+                      3
                       ? 1
                       : (checkContractCodeCheckLast?.status_capacity_request_management_id == 2 || checkContractCodeCheckLast?.status_capacity_request_management_id == 4) &&
-                          (ckUserType?.id != 2 ||
-                            notApproved ||
-                            typeSuccess !== 1)
+                        (ckUserType?.id != 2 ||
+                          notApproved ||
+                          typeSuccess !== 1)
                         ? 1
                         : checkContractCodeCheckLast?.status_capacity_request_management_id,
                 },
@@ -2318,14 +2331,14 @@ export class CapacityV2Service {
       remarkWarningData: `warningData.length > 0 คือมี warning`,
       message:
         warningData?.length > 0 ? `Blank Or 0 value detected in the template.` :
-        typeSuccess === 1
-          ? 'Success.'
-          : 'Zone, Area or Contract point is NOT match.',
+          typeSuccess === 1
+            ? 'Success.'
+            : 'Zone, Area or Contract point is NOT match.',
       remark: `type 1 = Success, 2 = Warning`,
     };
   }
 
-  async restorePreviousVersion(id: any, terminateDate?: any, userId?:any) {
+  async restorePreviousVersion(id: any, terminateDate?: any, userId?: any) {
     console.log('คืนค่าเก่า----');
     const specificVersion = await this.prisma.booking_version.findFirst({
       where: {
@@ -2333,8 +2346,8 @@ export class CapacityV2Service {
         // flag_use: false,
         // status_capacity_request_management_id: 2,
       },
-      include:{
-        contract_code:true,
+      include: {
+        contract_code: true,
       },
       orderBy: { id: 'desc' },
     });
@@ -2348,15 +2361,15 @@ export class CapacityV2Service {
           specificVersion.id,
         );
 
-        // @@@
+      // @@@
       let tsetDataUse = []
-      if(terminateDate){
+      if (terminateDate) {
         console.log('******* terminateDate Day : ', dayjs(terminateDate).format("YYYY-MM-DD"));
-        tsetDataUse = setDataUse?.map((sd:any) => {
+        tsetDataUse = setDataUse?.map((sd: any) => {
           const { resCalcNew, ...nSd } = sd
-          const nresCalcNew = resCalcNew?.map((rCn:any) => {
+          const nresCalcNew = resCalcNew?.map((rCn: any) => {
             const { calcNew, ...nRCn } = rCn
-            const fcalcNew = calcNew?.filter((f:any) => {
+            const fcalcNew = calcNew?.filter((f: any) => {
               return (
                 dayjs(f?.date, "YYYY-MM-DD").isSameOrAfter(dayjs(terminateDate).format("YYYY-MM-DD"))
               )
@@ -2366,20 +2379,20 @@ export class CapacityV2Service {
               calcNew: fcalcNew
             }
           })
-  
+
           return {
             ...nSd,
             resCalcNew: nresCalcNew
           }
         })
-  
-      }else{
+
+      } else {
         tsetDataUse = setDataUse
       }
-      
+
       console.log('คืน ---- tsetDataUse : ', tsetDataUse);
       await this.capacityMiddleService.processGenPublicData(tsetDataUse, true);
-   
+
       // await this.capacityMiddleService.processGenPublicData(setDataUse, true);
     }
   }
@@ -2905,7 +2918,7 @@ export class CapacityV2Service {
         orderBy: { id: 'desc' },
       });
 
-      const dataFull = JSON.parse(getData['booking_full_json'][0]?.data_temp);
+      const dataFull = this.safeParseJSON(getData?.['booking_full_json']?.[0]?.data_temp);
       const shipperName = dataFull?.shipperInfo[0]['Shipper Name'] || null;
       const getGroupByName =
         await this.capacityMiddleService.getGroupByName(shipperName);
@@ -2994,7 +3007,7 @@ export class CapacityV2Service {
         },
       },
     });
-    jsonFull['data_temp'] = JSON.parse(jsonFull['data_temp']);
+    if (jsonFull) jsonFull['data_temp'] = this.safeParseJSON(jsonFull?.['data_temp']);
 
     let resultDate = null;
     let startDate = contract_start_date;
@@ -3037,7 +3050,7 @@ export class CapacityV2Service {
       const npath_management_config = path_management_config.map((e: any) => {
         return {
           ...e,
-          temps: JSON.parse(e['temps']),
+          temps: this.safeParseJSON(e?.['temps']),
         };
       });
 
@@ -3138,7 +3151,7 @@ export class CapacityV2Service {
         );
       }
 
-      if(getTodayNowDDMMYYYYAdd7(contract_start_date).isSameOrAfter(getTodayNowDDMMYYYYAdd7(contract_end_date))) {
+      if (getTodayNowDDMMYYYYAdd7(contract_start_date).isSameOrAfter(getTodayNowDDMMYYYYAdd7(contract_end_date))) {
         throw new HttpException(
           {
             status: HttpStatus.BAD_REQUEST,
@@ -3705,7 +3718,7 @@ export class CapacityV2Service {
           Number(contractCode?.term_type_id),
         );
 
-      if(getTodayNowDDMMYYYYAdd7(contract_start_date).isSameOrAfter(getTodayNowDDMMYYYYAdd7(contract_end_date))) {
+      if (getTodayNowDDMMYYYYAdd7(contract_start_date).isSameOrAfter(getTodayNowDDMMYYYYAdd7(contract_end_date))) {
         throw new HttpException(
           {
             status: HttpStatus.BAD_REQUEST,
@@ -4098,13 +4111,13 @@ export class CapacityV2Service {
   }
 
   makeFillWithLast(arr: string[], count: number) {
-      const last = arr.length ? arr[arr.length - 1] : "0";
-      return Array.from({ length: count }, () => last);
+    const last = arr.length ? arr[arr.length - 1] : "0";
+    return Array.from({ length: count }, () => last);
   };
 
-   makeFillWithFirst(arr: string[], count: number) {
-      const first = arr.length ? arr[0] : "0";
-      return Array.from({ length: count }, () => first);
+  makeFillWithFirst(arr: string[], count: number) {
+    const first = arr.length ? arr[0] : "0";
+    return Array.from({ length: count }, () => first);
   };
 
 
@@ -4115,7 +4128,7 @@ export class CapacityV2Service {
     mode: 'FROM' | 'TO',
     data: any[],
     entryExit: number
-) => {
+  ) => {
 
     function chunkIntoParts<T>(xs: T[], parts: number): T[][] {
       const size = Math.ceil(xs.length / parts);
@@ -4131,466 +4144,470 @@ export class CapacityV2Service {
     const diff = oldLength - newLength;
 
     if (diff <= 0) return data; // no trimming needed
-    
+
     const totalKeysToRemove = diff * groups;
-    
+
     return data.map((row) => {
-        const newRow: any = {};
-        // copy keys 0–6
-        for (let i = 0; i <= 6; i++) {
-            newRow[i] = row[i];
-        }
+      const newRow: any = {};
+      // copy keys 0–6
+      for (let i = 0; i <= 6; i++) {
+        newRow[i] = row[i];
+      }
 
-        // collect value blocks (grouped)
-        let values: string[] = [];
-        const valueStart = 7;
-        let keyIndex = valueStart;
-        while (row[keyIndex] !== undefined) {
-            values.push(row[keyIndex]);
-            keyIndex++;
-        }
-        
-        if (mode === 'FROM') {
-          const cutValues = chunkIntoParts(values, groups)
-          const baseCut = Math.floor(totalKeysToRemove / groups);
-          const extra = totalKeysToRemove % groups; // ส่วนเกินแจกให้ก้อนแรกๆ ทีละ 1
-            const ncutValues = cutValues.map((chunk, i) => {
-              const cut = baseCut + (i < extra ? 1 : 0); // กระจายส่วนเกิน
-              return chunk.slice(cut); // ใช้ slice เพื่อไม่ mutate ต้นฉบับ
-            });
-            values = ncutValues?.flat()
-        } else {
-          const cutValues = chunkIntoParts(values, groups)
-          const baseCut = Math.floor(totalKeysToRemove / groups);
-          const extra = totalKeysToRemove % groups; 
-          const ncutValues = cutValues.map((chunk, i) => {
-            const cut = Math.min(chunk.length, baseCut + (i < extra ? 1 : 0)); // จำนวนที่จะตัดจากท้าย
-            const keepLen = Math.max(0, chunk.length - cut);                   // ความยาวที่เหลือ
-            return chunk.slice(0, keepLen);                                    // ← ตัดท้าย
-          });
-            values = ncutValues?.flat()
-        }
+      // collect value blocks (grouped)
+      let values: string[] = [];
+      const valueStart = 7;
+      let keyIndex = valueStart;
+      while (row[keyIndex] !== undefined) {
+        values.push(row[keyIndex]);
+        keyIndex++;
+      }
 
-        // assign trimmed values back to keys 7+
-        values.forEach((val, i) => {
-            newRow[i + 7] = val;
+      if (mode === 'FROM') {
+        const cutValues = chunkIntoParts(values, groups)
+        const baseCut = Math.floor(totalKeysToRemove / groups);
+        const extra = totalKeysToRemove % groups; // ส่วนเกินแจกให้ก้อนแรกๆ ทีละ 1
+        const ncutValues = cutValues.map((chunk, i) => {
+          const cut = baseCut + (i < extra ? 1 : 0); // กระจายส่วนเกิน
+          return chunk.slice(cut); // ใช้ slice เพื่อไม่ mutate ต้นฉบับ
         });
+        values = ncutValues?.flat()
+      } else {
+        const cutValues = chunkIntoParts(values, groups)
+        const baseCut = Math.floor(totalKeysToRemove / groups);
+        const extra = totalKeysToRemove % groups;
+        const ncutValues = cutValues.map((chunk, i) => {
+          const cut = Math.min(chunk.length, baseCut + (i < extra ? 1 : 0)); // จำนวนที่จะตัดจากท้าย
+          const keepLen = Math.max(0, chunk.length - cut);                   // ความยาวที่เหลือ
+          return chunk.slice(0, keepLen);                                    // ← ตัดท้าย
+        });
+        values = ncutValues?.flat()
+      }
 
-        return newRow;
+      // assign trimmed values back to keys 7+
+      values.forEach((val, i) => {
+        newRow[i + 7] = val;
+      });
+
+      return newRow;
     });
-};
+  };
 
- getMonthCountDiff = (newHeaders: string[], oldHeaders: string[], direction: 'FROM' | 'TO') => {
+  getMonthCountDiff = (newHeaders: string[], oldHeaders: string[], direction: 'FROM' | 'TO') => {
 
     // return Math.abs(newHeaders.length - oldHeaders?.length)
     let count = 0;
 
     if (direction === 'FROM') {
-        for (const date of newHeaders) {
-            if (!oldHeaders.includes(date)) count++;
-            else break;
-        }
+      for (const date of newHeaders) {
+        if (!oldHeaders.includes(date)) count++;
+        else break;
+      }
     } else {
-        // นับเฉพาะค่าที่ "อยู่ใน newHeaders แต่ไม่อยู่ใน oldHeaders"
-        const addedFromEnd = newHeaders.filter(h => !oldHeaders.includes(h));
-        count = addedFromEnd.length;
+      // นับเฉพาะค่าที่ "อยู่ใน newHeaders แต่ไม่อยู่ใน oldHeaders"
+      const addedFromEnd = newHeaders.filter(h => !oldHeaders.includes(h));
+      count = addedFromEnd.length;
 
     }
 
     return count;
-};
+  };
 
-  updateRow(mode: 'FROM' | 'TO', new_header: any, old_header: any, example_data: any, entryExit:number) {
-      if (mode !== 'FROM' && mode !== 'TO') return;
+  updateRow(mode: 'FROM' | 'TO', new_header: any, old_header: any, example_data: any, entryExit: number) {
+    if (mode !== 'FROM' && mode !== 'TO') return;
 
-      // console.log('mode', mode)
-      // console.log('new_header', new_header)
-      // console.log('old_header', old_header)
-      // console.log('example_data', example_data)
+    // console.log('mode', mode)
+    // console.log('new_header', new_header)
+    // console.log('old_header', old_header)
+    // console.log('example_data', example_data)
 
-      // mode: 'FROM' | 'TO' คือแก้วันที่ FROM หรือ TO
+    // mode: 'FROM' | 'TO' คือแก้วันที่ FROM หรือ TO
 
-      // let new_header = [
-      //     "01/08/2025",
-      //     "01/09/2025",
-      //     "01/10/2025",
-      //     "01/11/2025",
-      //     "01/12/2025"
-      // ]
+    // let new_header = [
+    //     "01/08/2025",
+    //     "01/09/2025",
+    //     "01/10/2025",
+    //     "01/11/2025",
+    //     "01/12/2025"
+    // ]
 
-      // let old_header = [
-      //     "01/09/2025",
-      //     "01/10/2025",
-      //     "01/11/2025",
-      //     "01/12/2025"
-      // ]
+    // let old_header = [
+    //     "01/09/2025",
+    //     "01/10/2025",
+    //     "01/11/2025",
+    //     "01/12/2025"
+    // ]
 
-      // let example_data = [
-      //     {
-      //         "0": "ENTRY-X3-EGAT",
-      //         "1": " ",
-      //         "3": " ",
-      //         "5": "01/08/2025",
-      //         "6": "25/12/2025",
-      //         "7": "151000.000",
-      //         "8": "150000",
-      //         "9": "120000",
-      //         "10": "120000",
-      //         "11": "6250",
-      //         "12": "6250",
-      //         "13": "5000",
-      //         "14": "5000",
-      //         "15": "150",
-      //         "16": "150",
-      //         "17": "120",
-      //         "18": "120",
-      //         "19": "6.25",
-      //         "20": "6.25",
-      //         "21": "5",
-      //         "22": "5"
+    // let example_data = [
+    //     {
+    //         "0": "ENTRY-X3-EGAT",
+    //         "1": " ",
+    //         "3": " ",
+    //         "5": "01/08/2025",
+    //         "6": "25/12/2025",
+    //         "7": "151000.000",
+    //         "8": "150000",
+    //         "9": "120000",
+    //         "10": "120000",
+    //         "11": "6250",
+    //         "12": "6250",
+    //         "13": "5000",
+    //         "14": "5000",
+    //         "15": "150",
+    //         "16": "150",
+    //         "17": "120",
+    //         "18": "120",
+    //         "19": "6.25",
+    //         "20": "6.25",
+    //         "21": "5",
+    //         "22": "5"
+    //     }
+    // ]
+
+    const newHeaders = new_header;
+    const oldHeaders = old_header;
+
+    // oldHeaders = [ "01/05/2025", "01/06/2025", "01/07/2025","01/08/2025"]
+    // newHeaders = ["01/07/2025", "01/08/2025"]
+    // ถ้า newHeaders มีน้อยกว่า oldHeaders ให้ลบ ข้อมูลตาม example_data ไปด้วย
+
+    const addedMonths = this.getMonthCountDiff(newHeaders, oldHeaders, mode);
+
+    // console.log('addedMonths', addedMonths)
+    // const example_data = [
+    //     {
+    //         "0": "Entry-X1-PTT",
+    //         "1": "900",
+    //         "2": "1000",
+    //         "3": "85",
+    //         "4": "90",
+    //         "5": "10/06/2025",
+    //         "6": "03/10/2025",
+
+    //         "7": "15000",
+    //         "8": "10000",
+    //         "9": "10000",
+    //         "10": "10000",
+
+    //         "11": "625",
+    //         "12": "416.667",
+    //         "13": "416.667",
+    //         "14": "416.667",
+
+    //         "15": "15",
+    //         "16": "10",
+    //         "17": "10",
+    //         "18": "10",
+
+    //         "19": "0.625",
+    //         "20": "0.417",
+    //         "21": "0.417",
+    //         "22": "0.417"
+    //     },
+    //     {
+    //         "0": "Entry-Y-PTT",
+    //         "1": "900",
+    //         "2": "1000",
+    //         "3": "85",
+    //         "4": "90",
+    //         "5": "30/05/2025",
+    //         "6": "30/08/2025",
+
+    //         "7": "0",
+    //         "8": "5000",
+    //         "9": "5000",
+    //         "10": "5000",
+
+    //         "11": "0",
+    //         "12": "208.333",
+    //         "13": "208.333",
+    //         "14": "208.333",
+
+    //         "15": "0",
+    //         "16": "5",
+    //         "17": "5",
+    //         "18": "5",
+
+    //         "19": "0",
+    //         "20": "0.208",
+    //         "21": "0.208",
+    //         "22": "0.208"
+    //     }
+    // ]
+
+    // if (addedMonths === 0) return;
+    if (addedMonths === 0) {
+      // case นี้คือลดช่วงเวลา period from, to
+      const updatedExampleData = this.trimRowByHeaderChange(
+        oldHeaders,
+        newHeaders,
+        mode, // 'FROM' หรือ 'TO'
+        example_data,
+        entryExit
+      );
+      console.log('n oldHeaders : ', oldHeaders);
+      console.log('n newHeaders : ', newHeaders);
+      console.log('n example_data : ', example_data);
+
+      console.log('✅ updatedExampleData ----->', updatedExampleData)
+      return updatedExampleData
+    } else {
+      // case นี้เพิ่มช่วงเวลา period from, to
+
+      const groups = entryExit === 1 ? 4 : 2;
+      const keysPerGroup = oldHeaders.length;
+      const newKeysPerGroup = newHeaders.length;
+      const keysToAddPerGroup = newKeysPerGroup - keysPerGroup;
+
+      // เติม 0 ลงคีย์ใหม่
+      // const updatedData = example_data.map((row: any) => {
+      //     const newRow: any = {};
+
+      //     // คัดลอก key 0-6
+      //     for (let i = 0; i <= 6; i++) {
+      //         newRow[i] = row[i];
       //     }
-      // ]
 
-      const newHeaders = new_header;
-      const oldHeaders = old_header;
-
-      // oldHeaders = [ "01/05/2025", "01/06/2025", "01/07/2025","01/08/2025"]
-      // newHeaders = ["01/07/2025", "01/08/2025"]
-      // ถ้า newHeaders มีน้อยกว่า oldHeaders ให้ลบ ข้อมูลตาม example_data ไปด้วย
-
-      const addedMonths = this.getMonthCountDiff(newHeaders, oldHeaders, mode);
-
-      // console.log('addedMonths', addedMonths)
-      // const example_data = [
-      //     {
-      //         "0": "Entry-X1-PTT",
-      //         "1": "900",
-      //         "2": "1000",
-      //         "3": "85",
-      //         "4": "90",
-      //         "5": "10/06/2025",
-      //         "6": "03/10/2025",
-
-      //         "7": "15000",
-      //         "8": "10000",
-      //         "9": "10000",
-      //         "10": "10000",
-
-      //         "11": "625",
-      //         "12": "416.667",
-      //         "13": "416.667",
-      //         "14": "416.667",
-
-      //         "15": "15",
-      //         "16": "10",
-      //         "17": "10",
-      //         "18": "10",
-
-      //         "19": "0.625",
-      //         "20": "0.417",
-      //         "21": "0.417",
-      //         "22": "0.417"
-      //     },
-      //     {
-      //         "0": "Entry-Y-PTT",
-      //         "1": "900",
-      //         "2": "1000",
-      //         "3": "85",
-      //         "4": "90",
-      //         "5": "30/05/2025",
-      //         "6": "30/08/2025",
-
-      //         "7": "0",
-      //         "8": "5000",
-      //         "9": "5000",
-      //         "10": "5000",
-
-      //         "11": "0",
-      //         "12": "208.333",
-      //         "13": "208.333",
-      //         "14": "208.333",
-
-      //         "15": "0",
-      //         "16": "5",
-      //         "17": "5",
-      //         "18": "5",
-
-      //         "19": "0",
-      //         "20": "0.208",
-      //         "21": "0.208",
-      //         "22": "0.208"
+      //     // จัดกลุ่มข้อมูล 4 กลุ่ม
+      //     const groupData: string[][] = Array.from({ length: groups }, () => []);
+      //     let baseKey = 7;
+      //     for (let g = 0; g < groups; g++) {
+      //         for (let i = 0; i < keysPerGroup; i++) {
+      //             const key = String(baseKey++);
+      //             groupData[g].push(row[key] ?? "0");
+      //         }
       //     }
-      // ]
 
-      // if (addedMonths === 0) return;
-      if (addedMonths === 0) {
-          // case นี้คือลดช่วงเวลา period from, to
-          const updatedExampleData = this.trimRowByHeaderChange(
-              oldHeaders,
-              newHeaders,
-              mode, // 'FROM' หรือ 'TO'
-              example_data,
-              entryExit
-          );
-          console.log('n oldHeaders : ', oldHeaders);
-          console.log('n newHeaders : ', newHeaders);
-          console.log('n example_data : ', example_data);
+      //     if (mode === 'FROM') {
+      //         // เพิ่ม "0" ด้านหน้าแต่ละกลุ่ม
+      //         for (let g = 0; g < groups; g++) {
+      //             const zeros = Array(keysToAddPerGroup).fill("0");
+      //             groupData[g] = [...zeros, ...groupData[g]];
+      //         }
+      //     } else if (mode === 'TO') {
+      //         // เพิ่ม "0" ด้านหลังแต่ละกลุ่ม
+      //         for (let g = 0; g < groups; g++) {
+      //             const zeros = Array(keysToAddPerGroup).fill("0");
+      //             groupData[g] = [...groupData[g], ...zeros];
+      //         }
+      //     }
 
-          console.log('✅ updatedExampleData ----->', updatedExampleData)
-          return updatedExampleData
-      } else {
-          // case นี้เพิ่มช่วงเวลา period from, to
+      //     // แปลงกลับเป็น flat key/value
+      //     let newKeyIndex = 7;
+      //     for (const group of groupData) {
+      //         for (const val of group) {
+      //             newRow[newKeyIndex++] = val;
+      //         }
+      //     }
 
-          const groups = entryExit === 1 ? 4 : 2;
-          const keysPerGroup = oldHeaders.length;
-          const newKeysPerGroup = newHeaders.length;
-          const keysToAddPerGroup = newKeysPerGroup - keysPerGroup;
+      //     return newRow;
+      // });
 
-          // เติม 0 ลงคีย์ใหม่
-          // const updatedData = example_data.map((row: any) => {
-          //     const newRow: any = {};
+      // เติมค่าสุดท้ายของ row ลงคีย์ใหม่
+      const updatedData = example_data.map((row: any) => {
+        const newRow: any = {};
 
-          //     // คัดลอก key 0-6
-          //     for (let i = 0; i <= 6; i++) {
-          //         newRow[i] = row[i];
-          //     }
+        // คัดลอก key 0-6
+        for (let i = 0; i <= 6; i++) {
+          newRow[i] = row[i];
+        }
 
-          //     // จัดกลุ่มข้อมูล 4 กลุ่ม
-          //     const groupData: string[][] = Array.from({ length: groups }, () => []);
-          //     let baseKey = 7;
-          //     for (let g = 0; g < groups; g++) {
-          //         for (let i = 0; i < keysPerGroup; i++) {
-          //             const key = String(baseKey++);
-          //             groupData[g].push(row[key] ?? "0");
-          //         }
-          //     }
+        // ดึงข้อมูลเป็น 4 กลุ่ม
+        const groupData: string[][] = Array.from({ length: groups }, () => []);
+        let baseKey = 7;
+        for (let g = 0; g < groups; g++) {
+          for (let i = 0; i < keysPerGroup; i++) {
+            const key = String(baseKey++);
+            groupData[g].push(row[key] ?? "0");
+          }
+        }
 
-          //     if (mode === 'FROM') {
-          //         // เพิ่ม "0" ด้านหน้าแต่ละกลุ่ม
-          //         for (let g = 0; g < groups; g++) {
-          //             const zeros = Array(keysToAddPerGroup).fill("0");
-          //             groupData[g] = [...zeros, ...groupData[g]];
-          //         }
-          //     } else if (mode === 'TO') {
-          //         // เพิ่ม "0" ด้านหลังแต่ละกลุ่ม
-          //         for (let g = 0; g < groups; g++) {
-          //             const zeros = Array(keysToAddPerGroup).fill("0");
-          //             groupData[g] = [...groupData[g], ...zeros];
-          //         }
-          //     }
-
-          //     // แปลงกลับเป็น flat key/value
-          //     let newKeyIndex = 7;
-          //     for (const group of groupData) {
-          //         for (const val of group) {
-          //             newRow[newKeyIndex++] = val;
-          //         }
-          //     }
-
-          //     return newRow;
-          // });
-
-          // เติมค่าสุดท้ายของ row ลงคีย์ใหม่
-          const updatedData = example_data.map((row: any) => {
-              const newRow: any = {};
-
-              // คัดลอก key 0-6
-              for (let i = 0; i <= 6; i++) {
-                  newRow[i] = row[i];
-              }
-
-              // ดึงข้อมูลเป็น 4 กลุ่ม
-              const groupData: string[][] = Array.from({ length: groups }, () => []);
-              let baseKey = 7;
-              for (let g = 0; g < groups; g++) {
-                  for (let i = 0; i < keysPerGroup; i++) {
-                      const key = String(baseKey++);
-                      groupData[g].push(row[key] ?? "0");
-                  }
-              }
-
-              // const groupData: string[][] = Array.from({ length: groups }, (_, g) =>
-              //     Array.from({ length: keysPerGroup }, (_, i) => {
-              //       const key = String(baseKey + g * keysPerGroup + i);
-              //       return row[key] ?? '0';
-              //     })
-              //   );
-              console.log('-- groupData : ', groupData);
+        // const groupData: string[][] = Array.from({ length: groups }, (_, g) =>
+        //     Array.from({ length: keysPerGroup }, (_, i) => {
+        //       const key = String(baseKey + g * keysPerGroup + i);
+        //       return row[key] ?? '0';
+        //     })
+        //   );
+        console.log('-- groupData : ', groupData);
 
 
-              if (mode === 'FROM') {
-                  // เติมค่าตัวสุดท้ายไว้ "ด้านหน้า" ของแต่ละกลุ่ม
-                  for (let g = 0; g < groups; g++) {
-                      const fill = this.makeFillWithFirst(groupData[g], keysToAddPerGroup); // เอาค่าของตัวแรกมาใส่ ที่จะย้อนหลังวัน
-                      groupData[g] = [...fill, ...groupData[g]];
-                  }
-              } else if (mode === 'TO') {
-                  // เติมค่าตัวสุดท้ายไว้ "ด้านหลัง" ของแต่ละกลุ่ม
-                  for (let g = 0; g < groups; g++) {
-                      const fill = this.makeFillWithLast(groupData[g], keysToAddPerGroup); // เอาค่าของตัวสุดท้ายมาใส่ ที่จะเพิ่มวัน
-                      groupData[g] = [...groupData[g], ...fill];
-                  }
-              }
+        if (mode === 'FROM') {
+          // เติมค่าตัวสุดท้ายไว้ "ด้านหน้า" ของแต่ละกลุ่ม
+          for (let g = 0; g < groups; g++) {
+            const fill = this.makeFillWithFirst(groupData[g], keysToAddPerGroup); // เอาค่าของตัวแรกมาใส่ ที่จะย้อนหลังวัน
+            groupData[g] = [...fill, ...groupData[g]];
+          }
+        } else if (mode === 'TO') {
+          // เติมค่าตัวสุดท้ายไว้ "ด้านหลัง" ของแต่ละกลุ่ม
+          for (let g = 0; g < groups; g++) {
+            const fill = this.makeFillWithLast(groupData[g], keysToAddPerGroup); // เอาค่าของตัวสุดท้ายมาใส่ ที่จะเพิ่มวัน
+            groupData[g] = [...groupData[g], ...fill];
+          }
+        }
 
-              // แปลงกลับเป็น flat key/value
-              let newKeyIndex = 7;
-              for (const group of groupData) {
-                  for (const val of group) {
-                      newRow[newKeyIndex++] = val;
-                  }
-              }
+        // แปลงกลับเป็น flat key/value
+        let newKeyIndex = 7;
+        for (const group of groupData) {
+          for (const val of group) {
+            newRow[newKeyIndex++] = val;
+          }
+        }
 
-              return newRow;
-          });
+        return newRow;
+      });
 
-          // console.log("✅ Updated Data:", updatedData);
-          return updatedData
-      }
+      // console.log("✅ Updated Data:", updatedData);
+      return updatedData
+    }
 
-    };
+  };
 
-  async fnExtendDateJSONNew(payload:any){
+  async fnExtendDateJSONNew(payload: any) {
     const {
-        bookingTemplate,
-        jsonFull,
-        new_contract_start_date,
-        new_contract_end_date,
+      bookingTemplate,
+      jsonFull,
+      new_contract_start_date,
+      new_contract_end_date,
+      startDate,
+      endDateDate,
+    } = payload
+    console.log('...fnExtendDateJSONNew');
+    let oresultDate = []
+    let nresultDateStep1 = []
+    let nresultDate = []
+    let ostartDate = null
+    let nstartDateStep1 = null
+    let nstartDate = null
+    if (bookingTemplate?.term_type_id === 4) {
+      ostartDate = dayjs(startDate, 'DD/MM/YYYY', true)
+        .add(bookingTemplate?.todayday, 'day')
+        .format('DD/MM/YYYY');
+      oresultDate = this.capacityMiddleService.generateDailyArray(
         startDate,
         endDateDate,
-      } = payload
-      console.log('...fnExtendDateJSONNew');
-      let oresultDate = []
-      let nresultDateStep1 = []
-      let nresultDate = []
-      let ostartDate = null
-      let nstartDateStep1 = null
-      let nstartDate = null
-      if (bookingTemplate?.term_type_id === 4) {
-        ostartDate = dayjs(startDate, 'DD/MM/YYYY', true)
-          .add(bookingTemplate?.todayday, 'day')
-          .format('DD/MM/YYYY');
-        oresultDate = this.capacityMiddleService.generateDailyArray(
-          startDate,
-          endDateDate,
-        );
-        // 
-        nstartDateStep1 = dayjs(new_contract_start_date, 'DD/MM/YYYY', true)
-          .add(bookingTemplate?.todayday, 'day')
-          .format('DD/MM/YYYY');
-        nresultDateStep1 = this.capacityMiddleService.generateDailyArray(
-          new_contract_start_date,
-          endDateDate,
-        );
-        // 
-        nstartDate = dayjs(new_contract_start_date, 'DD/MM/YYYY', true)
-          .add(bookingTemplate?.todayday, 'day')
-          .format('DD/MM/YYYY');
-        nresultDate = this.capacityMiddleService.generateDailyArray(
-          new_contract_start_date,
-          new_contract_end_date,
-        );
-      } else {
-        ostartDate = startDate
-        oresultDate = this.capacityMiddleService.generateMonthArray(
-          startDate,
-          endDateDate,
-          1,
-        );
-        // 
-        nstartDateStep1 = new_contract_start_date
-        nresultDateStep1 = this.capacityMiddleService.generateMonthArray(
-          new_contract_start_date,
-          endDateDate,
-          1,
-        );
-        // 
-        nstartDate = new_contract_start_date
-        nresultDate = this.capacityMiddleService.generateMonthArray(
-          new_contract_start_date,
-          new_contract_end_date,
-          1,
-        );
+      );
+      // 
+      nstartDateStep1 = dayjs(new_contract_start_date, 'DD/MM/YYYY', true)
+        .add(bookingTemplate?.todayday, 'day')
+        .format('DD/MM/YYYY');
+      nresultDateStep1 = this.capacityMiddleService.generateDailyArray(
+        new_contract_start_date,
+        endDateDate,
+      );
+      // 
+      nstartDate = dayjs(new_contract_start_date, 'DD/MM/YYYY', true)
+        .add(bookingTemplate?.todayday, 'day')
+        .format('DD/MM/YYYY');
+      nresultDate = this.capacityMiddleService.generateDailyArray(
+        new_contract_start_date,
+        new_contract_end_date,
+      );
+    } else {
+      ostartDate = startDate
+      oresultDate = this.capacityMiddleService.generateMonthArray(
+        startDate,
+        endDateDate,
+        1,
+      );
+      // 
+      nstartDateStep1 = new_contract_start_date
+      nresultDateStep1 = this.capacityMiddleService.generateMonthArray(
+        new_contract_start_date,
+        endDateDate,
+        1,
+      );
+      // 
+      nstartDate = new_contract_start_date
+      nresultDate = this.capacityMiddleService.generateMonthArray(
+        new_contract_start_date,
+        new_contract_end_date,
+        1,
+      );
+    }
+
+    // console.log('startDate : ', startDate);
+    // console.log('endDateDate : ', endDateDate);
+    // console.log('oresultDate : ', oresultDate);
+    // console.log('nresultDate : ', nresultDate);
+
+    // oldHeaders = [ "01/05/2025", "01/06/2025", "01/07/2025","01/08/2025"]
+    // newHeaders = ["01/07/2025", "01/08/2025"]
+    const oldHeaders = oresultDate
+    const newHeadersStep1 = nresultDateStep1
+    const newHeaders = nresultDate
+    // console.log('oldHeaders : ', oldHeaders);
+    // console.log('newHeadersStep1 : ', newHeadersStep1);
+    // console.log('newHeaders : ', newHeaders);
+    const entryOld = jsonFull?.data_temp?.entryValue
+    const exitOld = jsonFull?.data_temp?.exitValue
+    const updateRowEntryFROM = this.updateRow("FROM", newHeadersStep1, oldHeaders, entryOld, 1)
+    const updateRowEntryTO = this.updateRow("TO", newHeaders, newHeadersStep1, updateRowEntryFROM, 1)
+    const updateRowExitFROM = this.updateRow("FROM", newHeadersStep1, oldHeaders, exitOld, 2)
+    const updateRowExitTO = this.updateRow("TO", newHeaders, newHeadersStep1, updateRowExitFROM, 2)
+
+    function datesToIndexedObject(dates: string[], start: number) {
+      // เรียงวันที่จากน้อยไปมาก
+      const sorted = [...dates].sort((a, b) => {
+        const [da, ma, ya] = a.split('/').map(Number);
+        const [db, mb, yb] = b.split('/').map(Number);
+        // สร้างเป็น time value เพื่อเทียบ
+        return new Date(ya, ma - 1, da).getTime() - new Date(yb, mb - 1, db).getTime();
+      });
+
+      // แปลงเป็น object โดย key เริ่มที่ 1
+      const out: any = {};
+      sorted.forEach((d, i) => (out[d] = { key: String(i + start) }));
+      out.key = String(start)
+      return out;
+    }
+
+    // ปรับวัน updateRowEntryTO, updateRowExitTO
+    const entryValue = updateRowEntryTO?.map((e: any) => {
+      e["5"] = new_contract_start_date
+      e["6"] = new_contract_end_date
+      return {
+        ...e,
       }
-
-      // console.log('startDate : ', startDate);
-      // console.log('endDateDate : ', endDateDate);
-      // console.log('oresultDate : ', oresultDate);
-      // console.log('nresultDate : ', nresultDate);
-
-      // oldHeaders = [ "01/05/2025", "01/06/2025", "01/07/2025","01/08/2025"]
-      // newHeaders = ["01/07/2025", "01/08/2025"]
-      const oldHeaders = oresultDate
-      const newHeadersStep1 = nresultDateStep1
-      const newHeaders = nresultDate
-      // console.log('oldHeaders : ', oldHeaders);
-      // console.log('newHeadersStep1 : ', newHeadersStep1);
-      // console.log('newHeaders : ', newHeaders);
-      const entryOld = jsonFull?.data_temp?.entryValue
-      const exitOld = jsonFull?.data_temp?.exitValue
-      const updateRowEntryFROM = this.updateRow("FROM",newHeadersStep1, oldHeaders, entryOld, 1)
-      const updateRowEntryTO = this.updateRow("TO",newHeaders, newHeadersStep1, updateRowEntryFROM, 1)
-      const updateRowExitFROM = this.updateRow("FROM",newHeadersStep1, oldHeaders, exitOld, 2)
-      const updateRowExitTO = this.updateRow("TO",newHeaders, newHeadersStep1, updateRowExitFROM, 2)
-
-      function datesToIndexedObject(dates: string[], start:number) {
-        // เรียงวันที่จากน้อยไปมาก
-        const sorted = [...dates].sort((a, b) => {
-          const [da, ma, ya] = a.split('/').map(Number);
-          const [db, mb, yb] = b.split('/').map(Number);
-          // สร้างเป็น time value เพื่อเทียบ
-          return new Date(ya, ma - 1, da).getTime() - new Date(yb, mb - 1, db).getTime();
-        });
-
-        // แปลงเป็น object โดย key เริ่มที่ 1
-        const out: any = {};
-        sorted.forEach((d, i) => (out[d] = {key: String(i + start)}));
-        out.key = String(start)
-        return out;
+    })
+    const exitValue = updateRowExitTO?.map((e: any) => {
+      e["5"] = new_contract_start_date
+      e["6"] = new_contract_end_date
+      return {
+        ...e,
       }
+    })
 
-      // ปรับวัน updateRowEntryTO, updateRowExitTO
-      const entryValue = updateRowEntryTO?.map((e:any) => {
-          e["5"] = new_contract_start_date
-          e["6"] = new_contract_end_date
-          return {
-            ...e,
-          }
-        })
-      const exitValue = updateRowExitTO?.map((e:any) => {
-          e["5"] = new_contract_start_date
-          e["6"] = new_contract_end_date
-          return {
-            ...e,
-          }
-        })
-     
-      const data_temp = {
-        shipperInfo: jsonFull?.data_temp?.shipperInfo,
-        headerEntry:{
-          ["Entry"]: jsonFull?.data_temp?.headerEntry?.["Entry"],
-          ["Period"]: jsonFull?.data_temp?.headerEntry?.["Period"],
-          ["Capacity Daily Booking (MMBTU/d)"]: datesToIndexedObject(newHeaders, 7), // เสร็จ
-          ["Maximum Hour Booking (MMBTU/h)"]: datesToIndexedObject(newHeaders, 7 + newHeaders?.length), // เสร็จ
-          ["Capacity Daily Booking (MMscfd)"]: datesToIndexedObject(newHeaders, 7 + (newHeaders?.length * 2)), // เสร็จ
-          ["Maximum Hour Booking (MMscfh)"]: datesToIndexedObject(newHeaders, 7 + (newHeaders?.length * 3)), // เสร็จ
-        },
-        headerExit:{
-          ["Exit"]: jsonFull?.data_temp?.headerExit?.["Exit"],
-          ["Period"]: jsonFull?.data_temp?.headerExit?.["Period"],
-          ["Capacity Daily Booking (MMBTU/d)"]: datesToIndexedObject(newHeaders, 7), // เสร็จ
-          ["Maximum Hour Booking (MMBTU/h)"]: datesToIndexedObject(newHeaders, 7 + newHeaders?.length), // เสร็จ
-        },
-        entryValue: entryValue, // เสร็จ
-        exitValue: exitValue, // เสร็จ
-        sumEntries: { '0': 'Sum Entry', ...this.capacityMiddleService.sumKeys(
+    const data_temp = {
+      shipperInfo: jsonFull?.data_temp?.shipperInfo,
+      headerEntry: {
+        ["Entry"]: jsonFull?.data_temp?.headerEntry?.["Entry"],
+        ["Period"]: jsonFull?.data_temp?.headerEntry?.["Period"],
+        ["Capacity Daily Booking (MMBTU/d)"]: datesToIndexedObject(newHeaders, 7), // เสร็จ
+        ["Maximum Hour Booking (MMBTU/h)"]: datesToIndexedObject(newHeaders, 7 + newHeaders?.length), // เสร็จ
+        ["Capacity Daily Booking (MMscfd)"]: datesToIndexedObject(newHeaders, 7 + (newHeaders?.length * 2)), // เสร็จ
+        ["Maximum Hour Booking (MMscfh)"]: datesToIndexedObject(newHeaders, 7 + (newHeaders?.length * 3)), // เสร็จ
+      },
+      headerExit: {
+        ["Exit"]: jsonFull?.data_temp?.headerExit?.["Exit"],
+        ["Period"]: jsonFull?.data_temp?.headerExit?.["Period"],
+        ["Capacity Daily Booking (MMBTU/d)"]: datesToIndexedObject(newHeaders, 7), // เสร็จ
+        ["Maximum Hour Booking (MMBTU/h)"]: datesToIndexedObject(newHeaders, 7 + newHeaders?.length), // เสร็จ
+      },
+      entryValue: entryValue, // เสร็จ
+      exitValue: exitValue, // เสร็จ
+      sumEntries: {
+        '0': 'Sum Entry', ...this.capacityMiddleService.sumKeys(
           entryValue,
           7,
-        )}, // เสร็จ
-        sumExits: { '0': 'Sum Exit', ...this.capacityMiddleService.sumKeys(
+        )
+      }, // เสร็จ
+      sumExits: {
+        '0': 'Sum Exit', ...this.capacityMiddleService.sumKeys(
           exitValue,
           7,
-        )}, // เสร็จ
-      }
+        )
+      }, // เสร็จ
+    }
 
     return {
       nstartDate,
@@ -4627,7 +4644,7 @@ export class CapacityV2Service {
         },
       },
     });
-    jsonFull['data_temp'] = JSON.parse(jsonFull['data_temp']);
+    if (jsonFull) jsonFull['data_temp'] = this.safeParseJSON(jsonFull?.['data_temp']);
 
     let resultDate = null;
     let startDate = contract_start_date;
@@ -4670,7 +4687,7 @@ export class CapacityV2Service {
       const npath_management_config = path_management_config.map((e: any) => {
         return {
           ...e,
-          temps: JSON.parse(e['temps']),
+          temps: this.safeParseJSON(e?.['temps']),
         };
       });
 
@@ -4771,7 +4788,7 @@ export class CapacityV2Service {
         );
       }
 
-      if(getTodayNowDDMMYYYYAdd7(contract_start_date).isSameOrAfter(getTodayNowDDMMYYYYAdd7(contract_end_date))) {
+      if (getTodayNowDDMMYYYYAdd7(contract_start_date).isSameOrAfter(getTodayNowDDMMYYYYAdd7(contract_end_date))) {
         throw new HttpException(
           {
             status: HttpStatus.BAD_REQUEST,
@@ -4923,7 +4940,7 @@ export class CapacityV2Service {
       //   );
       // }
 
-       const fnExtendDateJSONNew = await this.fnExtendDateJSONNew({
+      const fnExtendDateJSONNew = await this.fnExtendDateJSONNew({
         bookingTemplate: bookingTemplate,
         jsonFull: jsonFull,
         new_contract_start_date: contract_start_date,
@@ -5166,7 +5183,7 @@ export class CapacityV2Service {
       console.log('version extend');
       flagAmd = false;
       contract_code = contractCode?.contract_code;
-      if(contractCode.status_capacity_request_management_id === 2){
+      if (contractCode.status_capacity_request_management_id === 2) {
         await this.restorePreviousVersion(id);
       }
       const contractPointAPI = await this.prisma.contract_point.findMany({
@@ -5206,7 +5223,7 @@ export class CapacityV2Service {
           Number(contractCode?.term_type_id),
         );
 
-      if(getTodayNowDDMMYYYYAdd7(contract_start_date).isSameOrAfter(getTodayNowDDMMYYYYAdd7(contract_end_date))) {
+      if (getTodayNowDDMMYYYYAdd7(contract_start_date).isSameOrAfter(getTodayNowDDMMYYYYAdd7(contract_end_date))) {
         throw new HttpException(
           {
             status: HttpStatus.BAD_REQUEST,
@@ -5420,14 +5437,14 @@ export class CapacityV2Service {
       // valueExtend
 
       if (contractCode?.status_capacity_request_management_id === 2) {
-      const { pnmatchData, setDataUse, logWarnings } =
-        await this.capacityMiddleService.middleBooking(id, false);
+        const { pnmatchData, setDataUse, logWarnings } =
+          await this.capacityMiddleService.middleBooking(id, false);
 
         await this.capacityMiddleService.processGenPublicData(
           setDataUse,
           false,
         );
-        
+
         console.log('path detail process...');
         console.time('path detail');
         await this.capacityMiddleService.genPathDetail(
@@ -5542,7 +5559,7 @@ export class CapacityV2Service {
 
       const oldStatusID = bookingVersion?.contract_code?.status_capacity_request_management_id
       let statusCapacityRequestManagementProcessID = 1 // Active
-      switch(oldStatusID){
+      switch (oldStatusID) {
         case 1: // Saved
         case 4: // Confirmed
           statusCapacityRequestManagementProcessID = 3; // Waiting For Approval
@@ -5552,16 +5569,16 @@ export class CapacityV2Service {
           statusCapacityRequestManagementProcessID = 5; //Close
           break;
         default: // Approved
-          if(fromDate){
+          if (fromDate) {
             const today = getTodayStartAdd7()
             const contractStartDate = getTodayStartDDMMYYYYAdd7(fromDate)
-            if(contractStartDate.isAfter(today)){
+            if (contractStartDate.isAfter(today)) {
               statusCapacityRequestManagementProcessID = 2; // Waiting For Start Date
-            }else{
+            } else {
               statusCapacityRequestManagementProcessID = 1; // Active
             }
           }
-          else{
+          else {
             statusCapacityRequestManagementProcessID = 2; // Waiting For Start Date
           }
           break;
@@ -5920,32 +5937,32 @@ export class CapacityV2Service {
       //
       console.log('status : ', status);
       console.log('bookingVersion?.contract_code?.id : ', bookingVersion?.contract_code?.id);
-      if(status === 2){
+      if (status === 2) {
         // คืนค่า
         console.log('คืนค่า');
-      const specificVersion = await this.prisma.booking_version.findFirst({
-        where: {
-          contract_code_id: Number(bookingVersion?.contract_code?.id),
-          flag_use: false,
-          status_capacity_request_management_id: 2,
-        },
-        include:{
-          contract_code:true,
-        },
-        orderBy: { id: 'desc' },
-      });
-      const { setDataUse: resetDataUse } =
-        await this.capacityMiddleService.middleBooking(
-          bookingVersion?.contract_code?.id,
-          true,
-          specificVersion.id,
-        );
-      await this.capacityMiddleService.processGenPublicData(resetDataUse, true);
-        
+        const specificVersion = await this.prisma.booking_version.findFirst({
+          where: {
+            contract_code_id: Number(bookingVersion?.contract_code?.id),
+            flag_use: false,
+            status_capacity_request_management_id: 2,
+          },
+          include: {
+            contract_code: true,
+          },
+          orderBy: { id: 'desc' },
+        });
+        const { setDataUse: resetDataUse } =
+          await this.capacityMiddleService.middleBooking(
+            bookingVersion?.contract_code?.id,
+            true,
+            specificVersion.id,
+          );
+        await this.capacityMiddleService.processGenPublicData(resetDataUse, true);
+
         console.log('ค่าใหม่');
 
-      const { pnmatchData, setDataUse, logWarnings } =
-        await this.capacityMiddleService.middleBooking(bookingVersion?.contract_code?.id, false);
+        const { pnmatchData, setDataUse, logWarnings } =
+          await this.capacityMiddleService.middleBooking(bookingVersion?.contract_code?.id, false);
         console.log('edit v setDataUse : ', setDataUse);
         console.log('edit v pnmatchData : ', pnmatchData);
         await this.capacityMiddleService.processGenPublicData(
@@ -5982,12 +5999,12 @@ export class CapacityV2Service {
     newBK = bookingVersion;
     newBK['booking_full_json'] = await newBK?.booking_full_json.map(
       (e: any) => {
-        const data_temp = JSON.parse(e['data_temp']);
+        const data_temp = this.safeParseJSON(e?.['data_temp']);
         return { ...e, data_temp: data_temp };
       },
     );
     newBK['booking_row_json'] = await newBK?.booking_row_json.map((e: any) => {
-      const data_temp = JSON.parse(e['data_temp']);
+      const data_temp = this.safeParseJSON(e?.['data_temp']);
       return { ...e, data_temp: data_temp };
     });
 
@@ -6013,7 +6030,7 @@ export class CapacityV2Service {
     // headerEntry
     const headerEntryInfo1 =
       newBK['booking_full_json'][0]['data_temp']['headerEntry'][
-        'Capacity Daily Booking (MMBTU/d)'
+      'Capacity Daily Booking (MMBTU/d)'
       ];
 
     const headerEntryArr1 = Object.keys(headerEntryInfo1)
@@ -6029,7 +6046,7 @@ export class CapacityV2Service {
       });
     const headerEntryInfo2 =
       newBK['booking_full_json'][0]['data_temp']['headerEntry'][
-        'Maximum Hour Booking (MMBTU/h)'
+      'Maximum Hour Booking (MMBTU/h)'
       ];
     const headerEntryArr2 = Object.keys(headerEntryInfo2)
       .filter((key) => key !== 'key')
@@ -6044,7 +6061,7 @@ export class CapacityV2Service {
       });
     const headerEntryInfo3 =
       newBK['booking_full_json'][0]['data_temp']['headerEntry'][
-        'Capacity Daily Booking (MMscfd)'
+      'Capacity Daily Booking (MMscfd)'
       ];
     const headerEntryArr3 = Object.keys(headerEntryInfo3)
       .filter((key) => key !== 'key')
@@ -6059,7 +6076,7 @@ export class CapacityV2Service {
       });
     const headerEntryInfo4 =
       newBK['booking_full_json'][0]['data_temp']['headerEntry'][
-        'Maximum Hour Booking (MMscfh)'
+      'Maximum Hour Booking (MMscfh)'
       ];
     const headerEntryArr4 = Object.keys(headerEntryInfo4)
       .filter((key) => key !== 'key')
@@ -6092,7 +6109,7 @@ export class CapacityV2Service {
 
     const headerExitInfo1 =
       newBK['booking_full_json'][0]['data_temp']['headerExit'][
-        'Capacity Daily Booking (MMBTU/d)'
+      'Capacity Daily Booking (MMBTU/d)'
       ];
     const headerExitArr1 = Object.keys(headerExitInfo1)
       .filter((key) => key !== 'key')
@@ -6107,7 +6124,7 @@ export class CapacityV2Service {
       });
     const headerExitInfo2 =
       newBK['booking_full_json'][0]['data_temp']['headerExit'][
-        'Capacity Daily Booking (MMBTU/d)'
+      'Capacity Daily Booking (MMBTU/d)'
       ];
     const headerExitArr2 = Object.keys(headerExitInfo2)
       .filter((key) => key !== 'key')
@@ -6544,8 +6561,8 @@ export class CapacityV2Service {
       (metas[i] as any).startISO = this.fm(metas[i].minDate);
       (metas[i] as any).endISO = next
         ? dayjs(next.minDate)
-            .subtract(1, 'day')
-            .format('YYYY-MM-DDTHH:mm:ss.SSS[Z]')
+          .subtract(1, 'day')
+          .format('YYYY-MM-DDTHH:mm:ss.SSS[Z]')
         : this.fm(metas[i].maxDate);
     }
 
@@ -6903,12 +6920,12 @@ export class CapacityV2Service {
           const nextGroup = array[index + 1]; // หา period ถัดไป
           const endDate = nextGroup
             ? dayjs(nextGroup.startDate)
-                .subtract(1, 'day')
-                .format('YYYY-MM-DDTHH:mm:ss.SSS[Z]')
+              .subtract(1, 'day')
+              .format('YYYY-MM-DDTHH:mm:ss.SSS[Z]')
             : group.data
-                .map((item) => dayjs(item.date)) // ใช้วันที่จาก group.data
-                .sort((a, b) => b.valueOf() - a.valueOf())[0] // เรียงตามวันที่มากสุด
-                .format('YYYY-MM-DDTHH:mm:ss.SSS[Z]'); // แปลงเป็น ISO string
+              .map((item) => dayjs(item.date)) // ใช้วันที่จาก group.data
+              .sort((a, b) => b.valueOf() - a.valueOf())[0] // เรียงตามวันที่มากสุด
+              .format('YYYY-MM-DDTHH:mm:ss.SSS[Z]'); // แปลงเป็น ISO string
           return {
             ...group,
             endDate, // ใส่ endDate ที่หาได้
@@ -7292,7 +7309,7 @@ export class CapacityV2Service {
       orderBy: {
         create_date: 'desc',
       },
-      include:{
+      include: {
         booking_version: {
           select: {
             contract_code: {
@@ -7306,7 +7323,7 @@ export class CapacityV2Service {
       }
     })
 
-    const bookingFull = JSON.parse(booking_full_json?.data_temp ?? '{}')
+    const bookingFull = this.safeParseJSON(booking_full_json?.data_temp ?? '{}')
 
     const booking_row_json = await this.prisma.booking_row_json.findMany({
       where: {
@@ -7370,12 +7387,12 @@ export class CapacityV2Service {
           const nextGroup = array[index + 1]; // หา period ถัดไป
           const endDate = nextGroup
             ? dayjs(nextGroup.startDate)
-                .subtract(1, 'day')
-                .format('YYYY-MM-DDTHH:mm:ss.SSS[Z]')
+              .subtract(1, 'day')
+              .format('YYYY-MM-DDTHH:mm:ss.SSS[Z]')
             : group.data
-                .map((item) => dayjs(item.date)) // ใช้วันที่จาก group.data
-                .sort((a, b) => b.valueOf() - a.valueOf())[0] // เรียงตามวันที่มากสุด
-                .format('YYYY-MM-DDTHH:mm:ss.SSS[Z]'); // แปลงเป็น ISO string
+              .map((item) => dayjs(item.date)) // ใช้วันที่จาก group.data
+              .sort((a, b) => b.valueOf() - a.valueOf())[0] // เรียงตามวันที่มากสุด
+              .format('YYYY-MM-DDTHH:mm:ss.SSS[Z]'); // แปลงเป็น ISO string
           return {
             ...group,
             endDate, // ใส่ endDate ที่หาได้
@@ -7399,13 +7416,13 @@ export class CapacityV2Service {
               const isShortTermNonFirm = booking_full_json?.booking_version?.contract_code?.term_type_id == 4
               const dateArray: string[] = [];
               let current = startDate;
-              if(isShortTermNonFirm){
+              if (isShortTermNonFirm) {
                 while (current.isSameOrBefore(endDate)) {
                   dateArray.push(current.tz('Asia/Bangkok').format('DD/MM/YYYY'));
                   current = current.add(1, 'day');
                 }
               }
-              else{
+              else {
                 current = startDate.startOf('month');
                 while (current.isSameOrBefore(endDate)) {
                   dateArray.push(current.tz('Asia/Bangkok').format('DD/MM/YYYY'));
@@ -7414,53 +7431,53 @@ export class CapacityV2Service {
               }
 
               let bookingValueList = []
-              if(isMatch(item.area?.entry_exit?.name, 'Entry') && bookingFull?.headerEntry?.['Capacity Daily Booking (MMBTU/d)'] && bookingFull?.entryValue && Array.isArray(bookingFull?.entryValue)) {
+              if (isMatch(item.area?.entry_exit?.name, 'Entry') && bookingFull?.headerEntry?.['Capacity Daily Booking (MMBTU/d)'] && bookingFull?.entryValue && Array.isArray(bookingFull?.entryValue)) {
                 const header = bookingFull?.headerEntry?.['Capacity Daily Booking (MMBTU/d)']
                 Object.keys(header)
-                .filter(key => dateArray.includes(key))
-                .map(key => bookingValueList.push({
-                  date: key,
-                  key: header[key].key,
-                  value: null
-                }))
-                
+                  .filter(key => dateArray.includes(key))
+                  .map(key => bookingValueList.push({
+                    date: key,
+                    key: header[key].key,
+                    value: null
+                  }))
+
 
                 booking_row_json.filter(row => {
                   return row.entry_exit_id == 1 && isMatch(row.area_text, item.area?.name)
                 }).map(row => {
-                  const dataTemp = JSON.parse(row.data_temp)
+                  const dataTemp = this.safeParseJSON(row?.data_temp)
                   bookingValueList = bookingValueList.map((bookingValue: any) => {
                     const value = parseToNumber(dataTemp[bookingValue.key])
-                    if(bookingValue.value != null && value != null){
+                    if (bookingValue.value != null && value != null) {
                       bookingValue.value = bookingValue.value + value
                     }
-                    else{
+                    else {
                       bookingValue.value = value
                     }
                     return bookingValue
                   })
                 })
               }
-              else if(isMatch(item.area?.entry_exit?.name, 'Exit') && bookingFull?.headerExit?.['Capacity Daily Booking (MMBTU/d)'] && bookingFull?.exitValue && Array.isArray(bookingFull?.exitValue)) {
+              else if (isMatch(item.area?.entry_exit?.name, 'Exit') && bookingFull?.headerExit?.['Capacity Daily Booking (MMBTU/d)'] && bookingFull?.exitValue && Array.isArray(bookingFull?.exitValue)) {
                 const header = bookingFull?.headerExit?.['Capacity Daily Booking (MMBTU/d)']
                 Object.keys(header)
-                .filter(key => dateArray.includes(key))
-                .map(key => bookingValueList.push({
-                  date: key,
-                  key: header[key].key,
-                  value: null
-                }))
+                  .filter(key => dateArray.includes(key))
+                  .map(key => bookingValueList.push({
+                    date: key,
+                    key: header[key].key,
+                    value: null
+                  }))
 
                 booking_row_json.filter(row => {
                   return row.entry_exit_id == 2 && isMatch(row.area_text, item.area?.name)
                 }).map(row => {
-                  const dataTemp = JSON.parse(row.data_temp)
+                  const dataTemp = this.safeParseJSON(row?.data_temp)
                   bookingValueList = bookingValueList.map((bookingValue: any) => {
                     const value = parseToNumber(dataTemp[bookingValue.key])
-                    if(bookingValue.value != null && value != null){
+                    if (bookingValue.value != null && value != null) {
                       bookingValue.value = bookingValue.value + value
                     }
-                    else{
+                    else {
                       bookingValue.value = value
                     }
                     return bookingValue

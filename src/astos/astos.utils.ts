@@ -15,11 +15,13 @@ export interface MergeItem {
 @Injectable()
 export class AstosUtils {
     safeParse<T extends object = Record<string, any>>(s: unknown): T {
+        if (!s) return {} as T;
         try {
             if (typeof s === 'string') return JSON.parse(s) as T;
             if (s && typeof s === 'object') return s as T;
             return {} as T;
-        } catch {
+        } catch (e) {
+            console.error('safeParse JSON error:', e);
             return {} as T;
         }
     }

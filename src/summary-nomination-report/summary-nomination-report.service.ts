@@ -46,6 +46,16 @@ export class SummaryNominationReportService {
     private readonly qualityPlanningService: QualityPlanningService,
   ) { }
 
+  private safeParseJSON(data: any, defaultValue: any = null) {
+    if (!data) return defaultValue;
+    try {
+      return typeof data === 'string' ? JSON.parse(data) : data;
+    } catch (e) {
+      console.error('JSON parse error:', e);
+      return defaultValue;
+    }
+  }
+
   // findAllNoIntar
   async findAll(payload: any) {
     console.log('****************************');
@@ -239,16 +249,16 @@ export class SummaryNominationReportService {
     const dailyWeeklyData = [];
 
     const resDataCv = resData.map((e: any) => {
-      const nomination_version = e['nomination_version'].map((nv: any) => {
-        const nomination_full_json = nv['nomination_full_json'].map(
+      const nomination_version = e['nomination_version']?.map((nv: any) => {
+        const nomination_full_json = nv['nomination_full_json']?.map(
           (nfj: any) => {
-            nfj['data_temp'] = JSON.parse(nfj['data_temp']);
+            nfj['data_temp'] = this.safeParseJSON(nfj['data_temp']);
             return { ...nfj };
           },
         );
-        const nomination_row_json = nv['nomination_row_json'].map(
+        const nomination_row_json = nv['nomination_row_json']?.map(
           (nfj: any) => {
-            nfj['data_temp'] = JSON.parse(nfj['data_temp']);
+            nfj['data_temp'] = this.safeParseJSON(nfj['data_temp']);
             return { ...nfj };
           },
         );
@@ -842,144 +852,144 @@ export class SummaryNominationReportService {
     // });
 
     let dMMSCFD1 = dailyArrNomMMSCFD.map((e: any) => {
-          const hourDay = {
-            H1: e['nomination_row_json']?.['data_temp']?.['14'],
-            H2: e['nomination_row_json']?.['data_temp']?.['15'],
-            H3: e['nomination_row_json']?.['data_temp']?.['16'],
-            H4: e['nomination_row_json']?.['data_temp']?.['17'],
-            H5: e['nomination_row_json']?.['data_temp']?.['18'],
-            H6: e['nomination_row_json']?.['data_temp']?.['19'],
-            H7: e['nomination_row_json']?.['data_temp']?.['20'],
-            H8: e['nomination_row_json']?.['data_temp']?.['21'],
-            H9: e['nomination_row_json']?.['data_temp']?.['22'],
-            H10: e['nomination_row_json']?.['data_temp']?.['23'],
-            H11: e['nomination_row_json']?.['data_temp']?.['24'],
-            H12: e['nomination_row_json']?.['data_temp']?.['25'],
-            H13: e['nomination_row_json']?.['data_temp']?.['26'],
-            H14: e['nomination_row_json']?.['data_temp']?.['27'],
-            H15: e['nomination_row_json']?.['data_temp']?.['28'],
-            H16: e['nomination_row_json']?.['data_temp']?.['29'],
-            H17: e['nomination_row_json']?.['data_temp']?.['30'],
-            H18: e['nomination_row_json']?.['data_temp']?.['31'],
-            H19: e['nomination_row_json']?.['data_temp']?.['32'],
-            H20: e['nomination_row_json']?.['data_temp']?.['33'],
-            H21: e['nomination_row_json']?.['data_temp']?.['34'],
-            H22: e['nomination_row_json']?.['data_temp']?.['35'],
-            H23: e['nomination_row_json']?.['data_temp']?.['36'],
-            H24: e['nomination_row_json']?.['data_temp']?.['37'],
-            total: e['nomination_row_json']?.['data_temp']?.['38'],
-          };
+      const hourDay = {
+        H1: e['nomination_row_json']?.['data_temp']?.['14'],
+        H2: e['nomination_row_json']?.['data_temp']?.['15'],
+        H3: e['nomination_row_json']?.['data_temp']?.['16'],
+        H4: e['nomination_row_json']?.['data_temp']?.['17'],
+        H5: e['nomination_row_json']?.['data_temp']?.['18'],
+        H6: e['nomination_row_json']?.['data_temp']?.['19'],
+        H7: e['nomination_row_json']?.['data_temp']?.['20'],
+        H8: e['nomination_row_json']?.['data_temp']?.['21'],
+        H9: e['nomination_row_json']?.['data_temp']?.['22'],
+        H10: e['nomination_row_json']?.['data_temp']?.['23'],
+        H11: e['nomination_row_json']?.['data_temp']?.['24'],
+        H12: e['nomination_row_json']?.['data_temp']?.['25'],
+        H13: e['nomination_row_json']?.['data_temp']?.['26'],
+        H14: e['nomination_row_json']?.['data_temp']?.['27'],
+        H15: e['nomination_row_json']?.['data_temp']?.['28'],
+        H16: e['nomination_row_json']?.['data_temp']?.['29'],
+        H17: e['nomination_row_json']?.['data_temp']?.['30'],
+        H18: e['nomination_row_json']?.['data_temp']?.['31'],
+        H19: e['nomination_row_json']?.['data_temp']?.['32'],
+        H20: e['nomination_row_json']?.['data_temp']?.['33'],
+        H21: e['nomination_row_json']?.['data_temp']?.['34'],
+        H22: e['nomination_row_json']?.['data_temp']?.['35'],
+        H23: e['nomination_row_json']?.['data_temp']?.['36'],
+        H24: e['nomination_row_json']?.['data_temp']?.['37'],
+        total: e['nomination_row_json']?.['data_temp']?.['38'],
+      };
 
-        const calcMMBTUDTotal = (hDay: any) => {
-          const H1 = hDay?.["H1"]
-            ? parseToNumber(hDay?.["H1"])
-            : 0;
-          const H2 = hDay?.["H2"]
-            ? parseToNumber(hDay?.["H2"])
-            : 0;
-          const H3 = hDay?.["H3"]
-            ? parseToNumber(hDay?.["H3"])
-            : 0;
-          const H4 = hDay?.["H4"]
-            ? parseToNumber(hDay?.["H4"])
-            : 0;
-          const H5 = hDay?.["H5"]
-            ? parseToNumber(hDay?.["H5"])
-            : 0;
-          const H6 = hDay?.["H6"]
-            ? parseToNumber(hDay?.["H6"])
-            : 0;
-          const H7 = hDay?.["H7"]
-            ? parseToNumber(hDay?.["H7"])
-            : 0;
-          const H8 = hDay?.["H8"]
-            ? parseToNumber(hDay?.["H8"])
-            : 0;
-          const H9 = hDay?.["H9"]
-            ? parseToNumber(hDay?.["H9"])
-            : 0;
-          const H10 = hDay?.["H10"]
-            ? parseToNumber(hDay?.["H10"])
-            : 0;
-          const H11 = hDay?.["H11"]
-            ? parseToNumber(hDay?.["H11"])
-            : 0;
-          const H12 = hDay?.["H12"]
-            ? parseToNumber(hDay?.["H12"])
-            : 0;
-          const H13 = hDay?.["H13"]
-            ? parseToNumber(hDay?.["H13"])
-            : 0;
-          const H14 = hDay?.["H14"]
-            ? parseToNumber(hDay?.["H14"])
-            : 0;
-          const H15 = hDay?.["H15"]
-            ? parseToNumber(hDay?.["H15"])
-            : 0;
-          const H16 = hDay?.["H16"]
-            ? parseToNumber(hDay?.["H16"])
-            : 0;
-          const H17 = hDay?.["H17"]
-            ? parseToNumber(hDay?.["H17"])
-            : 0;
-          const H18 = hDay?.["H18"]
-            ? parseToNumber(hDay?.["H18"])
-            : 0;
-          const H19 = hDay?.["H19"]
-            ? parseToNumber(hDay?.["H19"])
-            : 0;
-          const H20 = hDay?.["H20"]
-            ? parseToNumber(hDay?.["H20"])
-            : 0;
-          const H21 = hDay?.["H21"]
-            ? parseToNumber(hDay?.["H21"])
-            : 0;
-          const H22 = hDay?.["H22"]
-            ? parseToNumber(hDay?.["H22"])
-            : 0;
-          const H23 = hDay?.["H23"]
-            ? parseToNumber(hDay?.["H23"])
-            : 0;
-          const H24 = hDay?.["H24"]
-            ? parseToNumber(hDay?.["H24"])
-            : 0;
-         
+      const calcMMBTUDTotal = (hDay: any) => {
+        const H1 = hDay?.["H1"]
+          ? parseToNumber(hDay?.["H1"])
+          : 0;
+        const H2 = hDay?.["H2"]
+          ? parseToNumber(hDay?.["H2"])
+          : 0;
+        const H3 = hDay?.["H3"]
+          ? parseToNumber(hDay?.["H3"])
+          : 0;
+        const H4 = hDay?.["H4"]
+          ? parseToNumber(hDay?.["H4"])
+          : 0;
+        const H5 = hDay?.["H5"]
+          ? parseToNumber(hDay?.["H5"])
+          : 0;
+        const H6 = hDay?.["H6"]
+          ? parseToNumber(hDay?.["H6"])
+          : 0;
+        const H7 = hDay?.["H7"]
+          ? parseToNumber(hDay?.["H7"])
+          : 0;
+        const H8 = hDay?.["H8"]
+          ? parseToNumber(hDay?.["H8"])
+          : 0;
+        const H9 = hDay?.["H9"]
+          ? parseToNumber(hDay?.["H9"])
+          : 0;
+        const H10 = hDay?.["H10"]
+          ? parseToNumber(hDay?.["H10"])
+          : 0;
+        const H11 = hDay?.["H11"]
+          ? parseToNumber(hDay?.["H11"])
+          : 0;
+        const H12 = hDay?.["H12"]
+          ? parseToNumber(hDay?.["H12"])
+          : 0;
+        const H13 = hDay?.["H13"]
+          ? parseToNumber(hDay?.["H13"])
+          : 0;
+        const H14 = hDay?.["H14"]
+          ? parseToNumber(hDay?.["H14"])
+          : 0;
+        const H15 = hDay?.["H15"]
+          ? parseToNumber(hDay?.["H15"])
+          : 0;
+        const H16 = hDay?.["H16"]
+          ? parseToNumber(hDay?.["H16"])
+          : 0;
+        const H17 = hDay?.["H17"]
+          ? parseToNumber(hDay?.["H17"])
+          : 0;
+        const H18 = hDay?.["H18"]
+          ? parseToNumber(hDay?.["H18"])
+          : 0;
+        const H19 = hDay?.["H19"]
+          ? parseToNumber(hDay?.["H19"])
+          : 0;
+        const H20 = hDay?.["H20"]
+          ? parseToNumber(hDay?.["H20"])
+          : 0;
+        const H21 = hDay?.["H21"]
+          ? parseToNumber(hDay?.["H21"])
+          : 0;
+        const H22 = hDay?.["H22"]
+          ? parseToNumber(hDay?.["H22"])
+          : 0;
+        const H23 = hDay?.["H23"]
+          ? parseToNumber(hDay?.["H23"])
+          : 0;
+        const H24 = hDay?.["H24"]
+          ? parseToNumber(hDay?.["H24"])
+          : 0;
 
-          const vl = 
-            H1 +
-            H2 +
-            H3 +
-            H4 +
-            H5 +
-            H6 +
-            H7 +
-            H8 +
-            H9 +
-            H10 +
-            H11 +
-            H12 +
-            H13 +
-            H14 +
-            H15 +
-            H16 +
-            H17 +
-            H18 +
-            H19 +
-            H20 +
-            H21 +
-            H22 +
-            H23 +
-            H24;
-          // console.log('--vl : ', vl);
-          // console.log('-hv : ', hv);
-          const calcFD = vl || 0;
-          // console.log('calcFD : ', calcFD);
-          return calcFD;
-        };
+
+        const vl =
+          H1 +
+          H2 +
+          H3 +
+          H4 +
+          H5 +
+          H6 +
+          H7 +
+          H8 +
+          H9 +
+          H10 +
+          H11 +
+          H12 +
+          H13 +
+          H14 +
+          H15 +
+          H16 +
+          H17 +
+          H18 +
+          H19 +
+          H20 +
+          H21 +
+          H22 +
+          H23 +
+          H24;
+        // console.log('--vl : ', vl);
+        // console.log('-hv : ', hv);
+        const calcFD = vl || 0;
+        // console.log('calcFD : ', calcFD);
+        return calcFD;
+      };
 
       const totalCap = calcMMBTUDTotal(hourDay);
       const total = calcMMBTUDTotal(hourDay);
-     
+
       // let totalCap =
       //   e['nomination_row_json']?.['data_temp']?.['38']?.replace(/,/g, '') ||
       //   null;
@@ -989,7 +999,7 @@ export class SummaryNominationReportService {
       const utilization =
         (Number(totalCap) / Number(nomPoint?.maximum_capacity ?? 0)) * 100;
 
-     
+
 
       return { ...e, totalCap, total, utilization, ...hourDay };
     });
@@ -1046,111 +1056,111 @@ export class SummaryNominationReportService {
       };
 
       const calcMMBTUDTotal = (hDay: any) => {
-          const H1 = hDay?.["H1"]
-            ? parseToNumber(hDay?.["H1"])
-            : 0;
-          const H2 = hDay?.["H2"]
-            ? parseToNumber(hDay?.["H2"])
-            : 0;
-          const H3 = hDay?.["H3"]
-            ? parseToNumber(hDay?.["H3"])
-            : 0;
-          const H4 = hDay?.["H4"]
-            ? parseToNumber(hDay?.["H4"])
-            : 0;
-          const H5 = hDay?.["H5"]
-            ? parseToNumber(hDay?.["H5"])
-            : 0;
-          const H6 = hDay?.["H6"]
-            ? parseToNumber(hDay?.["H6"])
-            : 0;
-          const H7 = hDay?.["H7"]
-            ? parseToNumber(hDay?.["H7"])
-            : 0;
-          const H8 = hDay?.["H8"]
-            ? parseToNumber(hDay?.["H8"])
-            : 0;
-          const H9 = hDay?.["H9"]
-            ? parseToNumber(hDay?.["H9"])
-            : 0;
-          const H10 = hDay?.["H10"]
-            ? parseToNumber(hDay?.["H10"])
-            : 0;
-          const H11 = hDay?.["H11"]
-            ? parseToNumber(hDay?.["H11"])
-            : 0;
-          const H12 = hDay?.["H12"]
-            ? parseToNumber(hDay?.["H12"])
-            : 0;
-          const H13 = hDay?.["H13"]
-            ? parseToNumber(hDay?.["H13"])
-            : 0;
-          const H14 = hDay?.["H14"]
-            ? parseToNumber(hDay?.["H14"])
-            : 0;
-          const H15 = hDay?.["H15"]
-            ? parseToNumber(hDay?.["H15"])
-            : 0;
-          const H16 = hDay?.["H16"]
-            ? parseToNumber(hDay?.["H16"])
-            : 0;
-          const H17 = hDay?.["H17"]
-            ? parseToNumber(hDay?.["H17"])
-            : 0;
-          const H18 = hDay?.["H18"]
-            ? parseToNumber(hDay?.["H18"])
-            : 0;
-          const H19 = hDay?.["H19"]
-            ? parseToNumber(hDay?.["H19"])
-            : 0;
-          const H20 = hDay?.["H20"]
-            ? parseToNumber(hDay?.["H20"])
-            : 0;
-          const H21 = hDay?.["H21"]
-            ? parseToNumber(hDay?.["H21"])
-            : 0;
-          const H22 = hDay?.["H22"]
-            ? parseToNumber(hDay?.["H22"])
-            : 0;
-          const H23 = hDay?.["H23"]
-            ? parseToNumber(hDay?.["H23"])
-            : 0;
-          const H24 = hDay?.["H24"]
-            ? parseToNumber(hDay?.["H24"])
-            : 0;
-         
+        const H1 = hDay?.["H1"]
+          ? parseToNumber(hDay?.["H1"])
+          : 0;
+        const H2 = hDay?.["H2"]
+          ? parseToNumber(hDay?.["H2"])
+          : 0;
+        const H3 = hDay?.["H3"]
+          ? parseToNumber(hDay?.["H3"])
+          : 0;
+        const H4 = hDay?.["H4"]
+          ? parseToNumber(hDay?.["H4"])
+          : 0;
+        const H5 = hDay?.["H5"]
+          ? parseToNumber(hDay?.["H5"])
+          : 0;
+        const H6 = hDay?.["H6"]
+          ? parseToNumber(hDay?.["H6"])
+          : 0;
+        const H7 = hDay?.["H7"]
+          ? parseToNumber(hDay?.["H7"])
+          : 0;
+        const H8 = hDay?.["H8"]
+          ? parseToNumber(hDay?.["H8"])
+          : 0;
+        const H9 = hDay?.["H9"]
+          ? parseToNumber(hDay?.["H9"])
+          : 0;
+        const H10 = hDay?.["H10"]
+          ? parseToNumber(hDay?.["H10"])
+          : 0;
+        const H11 = hDay?.["H11"]
+          ? parseToNumber(hDay?.["H11"])
+          : 0;
+        const H12 = hDay?.["H12"]
+          ? parseToNumber(hDay?.["H12"])
+          : 0;
+        const H13 = hDay?.["H13"]
+          ? parseToNumber(hDay?.["H13"])
+          : 0;
+        const H14 = hDay?.["H14"]
+          ? parseToNumber(hDay?.["H14"])
+          : 0;
+        const H15 = hDay?.["H15"]
+          ? parseToNumber(hDay?.["H15"])
+          : 0;
+        const H16 = hDay?.["H16"]
+          ? parseToNumber(hDay?.["H16"])
+          : 0;
+        const H17 = hDay?.["H17"]
+          ? parseToNumber(hDay?.["H17"])
+          : 0;
+        const H18 = hDay?.["H18"]
+          ? parseToNumber(hDay?.["H18"])
+          : 0;
+        const H19 = hDay?.["H19"]
+          ? parseToNumber(hDay?.["H19"])
+          : 0;
+        const H20 = hDay?.["H20"]
+          ? parseToNumber(hDay?.["H20"])
+          : 0;
+        const H21 = hDay?.["H21"]
+          ? parseToNumber(hDay?.["H21"])
+          : 0;
+        const H22 = hDay?.["H22"]
+          ? parseToNumber(hDay?.["H22"])
+          : 0;
+        const H23 = hDay?.["H23"]
+          ? parseToNumber(hDay?.["H23"])
+          : 0;
+        const H24 = hDay?.["H24"]
+          ? parseToNumber(hDay?.["H24"])
+          : 0;
 
-          const vl = 
-            H1 +
-            H2 +
-            H3 +
-            H4 +
-            H5 +
-            H6 +
-            H7 +
-            H8 +
-            H9 +
-            H10 +
-            H11 +
-            H12 +
-            H13 +
-            H14 +
-            H15 +
-            H16 +
-            H17 +
-            H18 +
-            H19 +
-            H20 +
-            H21 +
-            H22 +
-            H23 +
-            H24;
-          // console.log('--vl : ', vl);
-          // console.log('-hv : ', hv);
-          const calcFD = vl || 0;
-          // console.log('calcFD : ', calcFD);
-          return calcFD;
-        };
+
+        const vl =
+          H1 +
+          H2 +
+          H3 +
+          H4 +
+          H5 +
+          H6 +
+          H7 +
+          H8 +
+          H9 +
+          H10 +
+          H11 +
+          H12 +
+          H13 +
+          H14 +
+          H15 +
+          H16 +
+          H17 +
+          H18 +
+          H19 +
+          H20 +
+          H21 +
+          H22 +
+          H23 +
+          H24;
+        // console.log('--vl : ', vl);
+        // console.log('-hv : ', hv);
+        const calcFD = vl || 0;
+        // console.log('calcFD : ', calcFD);
+        return calcFD;
+      };
 
       const totalCap = calcMMBTUDTotal(hourDay);
       const total = calcMMBTUDTotal(hourDay);
@@ -1159,9 +1169,9 @@ export class SummaryNominationReportService {
         hv === 0
           ? 0
           : (Number(totalCap) /
-              (Number(nomPoint?.maximum_capacity ?? 0) * Number(hv))) *
-            100;
-      
+            (Number(nomPoint?.maximum_capacity ?? 0) * Number(hv))) *
+          100;
+
 
 
       return { ...e, totalCap, total, utilization, ...hourDay };
@@ -1189,8 +1199,8 @@ export class SummaryNominationReportService {
             ?.filter((f: any) => f?.gasday === e?.gas_day_text)
             ?.filter((f: any) => f?.zone?.name === supplyRef?.supply_reference_quality_area_by?.zone?.name)
             ?.filter((f: any) => f?.area?.name === supplyRef?.supply_reference_quality_area_by?.name)?.[0] || null;
-            // ?.filter((f: any) => f?.zone?.name === e?.zone_text)
-            // ?.filter((f: any) => f?.area?.name === e?.area_text)?.[0] || null;
+        // ?.filter((f: any) => f?.zone?.name === e?.zone_text)
+        // ?.filter((f: any) => f?.area?.name === e?.area_text)?.[0] || null;
         // console.log('- - -');
         // console.log('e?.gas_day_text : ', e?.gas_day_text);
         // console.log('e?.nomination_point : ', e?.nomination_point);
@@ -1198,7 +1208,7 @@ export class SummaryNominationReportService {
         // console.log('e?.area_text : ', e?.area_text);
 
         const hv = filDayWFormEva?.valueBtuScf || 0;
-        
+
 
         const nomPoint = nomData?.find((f: any) => {
           return f?.nomination_point === e['nomination_point'];
@@ -1206,7 +1216,7 @@ export class SummaryNominationReportService {
 
         // console.log('hv : ', hv);
         // console.log('nomPoint?.maximum_capacity : ', nomPoint?.maximum_capacity);
-        
+
 
         const calcMMBTUDtoMMSCFD = (key: any) => {
           const vl = e['nomination_row_json']?.['data_temp']?.[key]
@@ -1291,9 +1301,9 @@ export class SummaryNominationReportService {
           const H24 = hDay?.["H24"]
             ? parseToNumber(hDay?.["H24"])
             : 0;
-         
 
-          const vl = 
+
+          const vl =
             H1 +
             H2 +
             H3 +
@@ -1364,8 +1374,8 @@ export class SummaryNominationReportService {
           hv === 0
             ? 0
             : (Number(totalCap) /
-                (Number(nomPoint?.maximum_capacity ?? 0) * Number(hv))) *
-              100;
+              (Number(nomPoint?.maximum_capacity ?? 0) * Number(hv))) *
+            100;
 
 
 
@@ -1379,7 +1389,7 @@ export class SummaryNominationReportService {
 
     // cc
     let ccdMMSCFD1 = ccdailyArrNomMMSCFD.map((e: any) => {
-      
+
       // let totalCap =
       //   e['nomination_row_json']?.['data_temp']?.['38']?.replace(/,/g, '') ||
       //   null;
@@ -1387,7 +1397,7 @@ export class SummaryNominationReportService {
         return f?.nomination_point === e['nomination_point'];
       });
 
-            const hourDay = {
+      const hourDay = {
         H1: e['nomination_row_json']?.['data_temp']?.['14'],
         H2: e['nomination_row_json']?.['data_temp']?.['15'],
         H3: e['nomination_row_json']?.['data_temp']?.['16'],
@@ -1415,116 +1425,116 @@ export class SummaryNominationReportService {
         // total: e['nomination_row_json']?.['data_temp']?.['38'],
       };
 
-        const calcTotal = (hDay: any) => {
-          const H1 = hDay?.["H1"]
-            ? parseToNumber(hDay?.["H1"])
-            : 0;
-          const H2 = hDay?.["H2"]
-            ? parseToNumber(hDay?.["H2"])
-            : 0;
-          const H3 = hDay?.["H3"]
-            ? parseToNumber(hDay?.["H3"])
-            : 0;
-          const H4 = hDay?.["H4"]
-            ? parseToNumber(hDay?.["H4"])
-            : 0;
-          const H5 = hDay?.["H5"]
-            ? parseToNumber(hDay?.["H5"])
-            : 0;
-          const H6 = hDay?.["H6"]
-            ? parseToNumber(hDay?.["H6"])
-            : 0;
-          const H7 = hDay?.["H7"]
-            ? parseToNumber(hDay?.["H7"])
-            : 0;
-          const H8 = hDay?.["H8"]
-            ? parseToNumber(hDay?.["H8"])
-            : 0;
-          const H9 = hDay?.["H9"]
-            ? parseToNumber(hDay?.["H9"])
-            : 0;
-          const H10 = hDay?.["H10"]
-            ? parseToNumber(hDay?.["H10"])
-            : 0;
-          const H11 = hDay?.["H11"]
-            ? parseToNumber(hDay?.["H11"])
-            : 0;
-          const H12 = hDay?.["H12"]
-            ? parseToNumber(hDay?.["H12"])
-            : 0;
-          const H13 = hDay?.["H13"]
-            ? parseToNumber(hDay?.["H13"])
-            : 0;
-          const H14 = hDay?.["H14"]
-            ? parseToNumber(hDay?.["H14"])
-            : 0;
-          const H15 = hDay?.["H15"]
-            ? parseToNumber(hDay?.["H15"])
-            : 0;
-          const H16 = hDay?.["H16"]
-            ? parseToNumber(hDay?.["H16"])
-            : 0;
-          const H17 = hDay?.["H17"]
-            ? parseToNumber(hDay?.["H17"])
-            : 0;
-          const H18 = hDay?.["H18"]
-            ? parseToNumber(hDay?.["H18"])
-            : 0;
-          const H19 = hDay?.["H19"]
-            ? parseToNumber(hDay?.["H19"])
-            : 0;
-          const H20 = hDay?.["H20"]
-            ? parseToNumber(hDay?.["H20"])
-            : 0;
-          const H21 = hDay?.["H21"]
-            ? parseToNumber(hDay?.["H21"])
-            : 0;
-          const H22 = hDay?.["H22"]
-            ? parseToNumber(hDay?.["H22"])
-            : 0;
-          const H23 = hDay?.["H23"]
-            ? parseToNumber(hDay?.["H23"])
-            : 0;
-          const H24 = hDay?.["H24"]
-            ? parseToNumber(hDay?.["H24"])
-            : 0;
-         
+      const calcTotal = (hDay: any) => {
+        const H1 = hDay?.["H1"]
+          ? parseToNumber(hDay?.["H1"])
+          : 0;
+        const H2 = hDay?.["H2"]
+          ? parseToNumber(hDay?.["H2"])
+          : 0;
+        const H3 = hDay?.["H3"]
+          ? parseToNumber(hDay?.["H3"])
+          : 0;
+        const H4 = hDay?.["H4"]
+          ? parseToNumber(hDay?.["H4"])
+          : 0;
+        const H5 = hDay?.["H5"]
+          ? parseToNumber(hDay?.["H5"])
+          : 0;
+        const H6 = hDay?.["H6"]
+          ? parseToNumber(hDay?.["H6"])
+          : 0;
+        const H7 = hDay?.["H7"]
+          ? parseToNumber(hDay?.["H7"])
+          : 0;
+        const H8 = hDay?.["H8"]
+          ? parseToNumber(hDay?.["H8"])
+          : 0;
+        const H9 = hDay?.["H9"]
+          ? parseToNumber(hDay?.["H9"])
+          : 0;
+        const H10 = hDay?.["H10"]
+          ? parseToNumber(hDay?.["H10"])
+          : 0;
+        const H11 = hDay?.["H11"]
+          ? parseToNumber(hDay?.["H11"])
+          : 0;
+        const H12 = hDay?.["H12"]
+          ? parseToNumber(hDay?.["H12"])
+          : 0;
+        const H13 = hDay?.["H13"]
+          ? parseToNumber(hDay?.["H13"])
+          : 0;
+        const H14 = hDay?.["H14"]
+          ? parseToNumber(hDay?.["H14"])
+          : 0;
+        const H15 = hDay?.["H15"]
+          ? parseToNumber(hDay?.["H15"])
+          : 0;
+        const H16 = hDay?.["H16"]
+          ? parseToNumber(hDay?.["H16"])
+          : 0;
+        const H17 = hDay?.["H17"]
+          ? parseToNumber(hDay?.["H17"])
+          : 0;
+        const H18 = hDay?.["H18"]
+          ? parseToNumber(hDay?.["H18"])
+          : 0;
+        const H19 = hDay?.["H19"]
+          ? parseToNumber(hDay?.["H19"])
+          : 0;
+        const H20 = hDay?.["H20"]
+          ? parseToNumber(hDay?.["H20"])
+          : 0;
+        const H21 = hDay?.["H21"]
+          ? parseToNumber(hDay?.["H21"])
+          : 0;
+        const H22 = hDay?.["H22"]
+          ? parseToNumber(hDay?.["H22"])
+          : 0;
+        const H23 = hDay?.["H23"]
+          ? parseToNumber(hDay?.["H23"])
+          : 0;
+        const H24 = hDay?.["H24"]
+          ? parseToNumber(hDay?.["H24"])
+          : 0;
 
-          const vl = 
-            H1 +
-            H2 +
-            H3 +
-            H4 +
-            H5 +
-            H6 +
-            H7 +
-            H8 +
-            H9 +
-            H10 +
-            H11 +
-            H12 +
-            H13 +
-            H14 +
-            H15 +
-            H16 +
-            H17 +
-            H18 +
-            H19 +
-            H20 +
-            H21 +
-            H22 +
-            H23 +
-            H24;
-          // console.log('--vl : ', vl);
-          // console.log('-hv : ', hv);
-          const calcFD = vl || 0;
-          // console.log('calcFD : ', calcFD);
-          return calcFD;
-        };
+
+        const vl =
+          H1 +
+          H2 +
+          H3 +
+          H4 +
+          H5 +
+          H6 +
+          H7 +
+          H8 +
+          H9 +
+          H10 +
+          H11 +
+          H12 +
+          H13 +
+          H14 +
+          H15 +
+          H16 +
+          H17 +
+          H18 +
+          H19 +
+          H20 +
+          H21 +
+          H22 +
+          H23 +
+          H24;
+        // console.log('--vl : ', vl);
+        // console.log('-hv : ', hv);
+        const calcFD = vl || 0;
+        // console.log('calcFD : ', calcFD);
+        return calcFD;
+      };
 
       const totalCap = calcTotal(hourDay);
       const total = calcTotal(hourDay);
-     
+
       const utilization =
         (Number(totalCap) / Number(nomPoint?.maximum_capacity ?? 0)) * 100;
 
@@ -1535,13 +1545,13 @@ export class SummaryNominationReportService {
 
     // new calc hv utilization
     const ccdMMBTUD1 = ccdailyArrNomMMBTUD.map((e: any) => {
-      
+
       // let totalCap =
       //   e['nomination_row_json']?.['data_temp']?.['38']?.replace(/,/g, '') ||
       //   null;
 
 
-       const hourDay = {
+      const hourDay = {
         H1: e['nomination_row_json']?.['data_temp']?.['14'],
         H2: e['nomination_row_json']?.['data_temp']?.['15'],
         H3: e['nomination_row_json']?.['data_temp']?.['16'],
@@ -1569,116 +1579,116 @@ export class SummaryNominationReportService {
         // total: e['nomination_row_json']?.['data_temp']?.['38'],
       };
 
-        const calcTotal = (hDay: any) => {
-          const H1 = hDay?.["H1"]
-            ? parseToNumber(hDay?.["H1"])
-            : 0;
-          const H2 = hDay?.["H2"]
-            ? parseToNumber(hDay?.["H2"])
-            : 0;
-          const H3 = hDay?.["H3"]
-            ? parseToNumber(hDay?.["H3"])
-            : 0;
-          const H4 = hDay?.["H4"]
-            ? parseToNumber(hDay?.["H4"])
-            : 0;
-          const H5 = hDay?.["H5"]
-            ? parseToNumber(hDay?.["H5"])
-            : 0;
-          const H6 = hDay?.["H6"]
-            ? parseToNumber(hDay?.["H6"])
-            : 0;
-          const H7 = hDay?.["H7"]
-            ? parseToNumber(hDay?.["H7"])
-            : 0;
-          const H8 = hDay?.["H8"]
-            ? parseToNumber(hDay?.["H8"])
-            : 0;
-          const H9 = hDay?.["H9"]
-            ? parseToNumber(hDay?.["H9"])
-            : 0;
-          const H10 = hDay?.["H10"]
-            ? parseToNumber(hDay?.["H10"])
-            : 0;
-          const H11 = hDay?.["H11"]
-            ? parseToNumber(hDay?.["H11"])
-            : 0;
-          const H12 = hDay?.["H12"]
-            ? parseToNumber(hDay?.["H12"])
-            : 0;
-          const H13 = hDay?.["H13"]
-            ? parseToNumber(hDay?.["H13"])
-            : 0;
-          const H14 = hDay?.["H14"]
-            ? parseToNumber(hDay?.["H14"])
-            : 0;
-          const H15 = hDay?.["H15"]
-            ? parseToNumber(hDay?.["H15"])
-            : 0;
-          const H16 = hDay?.["H16"]
-            ? parseToNumber(hDay?.["H16"])
-            : 0;
-          const H17 = hDay?.["H17"]
-            ? parseToNumber(hDay?.["H17"])
-            : 0;
-          const H18 = hDay?.["H18"]
-            ? parseToNumber(hDay?.["H18"])
-            : 0;
-          const H19 = hDay?.["H19"]
-            ? parseToNumber(hDay?.["H19"])
-            : 0;
-          const H20 = hDay?.["H20"]
-            ? parseToNumber(hDay?.["H20"])
-            : 0;
-          const H21 = hDay?.["H21"]
-            ? parseToNumber(hDay?.["H21"])
-            : 0;
-          const H22 = hDay?.["H22"]
-            ? parseToNumber(hDay?.["H22"])
-            : 0;
-          const H23 = hDay?.["H23"]
-            ? parseToNumber(hDay?.["H23"])
-            : 0;
-          const H24 = hDay?.["H24"]
-            ? parseToNumber(hDay?.["H24"])
-            : 0;
-         
+      const calcTotal = (hDay: any) => {
+        const H1 = hDay?.["H1"]
+          ? parseToNumber(hDay?.["H1"])
+          : 0;
+        const H2 = hDay?.["H2"]
+          ? parseToNumber(hDay?.["H2"])
+          : 0;
+        const H3 = hDay?.["H3"]
+          ? parseToNumber(hDay?.["H3"])
+          : 0;
+        const H4 = hDay?.["H4"]
+          ? parseToNumber(hDay?.["H4"])
+          : 0;
+        const H5 = hDay?.["H5"]
+          ? parseToNumber(hDay?.["H5"])
+          : 0;
+        const H6 = hDay?.["H6"]
+          ? parseToNumber(hDay?.["H6"])
+          : 0;
+        const H7 = hDay?.["H7"]
+          ? parseToNumber(hDay?.["H7"])
+          : 0;
+        const H8 = hDay?.["H8"]
+          ? parseToNumber(hDay?.["H8"])
+          : 0;
+        const H9 = hDay?.["H9"]
+          ? parseToNumber(hDay?.["H9"])
+          : 0;
+        const H10 = hDay?.["H10"]
+          ? parseToNumber(hDay?.["H10"])
+          : 0;
+        const H11 = hDay?.["H11"]
+          ? parseToNumber(hDay?.["H11"])
+          : 0;
+        const H12 = hDay?.["H12"]
+          ? parseToNumber(hDay?.["H12"])
+          : 0;
+        const H13 = hDay?.["H13"]
+          ? parseToNumber(hDay?.["H13"])
+          : 0;
+        const H14 = hDay?.["H14"]
+          ? parseToNumber(hDay?.["H14"])
+          : 0;
+        const H15 = hDay?.["H15"]
+          ? parseToNumber(hDay?.["H15"])
+          : 0;
+        const H16 = hDay?.["H16"]
+          ? parseToNumber(hDay?.["H16"])
+          : 0;
+        const H17 = hDay?.["H17"]
+          ? parseToNumber(hDay?.["H17"])
+          : 0;
+        const H18 = hDay?.["H18"]
+          ? parseToNumber(hDay?.["H18"])
+          : 0;
+        const H19 = hDay?.["H19"]
+          ? parseToNumber(hDay?.["H19"])
+          : 0;
+        const H20 = hDay?.["H20"]
+          ? parseToNumber(hDay?.["H20"])
+          : 0;
+        const H21 = hDay?.["H21"]
+          ? parseToNumber(hDay?.["H21"])
+          : 0;
+        const H22 = hDay?.["H22"]
+          ? parseToNumber(hDay?.["H22"])
+          : 0;
+        const H23 = hDay?.["H23"]
+          ? parseToNumber(hDay?.["H23"])
+          : 0;
+        const H24 = hDay?.["H24"]
+          ? parseToNumber(hDay?.["H24"])
+          : 0;
 
-          const vl = 
-            H1 +
-            H2 +
-            H3 +
-            H4 +
-            H5 +
-            H6 +
-            H7 +
-            H8 +
-            H9 +
-            H10 +
-            H11 +
-            H12 +
-            H13 +
-            H14 +
-            H15 +
-            H16 +
-            H17 +
-            H18 +
-            H19 +
-            H20 +
-            H21 +
-            H22 +
-            H23 +
-            H24;
-          // console.log('--vl : ', vl);
-          // console.log('-hv : ', hv);
-          const calcFD = vl || 0;
-          // console.log('calcFD : ', calcFD);
-          return calcFD;
-        };
+
+        const vl =
+          H1 +
+          H2 +
+          H3 +
+          H4 +
+          H5 +
+          H6 +
+          H7 +
+          H8 +
+          H9 +
+          H10 +
+          H11 +
+          H12 +
+          H13 +
+          H14 +
+          H15 +
+          H16 +
+          H17 +
+          H18 +
+          H19 +
+          H20 +
+          H21 +
+          H22 +
+          H23 +
+          H24;
+        // console.log('--vl : ', vl);
+        // console.log('-hv : ', hv);
+        const calcFD = vl || 0;
+        // console.log('calcFD : ', calcFD);
+        return calcFD;
+      };
 
       const totalCap = calcTotal(hourDay);
       const total = calcTotal(hourDay);
-     
+
 
       const filDayWFormEva =
         eva?.newDaily
@@ -1700,10 +1710,10 @@ export class SummaryNominationReportService {
         hv === 0
           ? 0
           : (Number(totalCap) /
-              (Number(nomPoint?.maximum_capacity ?? 0) * Number(hv))) *
-            100;
+            (Number(nomPoint?.maximum_capacity ?? 0) * Number(hv))) *
+          100;
 
-     
+
 
       return { ...e, totalCap, total, utilization, ...hourDay };
     });
@@ -1755,8 +1765,8 @@ export class SummaryNominationReportService {
           hv === 0
             ? 0
             : (Number(totalCap) /
-                (Number(nomPoint?.maximum_capacity ?? 0) * Number(hv))) *
-              100;
+              (Number(nomPoint?.maximum_capacity ?? 0) * Number(hv))) *
+            100;
 
         const hourDay = {
           H1: calcMMBTUDtoMMSCFD('14'),
@@ -1834,33 +1844,33 @@ export class SummaryNominationReportService {
         sunday: e['nomination_row_json']?.['data_temp']?.['14'] || 0,
         sunday_utilization: calcWeek(sundayTotalCap, nomPoint?.maximum_capacity),
         gas_day_monday: getTodayNowDDMMYYYYDfault(e?.gas_day_text)
-        .add(1, 'day')
-        .format('DD/MM/YYYY'),
+          .add(1, 'day')
+          .format('DD/MM/YYYY'),
         monday: e['nomination_row_json']?.['data_temp']?.['15'] || 0,
         monday_utilization: calcWeek(mondayTotalCap, nomPoint?.maximum_capacity),
         gas_day_tuesday: getTodayNowDDMMYYYYDfault(e?.gas_day_text)
-        .add(2, 'day')
-        .format('DD/MM/YYYY'),
+          .add(2, 'day')
+          .format('DD/MM/YYYY'),
         tuesday: e['nomination_row_json']?.['data_temp']?.['16'] || 0,
         tuesday_utilization: calcWeek(tuesdayTotalCap, nomPoint?.maximum_capacity),
         gas_day_wednesday: getTodayNowDDMMYYYYDfault(e?.gas_day_text)
-        .add(3, 'day')
-        .format('DD/MM/YYYY'),
+          .add(3, 'day')
+          .format('DD/MM/YYYY'),
         wednesday: e['nomination_row_json']?.['data_temp']?.['17'] || 0,
         wednesday_utilization: calcWeek(wednesdayTotalCap, nomPoint?.maximum_capacity),
         gas_day_thursday: getTodayNowDDMMYYYYDfault(e?.gas_day_text)
-        .add(4, 'day')
-        .format('DD/MM/YYYY'),
+          .add(4, 'day')
+          .format('DD/MM/YYYY'),
         thursday: e['nomination_row_json']?.['data_temp']?.['18'] || 0,
         thursday_utilization: calcWeek(thursdayTotalCap, nomPoint?.maximum_capacity),
         gas_day_friday: getTodayNowDDMMYYYYDfault(e?.gas_day_text)
-        .add(5, 'day')
-        .format('DD/MM/YYYY'),
+          .add(5, 'day')
+          .format('DD/MM/YYYY'),
         friday: e['nomination_row_json']?.['data_temp']?.['19'] || 0,
         friday_utilization: calcWeek(fridayTotalCap, nomPoint?.maximum_capacity),
         gas_day_saturday: getTodayNowDDMMYYYYDfault(e?.gas_day_text)
-        .add(6, 'day')
-        .format('DD/MM/YYYY'),
+          .add(6, 'day')
+          .format('DD/MM/YYYY'),
         saturday: e['nomination_row_json']?.['data_temp']?.['20'] || 0,
         saturday_utilization: calcWeek(saturdayTotalCap, nomPoint?.maximum_capacity),
       };
@@ -1869,7 +1879,7 @@ export class SummaryNominationReportService {
     });
 
     // console.log('***** wMMSCFD1 : ', wMMSCFD1);
-    
+
     // new calc hv
     const wMMBTUD1 = weeklyArrNomMMBTUD.map((e: any) => {
       const sundayTotalCap =
@@ -1970,15 +1980,15 @@ export class SummaryNominationReportService {
       });
 
       // hv จาก Eva
-    
+
 
       const calcWeek = (cap: any, maximum_capacity: any, cHv: any) => {
         if (Number.isFinite((Number(cap ?? 0) / (Number(maximum_capacity ?? 0) * Number(cHv ?? 0))) * 100)) {
-            return (Number(cap ?? 0) / (Number(maximum_capacity ?? 0) * Number(cHv ?? 0))) * 100
+          return (Number(cap ?? 0) / (Number(maximum_capacity ?? 0) * Number(cHv ?? 0))) * 100
         } else {
-            return 0
-          }
+          return 0
         }
+      }
 
       const dayWeek = {
         sunday: e['nomination_row_json']?.['data_temp']?.['14'] || 0,
@@ -2049,15 +2059,15 @@ export class SummaryNominationReportService {
         //   ?.filter((f: any) => f?.zone?.name === e?.zone_text)
         //   ?.filter((f: any) => f?.area?.name === e?.area_text)?.[0] || null;
 
-      // console.log('----- e : ', e);
-    
-      const findHvsundayHv = filDayWFormEva?.sunday?.value || 0;
-      const findHvmondayHv = filDayWFormEva?.monday?.value || 0;
-      const findHvtuesdayHv = filDayWFormEva?.tuesday?.value || 0;
-      const findHvwednesdayHv = filDayWFormEva?.wednesday?.value || 0;
-      const findHvthursdayHv = filDayWFormEva?.thursday?.value || 0;
-      const findHvfridayHv = filDayWFormEva?.friday?.value || 0;
-      const findHvsaturdayHv = filDayWFormEva?.saturday?.value || 0;
+        // console.log('----- e : ', e);
+
+        const findHvsundayHv = filDayWFormEva?.sunday?.value || 0;
+        const findHvmondayHv = filDayWFormEva?.monday?.value || 0;
+        const findHvtuesdayHv = filDayWFormEva?.tuesday?.value || 0;
+        const findHvwednesdayHv = filDayWFormEva?.wednesday?.value || 0;
+        const findHvthursdayHv = filDayWFormEva?.thursday?.value || 0;
+        const findHvfridayHv = filDayWFormEva?.friday?.value || 0;
+        const findHvsaturdayHv = filDayWFormEva?.saturday?.value || 0;
 
         const nomPoint = nomData?.find((f: any) => {
           return f?.nomination_point === e['nomination_point'];
@@ -2106,7 +2116,7 @@ export class SummaryNominationReportService {
     // console.log('***** wExitMMBTUDtoMMSCFD1 : ', wExitMMBTUDtoMMSCFD1);
 
     wMMSCFD1 = [...wExitMMBTUDtoMMSCFD1, ...wMMSCFD1];
-    
+
 
     // cc
     let ccwMMSCFD1 = ccweeklyArrNomMMSCFD.map((e: any) => {
@@ -2134,14 +2144,14 @@ export class SummaryNominationReportService {
       const nomPoint = nomData?.find((f: any) => {
         return f?.nomination_point === e['nomination_point'];
       });
-      
+
       const calcWeek = (cap: any, maximum_capacity: any) => {
         if (Number.isFinite((Number(cap ?? 0) / Number(maximum_capacity ?? 0)) * 100)) {
-            return (Number(cap ?? 0) / Number(maximum_capacity ?? 0)) * 100
+          return (Number(cap ?? 0) / Number(maximum_capacity ?? 0)) * 100
         } else {
-            return 0
-          }
+          return 0
         }
+      }
 
       const dayWeek = {
         gas_day_sunday: getTodayNowDDMMYYYYDfault(e?.gas_day_text)
@@ -2150,33 +2160,33 @@ export class SummaryNominationReportService {
         sunday: e['nomination_row_json']?.['data_temp']?.['14'] || 0,
         sunday_utilization: calcWeek(sundayTotalCap, nomPoint?.maximum_capacity),
         gas_day_monday: getTodayNowDDMMYYYYDfault(e?.gas_day_text)
-        .add(1, 'day')
-        .format('DD/MM/YYYY'),
+          .add(1, 'day')
+          .format('DD/MM/YYYY'),
         monday: e['nomination_row_json']?.['data_temp']?.['15'] || 0,
         monday_utilization: calcWeek(mondayTotalCap, nomPoint?.maximum_capacity),
         gas_day_tuesday: getTodayNowDDMMYYYYDfault(e?.gas_day_text)
-        .add(2, 'day')
-        .format('DD/MM/YYYY'),
+          .add(2, 'day')
+          .format('DD/MM/YYYY'),
         tuesday: e['nomination_row_json']?.['data_temp']?.['16'] || 0,
         tuesday_utilization: calcWeek(tuesdayTotalCap, nomPoint?.maximum_capacity),
         gas_day_wednesday: getTodayNowDDMMYYYYDfault(e?.gas_day_text)
-        .add(3, 'day')
-        .format('DD/MM/YYYY'),
+          .add(3, 'day')
+          .format('DD/MM/YYYY'),
         wednesday: e['nomination_row_json']?.['data_temp']?.['17'] || 0,
         wednesday_utilization: calcWeek(wednesdayTotalCap, nomPoint?.maximum_capacity),
         gas_day_thursday: getTodayNowDDMMYYYYDfault(e?.gas_day_text)
-        .add(4, 'day')
-        .format('DD/MM/YYYY'),
+          .add(4, 'day')
+          .format('DD/MM/YYYY'),
         thursday: e['nomination_row_json']?.['data_temp']?.['18'] || 0,
         thursday_utilization: calcWeek(thursdayTotalCap, nomPoint?.maximum_capacity),
         gas_day_friday: getTodayNowDDMMYYYYDfault(e?.gas_day_text)
-        .add(5, 'day')
-        .format('DD/MM/YYYY'),
+          .add(5, 'day')
+          .format('DD/MM/YYYY'),
         friday: e['nomination_row_json']?.['data_temp']?.['19'] || 0,
         friday_utilization: calcWeek(fridayTotalCap, nomPoint?.maximum_capacity),
         gas_day_saturday: getTodayNowDDMMYYYYDfault(e?.gas_day_text)
-        .add(6, 'day')
-        .format('DD/MM/YYYY'),
+          .add(6, 'day')
+          .format('DD/MM/YYYY'),
         saturday: e['nomination_row_json']?.['data_temp']?.['20'] || 0,
         saturday_utilization: calcWeek(saturdayTotalCap, nomPoint?.maximum_capacity),
       };
@@ -2210,11 +2220,11 @@ export class SummaryNominationReportService {
         null;
 
       const filDayWFormEva = eva?.newWeekly
-          ?.filter((f: any) => f?.parameter === 'HV')
-          ?.filter((f: any) => f?.gasday === e?.gas_day_text)
-          ?.filter((f: any) => f?.zone?.name === e?.zone_text)
-          ?.filter((f: any) => f?.area?.name === e?.area_text)?.[0] || null;
-    
+        ?.filter((f: any) => f?.parameter === 'HV')
+        ?.filter((f: any) => f?.gasday === e?.gas_day_text)
+        ?.filter((f: any) => f?.zone?.name === e?.zone_text)
+        ?.filter((f: any) => f?.area?.name === e?.area_text)?.[0] || null;
+
       const findHvsundayHv = filDayWFormEva?.sunday?.value || 0;
       const findHvmondayHv = filDayWFormEva?.monday?.value || 0;
       const findHvtuesdayHv = filDayWFormEva?.tuesday?.value || 0;
@@ -2229,50 +2239,50 @@ export class SummaryNominationReportService {
 
       const calcWeek = (cap: any, maximum_capacity: any, cHv: any) => {
         if (Number.isFinite((Number(cap ?? 0) / (Number(maximum_capacity ?? 0) * Number(cHv ?? 0))) * 100)) {
-            return (Number(cap ?? 0) / (Number(maximum_capacity ?? 0) * Number(cHv ?? 0))) * 100
+          return (Number(cap ?? 0) / (Number(maximum_capacity ?? 0) * Number(cHv ?? 0))) * 100
         } else {
-            return 0
-          }
+          return 0
         }
+      }
 
       const dayWeek = {
         gas_day_sunday: getTodayNowDDMMYYYYDfault(e?.gas_day_text)
-        .add(0, 'day')
-        .format('DD/MM/YYYY'),
+          .add(0, 'day')
+          .format('DD/MM/YYYY'),
         sunday: e['nomination_row_json']?.['data_temp']?.['14'] || 0,
         sunday_utilization: calcWeek(sundayTotalCap, nomPoint?.maximum_capacity, findHvsundayHv),
         gas_day_monday: getTodayNowDDMMYYYYDfault(e?.gas_day_text)
-        .add(1, 'day')
-        .format('DD/MM/YYYY'),
+          .add(1, 'day')
+          .format('DD/MM/YYYY'),
         monday: e['nomination_row_json']?.['data_temp']?.['15'] || 0,
         monday_utilization: calcWeek(mondayTotalCap, nomPoint?.maximum_capacity, findHvmondayHv),
         gas_day_tuesday: getTodayNowDDMMYYYYDfault(e?.gas_day_text)
-        .add(2, 'day')
-        .format('DD/MM/YYYY'),
+          .add(2, 'day')
+          .format('DD/MM/YYYY'),
         tuesday: e['nomination_row_json']?.['data_temp']?.['16'] || 0,
         tuesday_utilization: calcWeek(tuesdayTotalCap, nomPoint?.maximum_capacity, findHvtuesdayHv),
         gas_day_wednesday: getTodayNowDDMMYYYYDfault(e?.gas_day_text)
-        .add(3, 'day')
-        .format('DD/MM/YYYY'),
+          .add(3, 'day')
+          .format('DD/MM/YYYY'),
         wednesday: e['nomination_row_json']?.['data_temp']?.['17'] || 0,
         wednesday_utilization: calcWeek(wednesdayTotalCap, nomPoint?.maximum_capacity, findHvwednesdayHv),
         gas_day_thursday: getTodayNowDDMMYYYYDfault(e?.gas_day_text)
-        .add(4, 'day')
-        .format('DD/MM/YYYY'),
+          .add(4, 'day')
+          .format('DD/MM/YYYY'),
         thursday: e['nomination_row_json']?.['data_temp']?.['18'] || 0,
         thursday_utilization: calcWeek(thursdayTotalCap, nomPoint?.maximum_capacity, findHvthursdayHv),
         gas_day_friday: getTodayNowDDMMYYYYDfault(e?.gas_day_text)
-        .add(5, 'day')
-        .format('DD/MM/YYYY'),
+          .add(5, 'day')
+          .format('DD/MM/YYYY'),
         friday: e['nomination_row_json']?.['data_temp']?.['19'] || 0,
         friday_utilization: calcWeek(fridayTotalCap, nomPoint?.maximum_capacity, findHvfridayHv),
         gas_day_saturday: getTodayNowDDMMYYYYDfault(e?.gas_day_text)
-        .add(6, 'day')
-        .format('DD/MM/YYYY'),
+          .add(6, 'day')
+          .format('DD/MM/YYYY'),
         saturday: e['nomination_row_json']?.['data_temp']?.['20'] || 0,
         saturday_utilization: calcWeek(saturdayTotalCap, nomPoint?.maximum_capacity, findHvsaturdayHv),
       };
-     
+
 
       // const calcWeek = (cap:any, maximum_capacity:any) => {
       //     if(Number.isFinite((Number(cap ?? 0) / Number(maximum_capacity ?? 0)) * 100)){
@@ -2436,7 +2446,7 @@ export class SummaryNominationReportService {
         const nomPoint = nomData?.find((f: any) => {
           return f?.nomination_point === e['nomination_point'];
         });
-       
+
         const calcWeek = (cap: any, maximum_capacity: any, cHv: any) => {
           if (Number.isFinite((Number(cap ?? 0) / (Number(maximum_capacity ?? 0) * Number(cHv ?? 0))) * 100)) {
             return (Number(cap ?? 0) / (Number(maximum_capacity ?? 0) * Number(cHv ?? 0))) * 100
@@ -3556,11 +3566,11 @@ export class SummaryNominationReportService {
 
       const calcWeek = (cap: any, fArea: any) => {
         if (Number.isFinite((Number(cap ?? 0) / Number(fArea)) * 100)) {
-            return (Number(cap ?? 0) / Number(fArea)) * 100
+          return (Number(cap ?? 0) / Number(fArea)) * 100
         } else {
-            return 0
-          }
+          return 0
         }
+      }
 
       const dayWeek = {
         gas_day_sunday: getTodayNowDDMMYYYYDfault(e?.gas_day_text)
@@ -3569,33 +3579,33 @@ export class SummaryNominationReportService {
         sunday: sundayTotalCap,
         sunday_utilization: calcWeek(sundayTotalCap, fareaData),
         gas_day_monday: getTodayNowDDMMYYYYDfault(e?.gas_day_text)
-        .add(1, 'day')
-        .format('DD/MM/YYYY'),
+          .add(1, 'day')
+          .format('DD/MM/YYYY'),
         monday: mondayTotalCap,
         monday_utilization: calcWeek(sundayTotalCap, fareaData),
         gas_day_tuesday: getTodayNowDDMMYYYYDfault(e?.gas_day_text)
-        .add(2, 'day')
-        .format('DD/MM/YYYY'),
+          .add(2, 'day')
+          .format('DD/MM/YYYY'),
         tuesday: tuesdayTotalCap,
         tuesday_utilization: calcWeek(tuesdayTotalCap, fareaData),
         gas_day_wednesday: getTodayNowDDMMYYYYDfault(e?.gas_day_text)
-        .add(3, 'day')
-        .format('DD/MM/YYYY'),
+          .add(3, 'day')
+          .format('DD/MM/YYYY'),
         wednesday: wednesdayTotalCap,
         wednesday_utilization: calcWeek(wednesdayTotalCap, fareaData),
         gas_day_thursday: getTodayNowDDMMYYYYDfault(e?.gas_day_text)
-        .add(4, 'day')
-        .format('DD/MM/YYYY'),
+          .add(4, 'day')
+          .format('DD/MM/YYYY'),
         thursday: thursdayTotalCap,
         thursday_utilization: calcWeek(thursdayTotalCap, fareaData),
         gas_day_friday: getTodayNowDDMMYYYYDfault(e?.gas_day_text)
-        .add(5, 'day')
-        .format('DD/MM/YYYY'),
+          .add(5, 'day')
+          .format('DD/MM/YYYY'),
         friday: fridayTotalCap,
         friday_utilization: calcWeek(fridayTotalCap, fareaData),
         gas_day_saturday: getTodayNowDDMMYYYYDfault(e?.gas_day_text)
-        .add(6, 'day')
-        .format('DD/MM/YYYY'),
+          .add(6, 'day')
+          .format('DD/MM/YYYY'),
         saturday: saturdayTotalCap,
         saturday_utilization: calcWeek(saturdayTotalCap, fareaData),
       };
@@ -4237,49 +4247,49 @@ export class SummaryNominationReportService {
         : parseToNumber(item.monday);
       acc[groupKey].monday_utilization = acc[groupKey].monday_utilization
         ? acc[groupKey].monday_utilization +
-          (parseToNumber(item.monday_utilization) ?? 0)
+        (parseToNumber(item.monday_utilization) ?? 0)
         : parseToNumber(item.monday_utilization);
       acc[groupKey].tuesday = acc[groupKey].tuesday
         ? acc[groupKey].tuesday + (parseToNumber(item.tuesday) ?? 0)
         : parseToNumber(item.tuesday);
       acc[groupKey].tuesday_utilization = acc[groupKey].tuesday_utilization
         ? acc[groupKey].tuesday_utilization +
-          (parseToNumber(item.tuesday_utilization) ?? 0)
+        (parseToNumber(item.tuesday_utilization) ?? 0)
         : parseToNumber(item.tuesday_utilization);
       acc[groupKey].wednesday = acc[groupKey].wednesday
         ? acc[groupKey].wednesday + (parseToNumber(item.wednesday) ?? 0)
         : parseToNumber(item.wednesday);
       acc[groupKey].wednesday_utilization = acc[groupKey].wednesday_utilization
         ? acc[groupKey].wednesday_utilization +
-          (parseToNumber(item.wednesday_utilization) ?? 0)
+        (parseToNumber(item.wednesday_utilization) ?? 0)
         : parseToNumber(item.wednesday_utilization);
       acc[groupKey].thursday = acc[groupKey].thursday
         ? acc[groupKey].thursday + (parseToNumber(item.thursday) ?? 0)
         : parseToNumber(item.thursday);
       acc[groupKey].thursday_utilization = acc[groupKey].thursday_utilization
         ? acc[groupKey].thursday_utilization +
-          (parseToNumber(item.thursday_utilization) ?? 0)
+        (parseToNumber(item.thursday_utilization) ?? 0)
         : parseToNumber(item.thursday_utilization);
       acc[groupKey].friday = acc[groupKey].friday
         ? acc[groupKey].friday + (parseToNumber(item.friday) ?? 0)
         : parseToNumber(item.friday);
       acc[groupKey].friday_utilization = acc[groupKey].friday_utilization
         ? acc[groupKey].friday_utilization +
-          (parseToNumber(item.friday_utilization) ?? 0)
+        (parseToNumber(item.friday_utilization) ?? 0)
         : parseToNumber(item.friday_utilization);
       acc[groupKey].saturday = acc[groupKey].saturday
         ? acc[groupKey].saturday + (parseToNumber(item.saturday) ?? 0)
         : parseToNumber(item.saturday);
       acc[groupKey].saturday_utilization = acc[groupKey].saturday_utilization
         ? acc[groupKey].saturday_utilization +
-          (parseToNumber(item.saturday_utilization) ?? 0)
+        (parseToNumber(item.saturday_utilization) ?? 0)
         : parseToNumber(item.saturday_utilization);
       acc[groupKey].sunday = acc[groupKey].sunday
         ? acc[groupKey].sunday + (parseToNumber(item.sunday) ?? 0)
         : parseToNumber(item.sunday);
       acc[groupKey].sunday_utilization = acc[groupKey].sunday_utilization
         ? acc[groupKey].sunday_utilization +
-          (parseToNumber(item.sunday_utilization) ?? 0)
+        (parseToNumber(item.sunday_utilization) ?? 0)
         : parseToNumber(item.sunday_utilization);
 
       acc[groupKey].items.push(item);
@@ -4322,7 +4332,7 @@ export class SummaryNominationReportService {
     // console.log('---- fDWaMMSCFDcalc : ', fDWaMMSCFDcalc);
 
 
-   
+
     let fDWaMMSCFD = [
       ...fDWaMMSCFDcalc?.filter((f: any) => f?.nomination_type_id === 1),
     ];

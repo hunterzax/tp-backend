@@ -49,6 +49,16 @@ export class MeteringManagementService {
     // private readonly astosService: AstosService,
   ) { }
 
+  private safeParseJSON(data: any, defaultValue: any = null) {
+    if (!data) return defaultValue;
+    try {
+      return typeof data === 'string' ? JSON.parse(data) : data;
+    } catch (e) {
+      console.error('JSON parse error:', e);
+      return defaultValue;
+    }
+  }
+
   async allId() {
     const resData = await this.prisma.metered_run_number.findMany({
       orderBy: {
@@ -69,7 +79,7 @@ export class MeteringManagementService {
 
   async meteredMasterAll(start_date?: any, end_date?: any) {
     const todayStart = start_date ? getTodayStartYYYYMMDDDfaultAdd7(start_date).toDate() : getTodayStartAdd7().toDate();
-    const todayEnd = end_date? getTodayEndYYYYMMDDDfaultAdd7(end_date).toDate() : getTodayEndAdd7().toDate();
+    const todayEnd = end_date ? getTodayEndYYYYMMDDDfaultAdd7(end_date).toDate() : getTodayEndAdd7().toDate();
     const resData = await this.prisma.metering_point.findMany({
       where: {
         AND: [
@@ -87,7 +97,7 @@ export class MeteringManagementService {
         ],
       },
       include: {
-        customer_type:true,
+        customer_type: true,
         non_tpa_point: {
           include: {
             nomination_point: {
@@ -167,53 +177,53 @@ export class MeteringManagementService {
   // }
   async meteredCompare(master: any, meter: any, gasDay?: string) {
     const dataResult = [];
-    if(Array.isArray(meter)){
-    const conceptPoint = await this.prisma.concept_point.findMany({
-      where: {
-        type_concept_point_id: 4,
-      },
-    });
+    if (Array.isArray(meter)) {
+      const conceptPoint = await this.prisma.concept_point.findMany({
+        where: {
+          type_concept_point_id: 4,
+        },
+      });
 
-    // console.log('conceptPoint : ', conceptPoint);
+      // console.log('conceptPoint : ', conceptPoint);
 
-    // console.log('master : ', master);
-    // console.log('meter : ', meter);
+      // console.log('master : ', master);
+      // console.log('meter : ', meter);
 
-    const mConcpetPoint = conceptPoint.map((e: any) => {
-      return { metered_point_name: e?.concept_point };
-    });
-    // console.log('mConcpetPoint : ', mConcpetPoint);
+      const mConcpetPoint = conceptPoint.map((e: any) => {
+        return { metered_point_name: e?.concept_point };
+      });
+      // console.log('mConcpetPoint : ', mConcpetPoint);
 
-    master = [...master, ...mConcpetPoint];
+      master = [...master, ...mConcpetPoint];
 
-    for (let i = 0; i < master.length; i++) {
-      const findMeter = meter?.filter(
-        (f: any) => f?.meteringPointId === master[i]?.metered_point_name && (gasDay ? f?.gasDay === gasDay : true),
-      ) || [];
-      // console.log('findMeter : ', findMeter);
-      if (findMeter.length > 0) {
-        for (let iM = 0; iM < findMeter.length; iM++) {
-          const contractPoints = master[i]?.non_tpa_point
-            ? master[i]?.non_tpa_point?.nomination_point?.contract_point_list
-            : master[i]?.nomination_point?.contract_point_list;
+      for (let i = 0; i < master.length; i++) {
+        const findMeter = meter?.filter(
+          (f: any) => f?.meteringPointId === master[i]?.metered_point_name && (gasDay ? f?.gasDay === gasDay : true),
+        ) || [];
+        // console.log('findMeter : ', findMeter);
+        if (findMeter.length > 0) {
+          for (let iM = 0; iM < findMeter.length; iM++) {
+            const contractPoints = master[i]?.non_tpa_point
+              ? master[i]?.non_tpa_point?.nomination_point?.contract_point_list
+              : master[i]?.nomination_point?.contract_point_list;
 
-          const firstContractPoint = contractPoints?.[0] || {};
-          const area = firstContractPoint?.area || master[i]?.area || null;
-          const zone = firstContractPoint?.zone || master[i]?.zone || null;
-          const customer_type = master[i]?.non_tpa_point
-            ? master[i]?.non_tpa_point?.nomination_point?.customer_type
-            : master[i]?.nomination_point?.customer_type;
+            const firstContractPoint = contractPoints?.[0] || {};
+            const area = firstContractPoint?.area || master[i]?.area || null;
+            const zone = firstContractPoint?.zone || master[i]?.zone || null;
+            const customer_type = master[i]?.non_tpa_point
+              ? master[i]?.non_tpa_point?.nomination_point?.customer_type
+              : master[i]?.nomination_point?.customer_type;
 
-          dataResult.push({
-            id: i + 1 + iM + 1,
-            ...findMeter[iM],
-            prop: { area: area, zone: zone, customer_type: customer_type },
-          });
+            dataResult.push({
+              id: i + 1 + iM + 1,
+              ...findMeter[iM],
+              prop: { area: area, zone: zone, customer_type: customer_type },
+            });
+          }
         }
-      }
 
-      //
-    }
+        //
+      }
     }
 
     return dataResult;
@@ -263,7 +273,7 @@ export class MeteringManagementService {
     // console.log('limit_ : ', limit_);
     // console.log('records : ', records);
 
-    const andWhere : Prisma.metered_retrievingWhereInput[] = [
+    const andWhere: Prisma.metered_retrievingWhereInput[] = [
       {
         del_flag: null
       },
@@ -272,7 +282,7 @@ export class MeteringManagementService {
       }
     ]
 
-    if(metered_run_number_id){
+    if (metered_run_number_id) {
       andWhere.push({
         metered_run_number_id: Number(metered_run_number_id),
       })
@@ -280,13 +290,13 @@ export class MeteringManagementService {
 
     const start = dayjs(startDate, "YYYY-MM-DD");
     const end = dayjs(endDate, "YYYY-MM-DD");
-    if(start.isValid() || end.isValid()){
-      if(start.isValid()){
+    if (start.isValid() || end.isValid()) {
+      if (start.isValid()) {
         andWhere.push({
           gas_day: { gte: start.toDate() }
         })
       }
-      if(end.isValid()){
+      if (end.isValid()) {
         andWhere.push({
           gas_day: { lte: end.toDate() }
         })
@@ -294,13 +304,13 @@ export class MeteringManagementService {
     }
     total = await this.prisma.metered_retrieving.count({
       where: {
-       AND: andWhere
+        AND: andWhere
       }
     })
-    if(limit == 40000 && offset == 0){
+    if (limit == 40000 && offset == 0) {
       limit_ = total
     }
-    
+
     // 1. Query ข้อมูลหลัก
     const resData = await this.prisma.metered_retrieving.findMany({
       where: {
@@ -345,7 +355,7 @@ export class MeteringManagementService {
 
     // 3. Process data
     const newResData = resData.map((e: any) => {
-      e['data'] = (!!e['temp'] && JSON.parse(e['temp'])) || null;
+      e['data'] = this.safeParseJSON(e?.['temp']);
       e['gasDay'] = e['data']?.['gasDay'] || null;
       const { temp, ...nE } = e;
       return { ...nE };
@@ -411,7 +421,7 @@ export class MeteringManagementService {
 
     // 3. Process data
     const newResData = resData.map((e: any) => {
-      e['data'] = (!!e['temp'] && JSON.parse(e['temp'])) || null;
+      e['data'] = this.safeParseJSON(e?.['temp']);
       delete e['temp'];
       return { ...e };
     });
@@ -441,7 +451,7 @@ export class MeteringManagementService {
     });
 
     const newResData = resData.map((e: any) => {
-      e['data'] = (!!e['temp'] && JSON.parse(e['temp'])) || null;
+      e['data'] = this.safeParseJSON(e?.['temp']);
       delete e['temp'];
       return { ...e };
     });
@@ -567,9 +577,7 @@ export class MeteringManagementService {
     );
     console.timeEnd('getDataLogicNoCondept');
     // console.log(JSON.parse(meteredMicroData?.reply));
-    const dataConvert =
-      (!!meteredMicroData?.reply && JSON.parse(meteredMicroData?.reply)) ||
-      null;
+    const dataConvert = this.safeParseJSON(meteredMicroData?.reply);
     const meteredPoint = await this.meteredMasterAll(start_date, end_date);
     const shareShipper = await this.shareShipper(meteredPoint);
     const ckShare = (share === 'on' || share == true) ? shareShipper : meteredPoint;
@@ -593,9 +601,7 @@ export class MeteringManagementService {
         end_date: end_date
       }),
     );
-    const reply =
-      (!!meteredMicroData?.reply && JSON.parse(meteredMicroData?.reply)) ||
-      null;
+    const reply = this.safeParseJSON(meteredMicroData?.reply);
 
     return reply;
   }
@@ -614,9 +620,7 @@ export class MeteringManagementService {
     const meteredMicroData = await this.meteredMicroService.sendMessage(payload);
     console.log('****end****');
 
-    let dataConvert =
-      (!!meteredMicroData?.reply && JSON.parse(meteredMicroData?.reply)) ||
-      null;
+    let dataConvert = this.safeParseJSON(meteredMicroData?.reply);
 
     const dateArray: string[] = Array.from(
       new Set(dataConvert?.map((item: any) => String(item.gasDay)) || [])
@@ -638,9 +642,7 @@ export class MeteringManagementService {
           meteredMicroData
         )
 
-        dataConvert =
-          (!!meteredMicroDataReplaceMissingMeterWithNomination?.reply && JSON.parse(meteredMicroDataReplaceMissingMeterWithNomination?.reply)) ||
-          null;
+        dataConvert = this.safeParseJSON(meteredMicroDataReplaceMissingMeterWithNomination?.reply);
       } catch (error) {
         activeData = undefined;
       }
@@ -708,9 +710,7 @@ export class MeteringManagementService {
     // console.log('start_date : ', start_date);
     // console.log('end_date : ', end_date);
     // console.log(JSON.parse(meteredMicroData?.reply));
-    const dataConvert =
-      (!!meteredMicroData?.reply && JSON.parse(meteredMicroData?.reply)) ||
-      null;
+    const dataConvert = this.safeParseJSON(meteredMicroData?.reply);
     // console.log('dataConvert : ', dataConvert);
 
     // return dataConvert
@@ -996,14 +996,17 @@ export class MeteringManagementService {
     fileOriginal: any,
     // userId: any,
   ) {
-    
+    if (file === undefined || file === null) {
+      throw new HttpException('Missing file', HttpStatus.BAD_REQUEST);
+    }
+
     const newDate = getTodayNow();
     try {
       const newDate7 = getTodayNowAdd7();
       const todayStart = getTodayStartAdd7().toDate();
       const todayEnd = getTodayEndAdd7().toDate();
-      const findData = JSON.parse(file?.jsonDataMultiSheet);
-  
+      const findData = this.safeParseJSON(file?.jsonDataMultiSheet);
+
       const meteredCount = await this.prisma.metered_run_number.count({
         where: {
           create_date: {
@@ -1017,11 +1020,11 @@ export class MeteringManagementService {
       console.log('meteringRetrievingId : ', meteringRetrievingId);
       console.log('insertTimestamp : ', insertTimestamp);
       let meterArr = []
-  
+
       const sheetArr = findData.filter((f: any) => {
         return /^Daily Metering Data(\s\(\d+\))?$/.test(f?.sheet || '');
       });
-  
+
       if (sheetArr.length <= 0) {
         throw new HttpException(
           {
@@ -1031,10 +1034,10 @@ export class MeteringManagementService {
           HttpStatus.BAD_REQUEST,
         );
       }
-  
+
       for (let i = 0; i < sheetArr.length; i++) {
         const sheet1 = sheetArr[i]
-  
+
         const gasDay = sheet1.data[1];
         const headerCol = sheet1.data[2];
         const valueCol = sheet1.data.slice(3);
@@ -1043,11 +1046,11 @@ export class MeteringManagementService {
           // ต้องเป็น string ก่อน
           console.log('value : ', value);
           if (typeof value?.[0] !== "string") return false;
-  
+
           // ตรวจว่าเป็นรูปแบบ YYYY-MM-DD และเป็นวันจริง
           return dayjs(value?.[0], "YYYY-MM-DD", true).isValid();
         }
-  
+
         if (!isValidGasDay(gasDay)) {
           throw new HttpException(
             {
@@ -1057,7 +1060,7 @@ export class MeteringManagementService {
             HttpStatus.BAD_REQUEST,
           );
         }
-  
+
         if (valueCol.length === 0) {
           throw new HttpException(
             {
@@ -1068,16 +1071,16 @@ export class MeteringManagementService {
           );
         }
         // 2025-07-09T11:30:00.569+01:00
-  
+
         function isValidStrictIsoDatetime(value) {
           if (typeof value !== "string") return false;
-  
+
           const regex =
             /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}[+-]\d{2}:\d{2}$/;
-  
+
           return regex.test(value);
         }
-  
+
         console.log('headerCol : ', headerCol);
         const correctHeaders = [
           'POINT_ID',
@@ -1108,17 +1111,17 @@ export class MeteringManagementService {
           'SG',
           'Datasource',
         ];
-  
+
         function validateHeaderCol(headerCol, correctHeaders) {
           // แปลง object → array
           const values = Object.values(headerCol);
-  
+
           // ตรวจว่าความยาวต้องเท่ากัน
           if (values.length !== correctHeaders.length) {
             console.log('❌ จำนวน header ไม่เท่ากัน');
             return false;
           }
-  
+
           // เช็คค่าทีละตัว
           for (let i = 0; i < values.length; i++) {
             if (values[i] !== correctHeaders[i]) {
@@ -1126,11 +1129,11 @@ export class MeteringManagementService {
               return false;
             }
           }
-  
+
           console.log('✅ Header ถูกต้องทั้งหมด');
           return true;
         }
-  
+
         if (!validateHeaderCol(headerCol, correctHeaders)) {
           throw new HttpException(
             {
@@ -1140,7 +1143,7 @@ export class MeteringManagementService {
             HttpStatus.BAD_REQUEST,
           );
         }
-  
+
         // Required field is missing: Point_ID / Register Timestamp / Energy.
         const newValue = valueCol.map((e: any) => {
           const headerRow = Object.keys(headerCol).map((obj: any) => {
@@ -1179,7 +1182,7 @@ export class MeteringManagementService {
                   HttpStatus.BAD_REQUEST,
                 );
               }
-  
+
             }
             return {
               [headerCol[obj]]: {
@@ -1188,17 +1191,17 @@ export class MeteringManagementService {
               },
             };
           });
-  
+
           const merged = Object.assign({}, ...headerRow);
           return merged;
         });
-  
+
         const newData = {
           gasDay: gasDay['0'],
           data: newValue,
           tempExcel: findData,
         };
-  
+
         if (!newData?.gasDay) {
           console.log('gasday');
           throw new HttpException(
@@ -1219,7 +1222,7 @@ export class MeteringManagementService {
             HttpStatus.BAD_REQUEST,
           );
         }
-  
+
         for (let i = 0; i < newData.data.length; i++) {
           // ห้ามว่าง
           // newData.data[i]?.POINT_ID?.value
@@ -1250,7 +1253,7 @@ export class MeteringManagementService {
               HttpStatus.BAD_REQUEST,
             );
           }
-  
+
           // ห้ามติดลบ
           // newData.data[i]?.VOLUME?.value
           // newData.data[i]?.ENERGY?.value
@@ -1301,7 +1304,7 @@ export class MeteringManagementService {
               HttpStatus.BAD_REQUEST,
             );
           }
-  
+
           // newData.data[i]?.REGISTER_TIMSTAMP?.value -> 2024-03-15T11:30:00.569+01:00
           const registerTime = dayjs(newData.data[i]?.REGISTER_TIMSTAMP?.value);
           const ckRg = dayjs.utc(newDate7).isBefore(registerTime);
@@ -1315,14 +1318,14 @@ export class MeteringManagementService {
             );
           }
         }
-  
+
         meterArr = [...meterArr, newData]
-  
+
       }
-  
+
       let countMeter = 0
       for (let i = 0; i < meterArr.length; i++) {
-  
+
         const meteredMicroData = await this.meteredMicroService.sendMessage(
           JSON.stringify({
             case: 'upload-json',
@@ -1332,12 +1335,10 @@ export class MeteringManagementService {
             json_data: meterArr[i],
           }),
         );
-  
-        const reply =
-          (!!meteredMicroData?.reply && JSON.parse(meteredMicroData?.reply)) ||
-          null;
+
+        const reply = this.safeParseJSON(meteredMicroData?.reply);
         console.log('reply : ', reply);
-  
+
         if (reply?.status) {
           const metered_run_number = await this.prisma.metered_run_number.create({
             data: {
@@ -1346,7 +1347,7 @@ export class MeteringManagementService {
               create_date_num: newDate7.unix(),
             },
           });
-  
+
           const resData = await this.prisma.metering_point.findMany({
             where: {
               AND: [
@@ -1404,7 +1405,7 @@ export class MeteringManagementService {
             },
           });
           const logsData = [];
-  
+
           for (let i = 0; i < (reply?.data?.length || 0); i++) {
             const findMeterDam = resData?.find((f: any) => {
               return f?.metered_point_name === reply?.data[i]?.meteringPointId;
@@ -1435,7 +1436,7 @@ export class MeteringManagementService {
                 metering_point_sys: reply?.data[i]?.meteringPointId,
                 gas_day: dayjs(reply?.data[i]?.gasDay ?? reply?.data[i]?.data?.gasDay, "YYYY-MM-DD").toDate()
               });
-  
+
               logsData.push({
                 metered_run_number_id: metered_run_number?.id,
                 temp: JSON.stringify(reply?.data[i]),
@@ -1453,9 +1454,9 @@ export class MeteringManagementService {
             });
           }
         }
-        countMeter =+ 1
+        countMeter = + 1
       }
-  
+
       await middleNotiInapp(
         this.prisma,
         'Metering', // 'Metering Management',
@@ -1463,9 +1464,9 @@ export class MeteringManagementService {
         77, // Metering Management menus_id
         1,
       );
-  
+
       return "success";
-      
+
     } catch (error) {
       await middleNotiInapp(
         this.prisma,
@@ -1566,9 +1567,7 @@ export class MeteringManagementService {
         gas_day: gDay,
       }),
     );
-    const dataConvert =
-      (!!meteredMicroData?.reply && JSON.parse(meteredMicroData?.reply)) ||
-      null;
+    const dataConvert = this.safeParseJSON(meteredMicroData?.reply);
     const meteredPoint = await this.meteredMasterAll(gDay, gDay);
     const todayStart = getTodayStartYYYYMMDDDfaultAdd7(gDay).toDate();
     const todayEnd = getTodayEndYYYYMMDDDfaultAdd7(gDay).toDate();
@@ -1583,7 +1582,7 @@ export class MeteringManagementService {
           },
           {
             OR: [
-              { end_date: null }, 
+              { end_date: null },
               { end_date: { gte: todayStart } },
             ],
           },
@@ -1594,11 +1593,11 @@ export class MeteringManagementService {
     // console.log('checkCondition : ', checkCondition);
 
     const newData = meteredPoint.map((e: any) => {
-  
+
       const filMeter = dataConvert?.filter((f: any) => {
         return f?.meteringPointId === e?.metered_point_name;
       });
-    
+
       const grouped: any = Object.values(
         filMeter.reduce((acc, item, index) => {
           const key = item.metering_retrieving_id;
@@ -1615,8 +1614,8 @@ export class MeteringManagementService {
         }, {}),
       );
 
-      const fHrIn0 = (payl: any, hr: any) =>{
-        
+      const fHrIn0 = (payl: any, hr: any) => {
+
         return (payl || []).find((f: any) => {
           return (
             // f?.hour === hr &&
@@ -1625,7 +1624,7 @@ export class MeteringManagementService {
           );
         });
       }
-        
+
 
 
       let fH1 = null;
@@ -1652,7 +1651,7 @@ export class MeteringManagementService {
       let fH22 = null;
       let fH23 = null;
       let fH24 = null;
-        // console.log('grouped : ', grouped);
+      // console.log('grouped : ', grouped);
       // หาวัน และ เวลา h ตั้งต้น
       for (let iTime = 1; iTime <= grouped.length; iTime++) {
         if (!fH1?.data) {
@@ -2101,9 +2100,7 @@ export class MeteringManagementService {
         end_date: endDate,
       }),
     );
-    const reply =
-      (!!meteredMicroData?.reply && JSON.parse(meteredMicroData?.reply)) ||
-      null;
+    const reply = this.safeParseJSON(meteredMicroData?.reply);
     console.log('reply : ', reply);
 
     if (reply?.status && reply.data.length > 0) {
@@ -2240,7 +2237,7 @@ export class MeteringManagementService {
     //   );
     // }
 
-    
+
     return reply;
   }
 
@@ -2286,10 +2283,8 @@ export class MeteringManagementService {
     console.log('****end****');
     // console.log('start_date : ', start_date);
     // console.log('end_date : ', end_date);
-    console.log(JSON.parse(meteredMicroData?.reply));
-    const dataConvert =
-      (!!meteredMicroData?.reply && JSON.parse(meteredMicroData?.reply)) ||
-      null;
+    console.log(this.safeParseJSON(meteredMicroData?.reply));
+    const dataConvert = this.safeParseJSON(meteredMicroData?.reply);
     console.log('dataConvert : ', dataConvert);
     return dataConvert;
   }
@@ -2302,13 +2297,13 @@ export class MeteringManagementService {
     endDate?: any,
     metered_run_number_id?: any
   ) {
-    const andWhere : Prisma.metered_retrievingWhereInput[] = [
+    const andWhere: Prisma.metered_retrievingWhereInput[] = [
       {
         type: 'mastering data check'
       }
     ]
 
-    if(metered_run_number_id){
+    if (metered_run_number_id) {
       andWhere.push({
         metered_run_number_id: Number(metered_run_number_id),
       })
@@ -2316,13 +2311,13 @@ export class MeteringManagementService {
 
     const start = dayjs(startDate, "YYYY-MM-DD");
     const end = dayjs(endDate, "YYYY-MM-DD");
-    if(start.isValid() || end.isValid()){
-      if(start.isValid()){
+    if (start.isValid() || end.isValid()) {
+      if (start.isValid()) {
         andWhere.push({
           gas_day: { gte: start.toDate() }
         })
       }
-      if(end.isValid()){
+      if (end.isValid()) {
         andWhere.push({
           gas_day: { lte: end.toDate() }
         })
@@ -2331,7 +2326,7 @@ export class MeteringManagementService {
 
     // 1. Query ข้อมูลหลัก
     const resData = await this.prisma.metered_retrieving.findMany({
-      where: { 
+      where: {
         AND: andWhere
       },
       include: { metered_run_number: true },
@@ -2375,7 +2370,7 @@ export class MeteringManagementService {
     const removedMeterThatHaveEnergy = Object.values(groupedData).filter((meteredRetrievingList: any) => !meteredRetrievingList.some((meteredRetrieving: any) => meteredRetrieving.del_flag == true))
     const removedMeterPointThatHaveEnergy = activeMeteringPoint.filter(meteringPoint => !resData.some((e: any) => isMatch(e.metering_point_sys, meteringPoint.metered_point_name) && e.del_flag == true))
     // const removedConceptPointThatHaveEnergy = activeConceptPoint.filter(conceptPoint => !resData.some((e: any) => isMatch(e.metering_point_sys, conceptPoint.concept_point) && e.del_flag == true))
-    
+
     // ทำให้เหลือแค่ meter อย่างละตัว
     // Get the latest gas_day for each meteredRetrievingList
     const meteredRetrievingWithLatestGasDay = removedMeterThatHaveEnergy.map((meteredRetrievingList: any) => {
@@ -2383,14 +2378,14 @@ export class MeteringManagementService {
       const latestRecord = meteredRetrievingList.reduce((latest: any, current: any) => {
         if (!latest || !latest.gas_day) return current;
         if (!current.gas_day) return latest;
-        
+
         // Compare gas_day dates
         const latestDate = new Date(latest.gas_day);
         const currentDate = new Date(current.gas_day);
-        
+
         return currentDate > latestDate ? current : latest;
       }, null);
-      
+
       // return {
       //   meteringPointSys: meteredRetrievingList[0]?.metering_point_sys,
       //   latestGasDay: latestRecord?.gas_day,
@@ -2400,20 +2395,20 @@ export class MeteringManagementService {
       return latestRecord;
     });
     removedMeterPointThatHaveEnergy
-    .filter(meteringPoint => !meteredRetrievingWithLatestGasDay.some((meteredRetrieving: any) => isMatch(meteredRetrieving.metering_point_sys, meteringPoint.metered_point_name)))
-    .map(meteringPoint => {
-      meteredRetrievingWithLatestGasDay.push({
-        "type": "mastering data check",
-        "description": `The point ${meteringPoint.metered_point_name} does not retrieved Metering data`,
-        "metering_point_sys": meteringPoint.metered_point_name,
-        "gas_day": end.toISOString(),
-        "temp": JSON.stringify({
-          "gasDay": end.format("YYYY-MM-DD"),
-          "meteringPointId": meteringPoint.metered_point_name,
+      .filter(meteringPoint => !meteredRetrievingWithLatestGasDay.some((meteredRetrieving: any) => isMatch(meteredRetrieving.metering_point_sys, meteringPoint.metered_point_name)))
+      .map(meteringPoint => {
+        meteredRetrievingWithLatestGasDay.push({
+          "type": "mastering data check",
+          "description": `The point ${meteringPoint.metered_point_name} does not retrieved Metering data`,
+          "metering_point_sys": meteringPoint.metered_point_name,
+          "gas_day": end.toISOString(),
+          "temp": JSON.stringify({
+            "gasDay": end.format("YYYY-MM-DD"),
+            "meteringPointId": meteringPoint.metered_point_name,
+          })
         })
       })
-    })
-    
+
     // removedConceptPointThatHaveEnergy
     // .filter(conceptPoint => !meteredRetrievingWithLatestGasDay.some((meteredRetrieving: any) => isMatch(meteredRetrieving.metering_point_sys, conceptPoint.concept_point)))
     // .map(conceptPoint => {
@@ -2434,7 +2429,7 @@ export class MeteringManagementService {
 
     // 3. Process data
     const newResData = meteredRetrievingWithLatestGasDay.map((e: any) => {
-      e['data'] = (!!e['temp'] && JSON.parse(e['temp'])) || null;
+      e['data'] = this.safeParseJSON(e?.['temp']);
       delete e['temp'];
       return { ...e };
     });
@@ -2521,14 +2516,14 @@ export class MeteringManagementService {
     fileOriginal: any,
     // userId: any,
   ) {
-    
+
     const newDate = getTodayNow();
     try {
       const newDate7 = getTodayNowAdd7();
       const todayStart = getTodayStartAdd7().toDate();
       const todayEnd = getTodayEndAdd7().toDate();
-      const findData = JSON.parse(file?.jsonDataMultiSheet);
-  
+      const findData = this.safeParseJSON(file?.jsonDataMultiSheet);
+
       const meteredCount = await this.prisma.metered_run_number.count({
         where: {
           create_date: {
@@ -2542,11 +2537,11 @@ export class MeteringManagementService {
       // console.log('meteringRetrievingId : ', meteringRetrievingId);
       // console.log('insertTimestamp : ', insertTimestamp);
       let meterArr = []
-  
+
       const sheetArr = findData.filter((f: any) => {
         return /^Daily Metering Data(\s\(\d+\))?$/.test(f?.sheet || '');
       });
-  
+
       if (sheetArr.length <= 0) {
         throw new HttpException(
           {
@@ -2556,10 +2551,10 @@ export class MeteringManagementService {
           HttpStatus.BAD_REQUEST,
         );
       }
-  
+
       for (let i = 0; i < sheetArr.length; i++) {
         const sheet1 = sheetArr[i]
-  
+
         const gasDay = sheet1.data[1];
         const headerCol = sheet1.data[2];
         const valueCol = sheet1.data.slice(3);
@@ -2568,11 +2563,11 @@ export class MeteringManagementService {
           // ต้องเป็น string ก่อน
           console.log('value : ', value);
           if (typeof value?.[0] !== "string") return false;
-  
+
           // ตรวจว่าเป็นรูปแบบ YYYY-MM-DD และเป็นวันจริง
           return dayjs(value?.[0], "YYYY-MM-DD", true).isValid();
         }
-  
+
         if (!isValidGasDay(gasDay)) {
           throw new HttpException(
             {
@@ -2582,7 +2577,7 @@ export class MeteringManagementService {
             HttpStatus.BAD_REQUEST,
           );
         }
-  
+
         if (valueCol.length === 0) {
           throw new HttpException(
             {
@@ -2593,16 +2588,16 @@ export class MeteringManagementService {
           );
         }
         // 2025-07-09T11:30:00.569+01:00
-  
+
         function isValidStrictIsoDatetime(value) {
           if (typeof value !== "string") return false;
-  
+
           const regex =
             /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}[+-]\d{2}:\d{2}$/;
-  
+
           return regex.test(value);
         }
-  
+
         // console.log('headerCol : ', headerCol);
         const correctHeaders = [
           'POINT_ID',
@@ -2633,17 +2628,17 @@ export class MeteringManagementService {
           'SG',
           'Datasource',
         ];
-  
+
         function validateHeaderCol(headerCol, correctHeaders) {
           // แปลง object → array
           const values = Object.values(headerCol);
-  
+
           // ตรวจว่าความยาวต้องเท่ากัน
           if (values.length !== correctHeaders.length) {
             console.log('❌ จำนวน header ไม่เท่ากัน');
             return false;
           }
-  
+
           // เช็คค่าทีละตัว
           for (let i = 0; i < values.length; i++) {
             if (values[i] !== correctHeaders[i]) {
@@ -2651,11 +2646,11 @@ export class MeteringManagementService {
               return false;
             }
           }
-  
+
           console.log('✅ Header ถูกต้องทั้งหมด');
           return true;
         }
-  
+
         if (!validateHeaderCol(headerCol, correctHeaders)) {
           throw new HttpException(
             {
@@ -2665,7 +2660,7 @@ export class MeteringManagementService {
             HttpStatus.BAD_REQUEST,
           );
         }
-  
+
         // Required field is missing: Point_ID / Register Timestamp / Energy.
         const newValue = valueCol.map((e: any) => {
           const headerRow = Object.keys(headerCol).map((obj: any) => {
@@ -2713,17 +2708,17 @@ export class MeteringManagementService {
               },
             };
           });
-  
+
           const merged = Object.assign({}, ...headerRow);
           return merged;
         });
-  
+
         const newData = {
           gasDay: gasDay['0'],
           data: newValue,
           tempExcel: findData,
         };
-  
+
         if (!newData?.gasDay) {
           console.log('gasday');
           throw new HttpException(
@@ -2745,7 +2740,7 @@ export class MeteringManagementService {
             HttpStatus.BAD_REQUEST,
           );
         }
-  
+
         for (let i = 0; i < newData.data.length; i++) {
           // ห้ามว่าง
           // newData.data[i]?.POINT_ID?.value
@@ -2776,7 +2771,7 @@ export class MeteringManagementService {
               HttpStatus.BAD_REQUEST,
             );
           }
-  
+
           // ห้ามติดลบ
           // newData.data[i]?.VOLUME?.value
           // newData.data[i]?.ENERGY?.value
@@ -2827,7 +2822,7 @@ export class MeteringManagementService {
               HttpStatus.BAD_REQUEST,
             );
           }
-  
+
           // newData.data[i]?.REGISTER_TIMSTAMP?.value -> 2024-03-15T11:30:00.569+01:00
           // newData.data[i]?.REGISTER_TIMSTAMP?.value -> 2024-03-15T11:30:00.569
           const registerTime = dayjs(newData.data[i]?.REGISTER_TIMSTAMP?.value);
@@ -2842,14 +2837,14 @@ export class MeteringManagementService {
             );
           }
         }
-  
+
         meterArr = [...meterArr, newData]
-  
+
       }
-  
+
       let countMeter = 0
       for (let i = 0; i < meterArr.length; i++) {
-  
+
         const meteredMicroData = await this.meteredMicroService.sendMessage(
           JSON.stringify({
             case: 'upload-json',
@@ -2859,12 +2854,10 @@ export class MeteringManagementService {
             json_data: meterArr[i],
           }),
         );
-  
-        const reply =
-          (!!meteredMicroData?.reply && JSON.parse(meteredMicroData?.reply)) ||
-          null;
+
+        const reply = this.safeParseJSON(meteredMicroData?.reply);
         // console.log('reply : ', reply);
-  
+
         if (reply?.status) {
           const metered_run_number = await this.prisma.metered_run_number.create({
             data: {
@@ -2873,7 +2866,7 @@ export class MeteringManagementService {
               create_date_num: newDate7.unix(),
             },
           });
-          
+
           const gasDay = dayjs(reply?.data[i]?.gasDay ?? reply?.data[i]?.data?.gasDay ?? meterArr[i].gasDay, "YYYY-MM-DD").toDate();
           const resData = await this.prisma.metering_point.findMany({
             where: {
@@ -2932,13 +2925,13 @@ export class MeteringManagementService {
             },
           });
           const logsData = [];
-  
+
           for (let i = 0; i < (reply?.data?.length || 0); i++) {
             const findMeterDam = resData?.find((f: any) => {
               return f?.metered_point_name === reply?.data[i]?.meteringPointId;
             });
 
-            if(!reply?.data[i]?.energy && reply?.data[i]?.energy != 0){
+            if (!reply?.data[i]?.energy && reply?.data[i]?.energy != 0) {
               // ไม่มี energy
               if (findMeterDam) {
                 // ไม่มี energy แต่ มีใน DAM 
@@ -2955,14 +2948,14 @@ export class MeteringManagementService {
                 });
               }
             }
-            else{
+            else {
               // มี energy
-              if(reply?.data[i]?.meteringPointId){
+              if (reply?.data[i]?.meteringPointId) {
                 // เอาไปใส่ mastering data check เพื่อให้เวลาหาเป็นช่วงเวลาจะได้รู้ว่า meter นี้มีค่ามาแล้ว
                 const count = await this.prisma.metered_retrieving.count({
                   where: { del_flag: true, type: 'mastering data check', metered_run_number_id: metered_run_number?.id, metering_point_sys: reply?.data[i]?.meteringPointId },
                 })
-                if(count == 0){
+                if (count == 0) {
                   logsData.push({
                     metered_run_number_id: metered_run_number?.id,
                     temp: JSON.stringify(reply?.data[i]),
@@ -2995,7 +2988,7 @@ export class MeteringManagementService {
                 //   // มี energy และ มีใน DAM
                 // }
               }
-              else{
+              else {
                 // มี energy แต่ ไม่มี meteringPointId
                 logsData.push({
                   metered_run_number_id: metered_run_number?.id,
@@ -3017,9 +3010,9 @@ export class MeteringManagementService {
             });
           }
         }
-        countMeter =+ 1
+        countMeter = + 1
       }
-  
+
       await middleNotiInapp(
         this.prisma,
         'Metering', // 'Metering Management',
@@ -3027,9 +3020,9 @@ export class MeteringManagementService {
         77, // Metering Management menus_id
         1,
       );
-  
+
       return "success";
-      
+
     } catch (error) {
       await middleNotiInapp(
         this.prisma,
@@ -3047,7 +3040,7 @@ export class MeteringManagementService {
       );
     }
   }
-  
+
   async procressMetered2(payload: any, userId: any) {
     const { startDate, endDate } = payload;
 
@@ -3085,9 +3078,7 @@ export class MeteringManagementService {
         end_date: endDate,
       }),
     );
-    const reply =
-      (!!meteredMicroData?.reply && JSON.parse(meteredMicroData?.reply)) ||
-      null;
+    const reply = this.safeParseJSON(meteredMicroData?.reply);
 
     if (reply?.status && reply.data.length > 0) {
       const resData = await this.prisma.metering_point.findMany({
@@ -3148,14 +3139,14 @@ export class MeteringManagementService {
       });
       const logsData = [];
       for (let i = 0; i < reply?.data.length; i++) {
-        let gasDay : dayjs.Dayjs | null = reply?.data[i]?.gasDay ? dayjs(reply?.data[i]?.gasDay, "YYYY-MM-DD") : null;
+        let gasDay: dayjs.Dayjs | null = reply?.data[i]?.gasDay ? dayjs(reply?.data[i]?.gasDay, "YYYY-MM-DD") : null;
         gasDay = gasDay?.isValid() ? gasDay : null;
         const findMeterDam = resData?.find((f: any) => {
           return f?.metered_point_name === reply?.data[i]?.meteringPointId &&
-          dayjs(f?.start_date).isSameOrBefore(gasDay, "day") &&
-          ((!f?.end_date) || dayjs(f?.end_date).isAfter(gasDay, "day"));
+            dayjs(f?.start_date).isSameOrBefore(gasDay, "day") &&
+            ((!f?.end_date) || dayjs(f?.end_date).isAfter(gasDay, "day"));
         });
-        if(!reply?.data[i]?.energy && reply?.data[i]?.energy != 0){
+        if (!reply?.data[i]?.energy && reply?.data[i]?.energy != 0) {
           // ไม่มี energy
           if (findMeterDam) {
             // ไม่มี energy แต่ มีใน DAM 
@@ -3172,14 +3163,14 @@ export class MeteringManagementService {
             });
           }
         }
-        else{
+        else {
           // มี energy
           // เอาไปใส่ mastering data check เพื่อให้เวลาหาเป็นช่วงเวลาจะได้รู้ว่า meter นี้มีค่ามาแล้ว
-          if(reply?.data[i]?.meteringPointId){
+          if (reply?.data[i]?.meteringPointId) {
             const count = await this.prisma.metered_retrieving.count({
               where: { del_flag: true, type: 'mastering data check', metered_run_number_id: metered_run_number?.id, metering_point_sys: reply?.data[i]?.meteringPointId },
             })
-            if(count == 0){
+            if (count == 0) {
               logsData.push({
                 metered_run_number_id: metered_run_number?.id,
                 temp: JSON.stringify(reply?.data[i]),

@@ -3,7 +3,17 @@ import { PrismaService } from 'prisma/prisma.service';
 
 @Injectable()
 export class AccountManageHistoryService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
+
+  private safeParseJSON(data: any, defaultValue: any = null) {
+    if (!data) return defaultValue;
+    try {
+      return typeof data === 'string' ? JSON.parse(data) : data;
+    } catch (e) {
+      console.error('JSON parse error:', e);
+      return defaultValue;
+    }
+  }
 
   async history(payload: any, id: any) {
     console.log('---');
@@ -19,8 +29,8 @@ export class AccountManageHistoryService {
     });
     console.log('history : ', history);
     const newHistory = await history.map((e: any) => {
-      e['reqUser'] = JSON.parse(e['reqUser']) || null;
-      e['value'] = JSON.parse(e['value']) || null;
+      e['reqUser'] = this.safeParseJSON(e['reqUser']);
+      e['value'] = this.safeParseJSON(e['value']);
       return e;
     });
     return history;

@@ -79,6 +79,16 @@ export class ExportFilesService {
     // @Inject(CACHE_MANAGER) private cacheService: Cache,
   ) { }
 
+  private safeParseJSON(data: any, defaultValue: any = null) {
+    if (!data) return defaultValue;
+    try {
+      return typeof data === 'string' ? JSON.parse(data) : data;
+    } catch (e) {
+      console.error('JSON parse error:', e);
+      return defaultValue;
+    }
+  }
+
   // -------
 
   exportDataToExcelNew(
@@ -87,7 +97,7 @@ export class ExportFilesService {
     nameFile: string,
     skipFirstRow: boolean,
     mergeColumns: string[] = [],
-    rowHeight: {rowIndex: number, height: number}[] = [],
+    rowHeight: { rowIndex: number, height: number }[] = [],
   ): void {
     // ตรวจสอบว่ามีข้อมูลหรือไม่
     if (!data || data.length === 0) {
@@ -123,7 +133,7 @@ export class ExportFilesService {
 
     // Cell merging logic for specific columns when enableCellMerging is true
     if (mergeColumns && mergeColumns.length > 0 && data.length > 1) {
-      
+
       // Find column indices for merge columns
       const columnIndices: Record<string, number> = {};
       mergeColumns.forEach(col => {
@@ -135,18 +145,18 @@ export class ExportFilesService {
 
       // Initialize merge ranges array
       const mergeRanges: any[] = [];
-      
+
       // Process each merge column
       Object.keys(columnIndices).forEach(columnName => {
         const colIndex = columnIndices[columnName];
         let startRow = skipFirstRow ? 2 : 1; // Start from data row
         let endRow = startRow;
-        
+
         // Go through each data row
         for (let i = 0; i < data.length; i++) {
           const currentValue = data[i][columnName];
           const nextValue = i < data.length - 1 ? data[i + 1][columnName] : null;
-          
+
           // If current value is same as next value, extend the range
           if (currentValue === nextValue) {
             endRow++;
@@ -164,7 +174,7 @@ export class ExportFilesService {
           }
         }
       });
-      
+
       // Apply merge ranges to worksheet
       if (mergeRanges.length > 0) {
         ws['!merges'] = mergeRanges;
@@ -306,21 +316,21 @@ export class ExportFilesService {
     // return `${withCommas}.${decimalPart}`;
 
     // คืนค่าตามเดิมถ้าไม่ใช่ตัวเลข ไม่ปัดเศษ
-      const n = Number(number);
-      if (!Number.isFinite(n)) return number;
+    const n = Number(number);
+    if (!Number.isFinite(n)) return number;
 
-      const sign = n < 0 ? '-' : '';
-      const abs = Math.abs(n);
+    const sign = n < 0 ? '-' : '';
+    const abs = Math.abs(n);
 
-      // ตัดทศนิยมให้เหลือ 2 ตำแหน่ง (ไม่ปัด)
-      const truncated = Math.floor(abs * 100) / 100;
+    // ตัดทศนิยมให้เหลือ 2 ตำแหน่ง (ไม่ปัด)
+    const truncated = Math.floor(abs * 100) / 100;
 
-      // แยกส่วนจำนวนเต็ม/ทศนิยมแล้วจัดรูปแบบ
-      const [i, d = ''] = truncated.toString().split('.');
-      const intWithComma = i?.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-      const dec = d.padEnd(2, '0'); // ให้ครบ 2 หลักเสมอ
+    // แยกส่วนจำนวนเต็ม/ทศนิยมแล้วจัดรูปแบบ
+    const [i, d = ''] = truncated.toString().split('.');
+    const intWithComma = i?.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    const dec = d.padEnd(2, '0'); // ให้ครบ 2 หลักเสมอ
 
-      return `${sign}${intWithComma}.${dec}`;
+    return `${sign}${intWithComma}.${dec}`;
   };
 
   // digit3
@@ -402,22 +412,22 @@ export class ExportFilesService {
     // // Add thousand separators
     // return fixedNumber.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 
-      // คืนค่าตามเดิมถ้าไม่ใช่ตัวเลข ไม่ปัดเศษ
-      const n = Number(number);
-      if (!Number.isFinite(n)) return number;
+    // คืนค่าตามเดิมถ้าไม่ใช่ตัวเลข ไม่ปัดเศษ
+    const n = Number(number);
+    if (!Number.isFinite(n)) return number;
 
-      const sign = n < 0 ? '-' : '';
-      const abs = Math.abs(n);
+    const sign = n < 0 ? '-' : '';
+    const abs = Math.abs(n);
 
-      // ตัดทศนิยมให้เหลือ 3 ตำแหน่ง (ไม่ปัด)
-      const truncated = Math.floor(abs * 1000) / 1000;
+    // ตัดทศนิยมให้เหลือ 3 ตำแหน่ง (ไม่ปัด)
+    const truncated = Math.floor(abs * 1000) / 1000;
 
-      // แยกส่วนจำนวนเต็ม/ทศนิยมแล้วจัดรูปแบบ
-      const [i, d = ''] = truncated.toString().split('.');
-      const intWithComma = i?.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-      const dec = d.padEnd(3, '0'); // ให้ครบ 3 หลักเสมอ
+    // แยกส่วนจำนวนเต็ม/ทศนิยมแล้วจัดรูปแบบ
+    const [i, d = ''] = truncated.toString().split('.');
+    const intWithComma = i?.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    const dec = d.padEnd(3, '0'); // ให้ครบ 3 หลักเสมอ
 
-      return `${sign}${intWithComma}.${dec}`;
+    return `${sign}${intWithComma}.${dec}`;
   }
 
   // เติมทศนิยม 4 ตำแหน่ง new
@@ -430,22 +440,22 @@ export class ExportFilesService {
     // // Add thousand separators
     // return fixedNumber.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 
-      // คืนค่าตามเดิมถ้าไม่ใช่ตัวเลข ไม่ปัดเศษ
-      const n = Number(number);
-      if (!Number.isFinite(n)) return number;
+    // คืนค่าตามเดิมถ้าไม่ใช่ตัวเลข ไม่ปัดเศษ
+    const n = Number(number);
+    if (!Number.isFinite(n)) return number;
 
-      const sign = n < 0 ? '-' : '';
-      const abs = Math.abs(n);
+    const sign = n < 0 ? '-' : '';
+    const abs = Math.abs(n);
 
-      // ตัดทศนิยมให้เหลือ 3 ตำแหน่ง (ไม่ปัด)
-      const truncated = Math.floor(abs * 10000) / 10000;
+    // ตัดทศนิยมให้เหลือ 3 ตำแหน่ง (ไม่ปัด)
+    const truncated = Math.floor(abs * 10000) / 10000;
 
-      // แยกส่วนจำนวนเต็ม/ทศนิยมแล้วจัดรูปแบบ
-      const [i, d = ''] = truncated.toString().split('.');
-      const intWithComma = i?.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-      const dec = d.padEnd(4, '0'); // ให้ครบ 3 หลักเสมอ
+    // แยกส่วนจำนวนเต็ม/ทศนิยมแล้วจัดรูปแบบ
+    const [i, d = ''] = truncated.toString().split('.');
+    const intWithComma = i?.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    const dec = d.padEnd(4, '0'); // ให้ครบ 3 หลักเสมอ
 
-      return `${sign}${intWithComma}.${dec}`;
+    return `${sign}${intWithComma}.${dec}`;
   }
 
   // เติมทศนิยม 4 ตำแหน่ง
@@ -888,28 +898,28 @@ export class ExportFilesService {
     );
     console.log('sortedResData : ', sortedResData);
 
-    function getLastLoginDuration (row: any) {
+    function getLastLoginDuration(row: any) {
       let text = ''
-      if(row?.login_logs?.length > 0){
-          const lastLogin = dayjs(row?.login_logs[0]?.create_date)
-          const now = dayjs()
-          let duration = now.diff(lastLogin, 'month')
-          if(duration > 0){
-              if(duration >= 12){
-                  duration = now.diff(lastLogin, 'year')
-                  text = `${duration} ${duration == 1 ? 'year' : 'years'}`
-              }
-              else{
-                  text = `${duration} ${duration == 1 ? 'month' : 'months'}`
-              }
+      if (row?.login_logs?.length > 0) {
+        const lastLogin = dayjs(row?.login_logs[0]?.create_date)
+        const now = dayjs()
+        let duration = now.diff(lastLogin, 'month')
+        if (duration > 0) {
+          if (duration >= 12) {
+            duration = now.diff(lastLogin, 'year')
+            text = `${duration} ${duration == 1 ? 'year' : 'years'}`
           }
-          else{
-              duration = now.diff(lastLogin, 'day')
-              text = `${duration} ${duration == 1 ? 'day' : 'days'}`
+          else {
+            text = `${duration} ${duration == 1 ? 'month' : 'months'}`
           }
+        }
+        else {
+          duration = now.diff(lastLogin, 'day')
+          text = `${duration} ${duration == 1 ? 'day' : 'days'}`
+        }
       }
       return text
-  }
+    }
 
     const formateData = await sortedResData.map((e: any) => {
       const setData = {
@@ -1279,15 +1289,11 @@ export class ExportFilesService {
             dayjs(e['create_date']).format('DD/MM/YYYY HH:mm')) ||
           null,
         ['First Name / Last Name']: (() => {
-          try {
-            const reqUser = e?.reqUser ? JSON.parse(e.reqUser) : null;
-            return (reqUser?.first_name || '') + ' ' + (reqUser?.last_name || '');
-          } catch (error) {
-            return '';
-          }
+          const reqUser = this.safeParseJSON(e?.reqUser);
+          return (reqUser?.first_name || '') + ' ' + (reqUser?.last_name || '');
         })(),
-          // ['Description']: e['method'],
-          ['Description']: `${renameMethod(e?.method, e?.type)} ${matchTypeWithMenu(e?.type)}`,
+        // ['Description']: e['method'],
+        ['Description']: `${renameMethod(e?.method, e?.type)} ${matchTypeWithMenu(e?.type)}`,
       };
       const filteredData = Object.keys(setData)
         .filter((key) => filter.includes(key)) // กรอง key ที่ตรงกับ filter
@@ -4340,7 +4346,7 @@ export class ExportFilesService {
 
     const mergeColumns = [
       'Release Start Date',
-      'Release End Date', 
+      'Release End Date',
       'Submitted Timestamp',
       'Contract Code',
       'Shipper Name'
@@ -4973,7 +4979,7 @@ export class ExportFilesService {
 
     let pathConvert = pathManagementOnceFull?.path_management_config.map(
       (e: any) => {
-        const convert = (!!e['temps'] && JSON.parse(e['temps'])) || null;
+        const convert = this.safeParseJSON(e?.['temps']);
         const pathData = {
           revised_capacity_path: convert?.revised_capacity_path,
           revised_capacity_path_edges: convert?.revised_capacity_path_edges,
@@ -6701,7 +6707,7 @@ export class ExportFilesService {
       if (!a['Gas Day'] || !b['Gas Day']) {
         return 0;
       }
-      
+
       const dateA = parseDate(a['Gas Day']);
       const dateB = parseDate(b['Gas Day']);
       return dateB.getTime() - dateA.getTime();
@@ -6742,12 +6748,12 @@ export class ExportFilesService {
     let keys = key.match(/(?<=\[')(.*?)(?='\])/g);
     let nomDatas = keys.reduce((obj, key) => obj?.[key], resData);
     let flagDW = false
-    
-    if(key === "['total']['daily']" && nomDatas.length === 0){
-      flagDW =true
+
+    if (key === "['total']['daily']" && nomDatas.length === 0) {
+      flagDW = true
       keys = "['total']['weekly']".match(/(?<=\[')(.*?)(?='\])/g);
       nomDatas = keys.reduce((obj, key) => obj?.[key], resData);
-    }else if(key === "['total']['weekly']" && nomDatas.length === 0){
+    } else if (key === "['total']['weekly']" && nomDatas.length === 0) {
       keys = "['total']['daily']".match(/(?<=\[')(.*?)(?='\])/g);
       nomDatas = keys.reduce((obj, key) => obj?.[key], resData);
     }
@@ -7004,28 +7010,28 @@ export class ExportFilesService {
       };
 
       let totalDW = {}
-      if(flagDW){
+      if (flagDW) {
         let vl = null
         let util = null
-        if(dayjs(e['gas_day_text'], 'DD/MM/YYYY').add(0, 'day').format('DD/MM/YYYY') === gas_day_text){
+        if (dayjs(e['gas_day_text'], 'DD/MM/YYYY').add(0, 'day').format('DD/MM/YYYY') === gas_day_text) {
           vl = !!e['sunday'] && this.formatNumberThreeDecimal(e['sunday']) || null
           util = e['sunday_utilization'] && this.dcimal2(e['sunday_utilization']) || null
-        }else if(dayjs(e['gas_day_text'], 'DD/MM/YYYY').add(1, 'day').format('DD/MM/YYYY') === gas_day_text){
+        } else if (dayjs(e['gas_day_text'], 'DD/MM/YYYY').add(1, 'day').format('DD/MM/YYYY') === gas_day_text) {
           vl = !!e['monday'] && this.formatNumberThreeDecimal(e['monday']) || null
           util = e['monday_utilization'] && this.dcimal2(e['monday_utilization']) || null
-        }else if(dayjs(e['gas_day_text'], 'DD/MM/YYYY').add(2, 'day').format('DD/MM/YYYY') === gas_day_text){
+        } else if (dayjs(e['gas_day_text'], 'DD/MM/YYYY').add(2, 'day').format('DD/MM/YYYY') === gas_day_text) {
           vl = !!e['tuesday'] && this.formatNumberThreeDecimal(e['tuesday']) || null
           util = e['tuesday_utilization'] && this.dcimal2(e['tuesday_utilization']) || null
-        }else if(dayjs(e['gas_day_text'], 'DD/MM/YYYY').add(3, 'day').format('DD/MM/YYYY') === gas_day_text){
+        } else if (dayjs(e['gas_day_text'], 'DD/MM/YYYY').add(3, 'day').format('DD/MM/YYYY') === gas_day_text) {
           vl = !!e['wednesday'] && this.formatNumberThreeDecimal(e['wednesday']) || null
           util = e['wednesday_utilization'] && this.dcimal2(e['wednesday_utilization']) || null
-        }else if(dayjs(e['gas_day_text'], 'DD/MM/YYYY').add(4, 'day').format('DD/MM/YYYY') === gas_day_text){
+        } else if (dayjs(e['gas_day_text'], 'DD/MM/YYYY').add(4, 'day').format('DD/MM/YYYY') === gas_day_text) {
           vl = !!e['thursday'] && this.formatNumberThreeDecimal(e['thursday']) || null
           util = e['thursday_utilization'] && this.dcimal2(e['thursday_utilization']) || null
-        }else if(dayjs(e['gas_day_text'], 'DD/MM/YYYY').add(5, 'day').format('DD/MM/YYYY') === gas_day_text){
+        } else if (dayjs(e['gas_day_text'], 'DD/MM/YYYY').add(5, 'day').format('DD/MM/YYYY') === gas_day_text) {
           vl = !!e['friday'] && this.formatNumberThreeDecimal(e['friday']) || null
           util = e['friday_utilization'] && this.dcimal2(e['friday_utilization']) || null
-        }else if(dayjs(e['gas_day_text'], 'DD/MM/YYYY').add(6, 'day').format('DD/MM/YYYY') === gas_day_text){
+        } else if (dayjs(e['gas_day_text'], 'DD/MM/YYYY').add(6, 'day').format('DD/MM/YYYY') === gas_day_text) {
           vl = !!e['saturday'] && this.formatNumberThreeDecimal(e['saturday']) || null
           util = e['saturday_utilization'] && this.dcimal2(e['saturday_utilization']) || null
         }
@@ -7194,7 +7200,7 @@ export class ExportFilesService {
         // Total cap
         // Total
         // H1
-        
+
         setData = nominationDaily;
       } else if (
         key === "['nomination']['weekly']['MMSCFD']" ||
@@ -7287,7 +7293,7 @@ export class ExportFilesService {
       'Summary Nomination Report',
       true,
       [],
-      key.includes('weekly') ? [] : [{rowIndex: 1, height: 30}]
+      key.includes('weekly') ? [] : [{ rowIndex: 1, height: 30 }]
     );
   }
 
@@ -7397,16 +7403,16 @@ export class ExportFilesService {
       ws['!rows'][R] = { hpx: maxHeight };
     }
 
-    ['A','B'].forEach((col, idx) => {
+    ['A', 'B'].forEach((col, idx) => {
       const ref = XLSX.utils.encode_cell({ r: 1, c: idx });
       ws[ref].s.alignment = { horizontal: 'center', vertical: 'center' };
     });
     ['A'].forEach((col, idx) => {
-      const ref = XLSX.utils.encode_cell({ r: rowOffset , c: idx });
+      const ref = XLSX.utils.encode_cell({ r: rowOffset, c: idx });
       ws[ref].s.alignment = { horizontal: 'center', vertical: 'center' };
     });
 
-    ['A','B'].forEach((col, idx) => {
+    ['A', 'B'].forEach((col, idx) => {
       const ref = XLSX.utils.encode_cell({ r: rowOffset + 1, c: idx });
       ws[ref] = ws[ref] || { t: 's', v: idx === 0 ? 'mixQuality' : 'quality' };
       ws[ref].s = ws[ref].s || {};
@@ -7742,7 +7748,7 @@ export class ExportFilesService {
 
 
 
-    const formateData = await resData?.filter((f:any) => bodys?.idAr?.includes(f?.id))?.map((e: any) => {
+    const formateData = await resData?.filter((f: any) => bodys?.idAr?.includes(f?.id))?.map((e: any) => {
       const lengthSubmission =
         (e['allocation_management_comment'].length > 0 &&
           e['allocation_management_comment']
@@ -9342,33 +9348,33 @@ export class ExportFilesService {
     response.send(excelBuffer);
   }
 
-  listToObject(keys: any, valueArr: any, groupMaster:any) {
-      const result: any = {};
-      keys.forEach((key) => {
-        //
+  listToObject(keys: any, valueArr: any, groupMaster: any) {
+    const result: any = {};
+    keys.forEach((key) => {
+      //
 
-        if (key === 'custom_gas_day') {
-          result[key] =
-            valueArr?.find((f: any) => {
-              return f?.tag === key;
-            })?.value ?? '';
-        } else if (key === 'custom_shipper_name') {
-          const shipperIdName =
-            valueArr?.find((f: any) => {
-              return f?.tag === key;
-            })?.value ?? '';
+      if (key === 'custom_gas_day') {
+        result[key] =
+          valueArr?.find((f: any) => {
+            return f?.tag === key;
+          })?.value ?? '';
+      } else if (key === 'custom_shipper_name') {
+        const shipperIdName =
+          valueArr?.find((f: any) => {
+            return f?.tag === key;
+          })?.value ?? '';
 
-          const findShipperName =
-            groupMaster?.find((f: any) => {
-              return f?.id_name === shipperIdName;
-            })?.name || '';
+        const findShipperName =
+          groupMaster?.find((f: any) => {
+            return f?.id_name === shipperIdName;
+          })?.name || '';
 
-          result[key] = findShipperName;
-        } else if (key === 'custom_contract_code') {
-          result[key] =
-            valueArr?.find((f: any) => {
-              return f?.tag === key;
-            })?.value ?? '';
+        result[key] = findShipperName;
+      } else if (key === 'custom_contract_code') {
+        result[key] =
+          valueArr?.find((f: any) => {
+            return f?.tag === key;
+          })?.value ?? '';
         // } else if (key === 'custom_detail_entry_east_') {
         //   result[key] =
         //     valueArr?.find((f: any) => {
@@ -9398,17 +9404,17 @@ export class ExportFilesService {
         //   result[key] = '';
         // } else if (key === 'custom_detail_exit_east-west_') {
         //   result[key] = '';
-        } else {
-          result[key] =
-            this.formatNumberFDecimal(
-              valueArr?.find((f: any) => {
-                return f?.tag === key;
-              })?.value,
-            ) ?? '';
-        }
-      });
-      return result;
-    }
+      } else {
+        result[key] =
+          this.formatNumberFDecimal(
+            valueArr?.find((f: any) => {
+              return f?.tag === key;
+            })?.value,
+          ) ?? '';
+      }
+    });
+    return result;
+  }
 
   // ...
   async epBalancingBalanceReport(response: Response, payload: any) {
@@ -9548,29 +9554,29 @@ export class ExportFilesService {
 
     const sumDetail = (values: any[], startWithTag: string, excludedTags: string[]) => {
       if (!values || !Array.isArray(values)) return 0.0000;
-        // console.log('values : ', values);
-        // console.log('startWithTag : ', startWithTag);
-        // console.log('excludedTags : ', excludedTags);
-        return this.formatNumberFDecimal(values
-          .filter((item: any) => {
-            const tag = item?.tag;
-            return tag &&
-              tag.startsWith(startWithTag) &&
-              !excludedTags.includes(tag.replace(startWithTag, ''));
-          })
-          .reduce((sum: number, item: any) => {
-            const value = parseFloat(item?.value) || 0;
-            return sum + value;
-          }, 0));
-      };
+      // console.log('values : ', values);
+      // console.log('startWithTag : ', startWithTag);
+      // console.log('excludedTags : ', excludedTags);
+      return this.formatNumberFDecimal(values
+        .filter((item: any) => {
+          const tag = item?.tag;
+          return tag &&
+            tag.startsWith(startWithTag) &&
+            !excludedTags.includes(tag.replace(startWithTag, ''));
+        })
+        .reduce((sum: number, item: any) => {
+          const value = parseFloat(item?.value) || 0;
+          return sum + value;
+        }, 0));
+    };
 
 
 
     const FMT = 'YYYY-MM-DD';
     const sorted_nrestype = _.orderBy(
       resData?.data,
-      [(r) => dayjs(r.gas_day, FMT).valueOf(), ],
-      ['desc', ]
+      [(r) => dayjs(r.gas_day, FMT).valueOf(),],
+      ['desc',]
     );
 
     console.log('sorted_nrestype : ', sorted_nrestype);
@@ -9749,7 +9755,7 @@ export class ExportFilesService {
               ['ZTK']: e['detail_entry_west_zawtika'],
               // ['Others']: e['custom_detail_entry_west_'],
               ['Others']: sumDetail(e?.["values_"], 'detail_entry_west_', ['yadana', 'yetagun', 'zawtika']),
-              
+
             },
             ['East-West']: {
               ['RA6 East']: e['detail_entry_east-west_ra6East'],
@@ -9809,7 +9815,7 @@ export class ExportFilesService {
     // );
     // 
 
-     const filterHeader = filter || [];
+    const filterHeader = filter || [];
     //  const filterHeader = [
     //     "Publicate",
     //     "Gas Day",
@@ -9912,118 +9918,118 @@ export class ExportFilesService {
       // 'Low Difficult Day (MMBTU)': 'A656C4', // #A656C4
       // 'Low Max (MMBTU)': '606060', // #606060
       "Publicate": '1573A1', // #1573A1
-        "Gas Day": '1573A1', // #1573A1
-        "Gas Hour": '1573A1', // #1573A1
-        "Timestamp": '1573A1', // #1573A1
-        "Summary Pane": 'DEA477', // #DEA477
-        "Summary Pane.Shipper Name": '1573A1', // #1573A1
-        "Summary Pane.Plan / Actual": '1573A1', // #1573A1
-        "Summary Pane.Contract Code": '1573A1', // #1573A1
-        "Summary Pane.Total Entry (MMBTU/D)": '1573A1', // #1573A1
-        "Summary Pane.Total Entry (MMBTU/D).East": 'DBE4FF', // #DBE4FF
-        "Summary Pane.Total Entry (MMBTU/D).West": 'FCB3CE', // #FCB3CE
-        "Summary Pane.Total Entry (MMBTU/D).East-West": 'A6F5BF', // #A6F5BF
-        "Summary Pane.Total Exit (MMBTU/D)": '1573A1', // #1573A1
-        "Summary Pane.Total Exit (MMBTU/D).East": 'DBE4FF', // #DBE4FF
-        "Summary Pane.Total Exit (MMBTU/D).West": 'FCB3CE', // #FCB3CE
-        "Summary Pane.Total Exit (MMBTU/D).East-West": 'A6F5BF', // #A6F5BF
-        "Summary Pane.Imbalance Zone (MMBTU/D)": '1573A1', // #1573A1
-        "Summary Pane.Imbalance Zone (MMBTU/D).East": 'DBE4FF', // #DBE4FF
-        "Summary Pane.Imbalance Zone (MMBTU/D).West": 'FCB3CE', // #FCB3CE
-        "Summary Pane.Imbalance Zone (MMBTU/D).Total": 'F2F2F2', // #F2F2F2
-        "Summary Pane.Instructed Flow (MMBTU/D)": '1573A1', // #1573A1
-        "Summary Pane.Instructed Flow (MMBTU/D).East": 'DBE4FF', // #DBE4FF
-        "Summary Pane.Instructed Flow (MMBTU/D).West": 'FCB3CE', // #FCB3CE
-        "Summary Pane.Instructed Flow (MMBTU/D).East-West": 'A6F5BF', // #A6F5BF
-        "Summary Pane.Shrinkage Volume (MMBTU/D)": '1573A1', // #1573A1
-        "Summary Pane.Shrinkage Volume (MMBTU/D).East": 'DBE4FF', // #DBE4FF
-        "Summary Pane.Shrinkage Volume (MMBTU/D).West": 'FCB3CE', // #FCB3CE
-        "Summary Pane.Park (MMBTU/D)": '1573A1', // #1573A1
-        "Summary Pane.Park (MMBTU/D).East": 'DBE4FF', // #DBE4FF
-        "Summary Pane.Park (MMBTU/D).West": 'FCB3CE', // #FCB3CE
-        "Summary Pane.Unpark (MMBTU/D)": '1573A1', // #1573A1
-        "Summary Pane.Unpark (MMBTU/D).East": 'DBE4FF', // #DBE4FF
-        "Summary Pane.Unpark (MMBTU/D).West": 'FCB3CE', // #FCB3CE
-        "Summary Pane.SOD Park (MMBTU/D)": '1573A1', // #1573A1
-        "Summary Pane.SOD Park (MMBTU/D).East": 'DBE4FF', // #DBE4FF
-        "Summary Pane.SOD Park (MMBTU/D).West": 'FCB3CE', // #FCB3CE
-        "Summary Pane.EOD Park (MMBTU/D)": '1573A1', // #1573A1
-        "Summary Pane.EOD Park (MMBTU/D).East": 'DBE4FF', // #DBE4FF
-        "Summary Pane.EOD Park (MMBTU/D).West": 'FCB3CE', // #FCB3CE
-        "Summary Pane.Change Min Inventory (MMBTU/D)": '1573A1', // #1573A1
-        "Summary Pane.Change Min Inventory (MMBTU/D).East": 'DBE4FF', // #DBE4FF
-        "Summary Pane.Change Min Inventory (MMBTU/D).West": 'FCB3CE', // #FCB3CE
-        "Summary Pane.Reserve Bal. (MMBTU/D)": '1573A1', // #1573A1
-        "Summary Pane.Reserve Bal. (MMBTU/D).East": 'DBE4FF', // #DBE4FF
-        "Summary Pane.Reserve Bal. (MMBTU/D).West": 'FCB3CE', // #FCB3CE
-        "Summary Pane.Adjust Imbalance (MMBTU/D)": '1573A1', // #1573A1
-        "Summary Pane.Adjust Imbalance (MMBTU/D).East": 'DBE4FF', // #DBE4FF
-        "Summary Pane.Adjust Imbalance (MMBTU/D).West": 'FCB3CE', // #FCB3CE
-        "Summary Pane.Vent Gas": '1573A1', // #1573A1
-        "Summary Pane.Vent Gas.East": 'DBE4FF', // #DBE4FF
-        "Summary Pane.Vent Gas.West": 'FCB3CE', // #FCB3CE
-        "Summary Pane.Commissioning Gas": '1573A1', // #1573A1
-        "Summary Pane.Commissioning Gas.East": 'DBE4FF', // #DBE4FF
-        "Summary Pane.Commissioning Gas.West": 'FCB3CE', // #FCB3CE
-        "Summary Pane.Other Gas": '1573A1', // #1573A1
-        "Summary Pane.Other Gas.East": 'DBE4FF', // #DBE4FF
-        "Summary Pane.Other Gas.West": 'FCB3CE', // #FCB3CE
-        "Summary Pane.Daily IMB (MMBTU/D)": '1573A1', // #1573A1
-        "Summary Pane.Daily IMB (MMBTU/D).East": 'DBE4FF', // #DBE4FF
-        "Summary Pane.Daily IMB (MMBTU/D).West": 'FCB3CE', // #FCB3CE
-        "Summary Pane.AIP (MMBTU/D)": '1573A1', // #1573A1
-        "Summary Pane.AIP (MMBTU/D).Total": 'F2F2F2', // #F2F2F2
-        "Summary Pane.AIN (MMBTU/D)": '1573A1', // #1573A1
-        "Summary Pane.AIN (MMBTU/D).Total": 'F2F2F2', // #F2F2F2
-        "Summary Pane.%Imb": '1573A1', // #1573A1
-        "Summary Pane.%Imb.Total": 'F2F2F2', // #F2F2F2
-        "Summary Pane.%Absimb": '1573A1', // #1573A1
-        "Summary Pane.%Absimb.Total": 'F2F2F2', // #F2F2F2
-        "Summary Pane.Acc. IMB. (MONTH) (MMBTU/D)": '1573A1', // #1573A1
-        "Summary Pane.Acc. IMB. (MONTH) (MMBTU/D).East": 'DBE4FF', // #DBE4FF
-        "Summary Pane.Acc. IMB. (MONTH) (MMBTU/D).West": 'FCB3CE', // #FCB3CE
-        "Summary Pane.Acc. IMB. (MMBTU/D)": '1573A1', // #1573A1
-        "Summary Pane.Acc. IMB. (MMBTU/D).East": 'DBE4FF', // #DBE4FF
-        "Summary Pane.Acc. IMB. (MMBTU/D).West": 'FCB3CE', // #FCB3CE
-        "Summary Pane.Min. (MMBTU/D)": '1573A1', // #1573A1
-        "Summary Pane.Min. (MMBTU/D).East": 'DBE4FF', // #DBE4FF
-        "Summary Pane.Min. (MMBTU/D).West": 'FCB3CE', // #FCB3CE
-        "Detail Pane": '6EA48D', // #6EA48D
-        "Detail Pane.Entry": '1573A1', // #1573A1
-        "Detail Pane.Entry.East": 'DBE4FF', // #DBE4FF
-        "Detail Pane.Entry.East.GSP": 'E0E0E0', // ##E0E0E0
-        "Detail Pane.Entry.East.Bypass GSP": 'E0E0E0', // ##E0E0E0
-        "Detail Pane.Entry.East.LNG": 'E0E0E0', // ##E0E0E0
-        "Detail Pane.Entry.East.Others": 'E0E0E0', // ##E0E0E0
-        "Detail Pane.Entry.West": 'FCB3CE', // #FCB3CE
-        "Detail Pane.Entry.West.YDN": 'E0E0E0', // ##E0E0E0
-        "Detail Pane.Entry.West.YTG": 'E0E0E0', // ##E0E0E0
-        "Detail Pane.Entry.West.ZTK": 'E0E0E0', // ##E0E0E0
-        "Detail Pane.Entry.West.Others": 'E0E0E0', // ##E0E0E0
-        "Detail Pane.Entry.East-West": 'A6F5BF', // #A6F5BF
-        "Detail Pane.Entry.East-West.RA6 East": 'E0E0E0', // ##E0E0E0
-        "Detail Pane.Entry.East-West.RA6 West": 'E0E0E0', // ##E0E0E0
-        "Detail Pane.Entry.East-West.BVW10 East": 'E0E0E0', // ##E0E0E0
-        "Detail Pane.Entry.East-West.BVW10 West": 'E0E0E0', // ##E0E0E0
-        "Detail Pane.Exit": '1573A1', // #1573A1
-        "Detail Pane.Exit.East": 'DBE4FF', // #DBE4FF
-        "Detail Pane.Exit.East.EGAT": 'E0E0E0', // ##E0E0E0
-        "Detail Pane.Exit.East.IPP": 'E0E0E0', // ##E0E0E0
-        "Detail Pane.Exit.East.Others": 'E0E0E0', // ##E0E0E0
-        "Detail Pane.Exit.West": 'FCB3CE', // #FCB3CE
-        "Detail Pane.Exit.West.EGAT": 'E0E0E0', // ##E0E0E0
-        "Detail Pane.Exit.West.IPP": 'E0E0E0', // ##E0E0E0
-        "Detail Pane.Exit.West.Others": 'E0E0E0', // ##E0E0E0
-        "Detail Pane.Exit.East-West": 'A6F5BF', // #A6F5BF
-        "Detail Pane.Exit.East-West.EGAT": 'E0E0E0', // ##E0E0E0
-        "Detail Pane.Exit.East-West.IPP": 'E0E0E0', // ##E0E0E0
-        "Detail Pane.Exit.East-West.Others": 'E0E0E0', // ##E0E0E0
-        "Detail Pane.Exit.F2&G": '1573A1', // #1573A1
-        "Detail Pane.Exit.F2&G.East": 'E5EED9', // ##E5EED9
-        "Detail Pane.Exit.F2&G.West": 'DBE1F2', // ##DBE1F2
-        "Detail Pane.Exit.E": '1573A1', // #1573A1
-        "Detail Pane.Exit.E.East": 'E5EED9', // ##E5EED9
-        "Detail Pane.Exit.E.West": 'DBE1F2', // ##DBE1F2
+      "Gas Day": '1573A1', // #1573A1
+      "Gas Hour": '1573A1', // #1573A1
+      "Timestamp": '1573A1', // #1573A1
+      "Summary Pane": 'DEA477', // #DEA477
+      "Summary Pane.Shipper Name": '1573A1', // #1573A1
+      "Summary Pane.Plan / Actual": '1573A1', // #1573A1
+      "Summary Pane.Contract Code": '1573A1', // #1573A1
+      "Summary Pane.Total Entry (MMBTU/D)": '1573A1', // #1573A1
+      "Summary Pane.Total Entry (MMBTU/D).East": 'DBE4FF', // #DBE4FF
+      "Summary Pane.Total Entry (MMBTU/D).West": 'FCB3CE', // #FCB3CE
+      "Summary Pane.Total Entry (MMBTU/D).East-West": 'A6F5BF', // #A6F5BF
+      "Summary Pane.Total Exit (MMBTU/D)": '1573A1', // #1573A1
+      "Summary Pane.Total Exit (MMBTU/D).East": 'DBE4FF', // #DBE4FF
+      "Summary Pane.Total Exit (MMBTU/D).West": 'FCB3CE', // #FCB3CE
+      "Summary Pane.Total Exit (MMBTU/D).East-West": 'A6F5BF', // #A6F5BF
+      "Summary Pane.Imbalance Zone (MMBTU/D)": '1573A1', // #1573A1
+      "Summary Pane.Imbalance Zone (MMBTU/D).East": 'DBE4FF', // #DBE4FF
+      "Summary Pane.Imbalance Zone (MMBTU/D).West": 'FCB3CE', // #FCB3CE
+      "Summary Pane.Imbalance Zone (MMBTU/D).Total": 'F2F2F2', // #F2F2F2
+      "Summary Pane.Instructed Flow (MMBTU/D)": '1573A1', // #1573A1
+      "Summary Pane.Instructed Flow (MMBTU/D).East": 'DBE4FF', // #DBE4FF
+      "Summary Pane.Instructed Flow (MMBTU/D).West": 'FCB3CE', // #FCB3CE
+      "Summary Pane.Instructed Flow (MMBTU/D).East-West": 'A6F5BF', // #A6F5BF
+      "Summary Pane.Shrinkage Volume (MMBTU/D)": '1573A1', // #1573A1
+      "Summary Pane.Shrinkage Volume (MMBTU/D).East": 'DBE4FF', // #DBE4FF
+      "Summary Pane.Shrinkage Volume (MMBTU/D).West": 'FCB3CE', // #FCB3CE
+      "Summary Pane.Park (MMBTU/D)": '1573A1', // #1573A1
+      "Summary Pane.Park (MMBTU/D).East": 'DBE4FF', // #DBE4FF
+      "Summary Pane.Park (MMBTU/D).West": 'FCB3CE', // #FCB3CE
+      "Summary Pane.Unpark (MMBTU/D)": '1573A1', // #1573A1
+      "Summary Pane.Unpark (MMBTU/D).East": 'DBE4FF', // #DBE4FF
+      "Summary Pane.Unpark (MMBTU/D).West": 'FCB3CE', // #FCB3CE
+      "Summary Pane.SOD Park (MMBTU/D)": '1573A1', // #1573A1
+      "Summary Pane.SOD Park (MMBTU/D).East": 'DBE4FF', // #DBE4FF
+      "Summary Pane.SOD Park (MMBTU/D).West": 'FCB3CE', // #FCB3CE
+      "Summary Pane.EOD Park (MMBTU/D)": '1573A1', // #1573A1
+      "Summary Pane.EOD Park (MMBTU/D).East": 'DBE4FF', // #DBE4FF
+      "Summary Pane.EOD Park (MMBTU/D).West": 'FCB3CE', // #FCB3CE
+      "Summary Pane.Change Min Inventory (MMBTU/D)": '1573A1', // #1573A1
+      "Summary Pane.Change Min Inventory (MMBTU/D).East": 'DBE4FF', // #DBE4FF
+      "Summary Pane.Change Min Inventory (MMBTU/D).West": 'FCB3CE', // #FCB3CE
+      "Summary Pane.Reserve Bal. (MMBTU/D)": '1573A1', // #1573A1
+      "Summary Pane.Reserve Bal. (MMBTU/D).East": 'DBE4FF', // #DBE4FF
+      "Summary Pane.Reserve Bal. (MMBTU/D).West": 'FCB3CE', // #FCB3CE
+      "Summary Pane.Adjust Imbalance (MMBTU/D)": '1573A1', // #1573A1
+      "Summary Pane.Adjust Imbalance (MMBTU/D).East": 'DBE4FF', // #DBE4FF
+      "Summary Pane.Adjust Imbalance (MMBTU/D).West": 'FCB3CE', // #FCB3CE
+      "Summary Pane.Vent Gas": '1573A1', // #1573A1
+      "Summary Pane.Vent Gas.East": 'DBE4FF', // #DBE4FF
+      "Summary Pane.Vent Gas.West": 'FCB3CE', // #FCB3CE
+      "Summary Pane.Commissioning Gas": '1573A1', // #1573A1
+      "Summary Pane.Commissioning Gas.East": 'DBE4FF', // #DBE4FF
+      "Summary Pane.Commissioning Gas.West": 'FCB3CE', // #FCB3CE
+      "Summary Pane.Other Gas": '1573A1', // #1573A1
+      "Summary Pane.Other Gas.East": 'DBE4FF', // #DBE4FF
+      "Summary Pane.Other Gas.West": 'FCB3CE', // #FCB3CE
+      "Summary Pane.Daily IMB (MMBTU/D)": '1573A1', // #1573A1
+      "Summary Pane.Daily IMB (MMBTU/D).East": 'DBE4FF', // #DBE4FF
+      "Summary Pane.Daily IMB (MMBTU/D).West": 'FCB3CE', // #FCB3CE
+      "Summary Pane.AIP (MMBTU/D)": '1573A1', // #1573A1
+      "Summary Pane.AIP (MMBTU/D).Total": 'F2F2F2', // #F2F2F2
+      "Summary Pane.AIN (MMBTU/D)": '1573A1', // #1573A1
+      "Summary Pane.AIN (MMBTU/D).Total": 'F2F2F2', // #F2F2F2
+      "Summary Pane.%Imb": '1573A1', // #1573A1
+      "Summary Pane.%Imb.Total": 'F2F2F2', // #F2F2F2
+      "Summary Pane.%Absimb": '1573A1', // #1573A1
+      "Summary Pane.%Absimb.Total": 'F2F2F2', // #F2F2F2
+      "Summary Pane.Acc. IMB. (MONTH) (MMBTU/D)": '1573A1', // #1573A1
+      "Summary Pane.Acc. IMB. (MONTH) (MMBTU/D).East": 'DBE4FF', // #DBE4FF
+      "Summary Pane.Acc. IMB. (MONTH) (MMBTU/D).West": 'FCB3CE', // #FCB3CE
+      "Summary Pane.Acc. IMB. (MMBTU/D)": '1573A1', // #1573A1
+      "Summary Pane.Acc. IMB. (MMBTU/D).East": 'DBE4FF', // #DBE4FF
+      "Summary Pane.Acc. IMB. (MMBTU/D).West": 'FCB3CE', // #FCB3CE
+      "Summary Pane.Min. (MMBTU/D)": '1573A1', // #1573A1
+      "Summary Pane.Min. (MMBTU/D).East": 'DBE4FF', // #DBE4FF
+      "Summary Pane.Min. (MMBTU/D).West": 'FCB3CE', // #FCB3CE
+      "Detail Pane": '6EA48D', // #6EA48D
+      "Detail Pane.Entry": '1573A1', // #1573A1
+      "Detail Pane.Entry.East": 'DBE4FF', // #DBE4FF
+      "Detail Pane.Entry.East.GSP": 'E0E0E0', // ##E0E0E0
+      "Detail Pane.Entry.East.Bypass GSP": 'E0E0E0', // ##E0E0E0
+      "Detail Pane.Entry.East.LNG": 'E0E0E0', // ##E0E0E0
+      "Detail Pane.Entry.East.Others": 'E0E0E0', // ##E0E0E0
+      "Detail Pane.Entry.West": 'FCB3CE', // #FCB3CE
+      "Detail Pane.Entry.West.YDN": 'E0E0E0', // ##E0E0E0
+      "Detail Pane.Entry.West.YTG": 'E0E0E0', // ##E0E0E0
+      "Detail Pane.Entry.West.ZTK": 'E0E0E0', // ##E0E0E0
+      "Detail Pane.Entry.West.Others": 'E0E0E0', // ##E0E0E0
+      "Detail Pane.Entry.East-West": 'A6F5BF', // #A6F5BF
+      "Detail Pane.Entry.East-West.RA6 East": 'E0E0E0', // ##E0E0E0
+      "Detail Pane.Entry.East-West.RA6 West": 'E0E0E0', // ##E0E0E0
+      "Detail Pane.Entry.East-West.BVW10 East": 'E0E0E0', // ##E0E0E0
+      "Detail Pane.Entry.East-West.BVW10 West": 'E0E0E0', // ##E0E0E0
+      "Detail Pane.Exit": '1573A1', // #1573A1
+      "Detail Pane.Exit.East": 'DBE4FF', // #DBE4FF
+      "Detail Pane.Exit.East.EGAT": 'E0E0E0', // ##E0E0E0
+      "Detail Pane.Exit.East.IPP": 'E0E0E0', // ##E0E0E0
+      "Detail Pane.Exit.East.Others": 'E0E0E0', // ##E0E0E0
+      "Detail Pane.Exit.West": 'FCB3CE', // #FCB3CE
+      "Detail Pane.Exit.West.EGAT": 'E0E0E0', // ##E0E0E0
+      "Detail Pane.Exit.West.IPP": 'E0E0E0', // ##E0E0E0
+      "Detail Pane.Exit.West.Others": 'E0E0E0', // ##E0E0E0
+      "Detail Pane.Exit.East-West": 'A6F5BF', // #A6F5BF
+      "Detail Pane.Exit.East-West.EGAT": 'E0E0E0', // ##E0E0E0
+      "Detail Pane.Exit.East-West.IPP": 'E0E0E0', // ##E0E0E0
+      "Detail Pane.Exit.East-West.Others": 'E0E0E0', // ##E0E0E0
+      "Detail Pane.Exit.F2&G": '1573A1', // #1573A1
+      "Detail Pane.Exit.F2&G.East": 'E5EED9', // ##E5EED9
+      "Detail Pane.Exit.F2&G.West": 'DBE1F2', // ##DBE1F2
+      "Detail Pane.Exit.E": '1573A1', // #1573A1
+      "Detail Pane.Exit.E.East": 'E5EED9', // ##E5EED9
+      "Detail Pane.Exit.E.West": 'DBE1F2', // ##DBE1F2
     };
 
     function generateCellHighlightMapMultiple(
@@ -10044,10 +10050,10 @@ export class ExportFilesService {
           // console.log('data[i]["Gas Day"] : ', data[i]["Gas Day"]);
           // TOTAL ALL :
           // TOTAL :
-          if(data[i]["Gas Day"].includes('TOTAL :')){
+          if (data[i]["Gas Day"].includes('TOTAL :')) {
             result[key][i] = 'E6F8FF'; //#E6F8FF
           }
-          if(data[i]["Gas Day"].includes('TOTAL ALL :')){
+          if (data[i]["Gas Day"].includes('TOTAL ALL :')) {
             result[key][i] = 'FEFBEC'; //#FEFBEC
           }
 
@@ -10608,7 +10614,7 @@ export class ExportFilesService {
     skipFirstRow: boolean,
     headerColorMap,
     cellHighlightMap,
-    keyAndDecimalMap?: Record<string, {index: number, decimal: number}[]>
+    keyAndDecimalMap?: Record<string, { index: number, decimal: number }[]>
   ): void {
     const wb = XLSX.utils.book_new();
     const flatData = data.map((d) => this.flattenObjectNew(d));
@@ -10659,7 +10665,7 @@ export class ExportFilesService {
     }
   }
 
-  getFontColor(fillColor: string){
+  getFontColor(fillColor: string) {
     return fillColor?.toUpperCase() === '24ADEC' || //#24adec
       fillColor?.toUpperCase() === '3A8FB8' || //#3A8FB8
       fillColor?.toUpperCase() === '25B9D0' || //#25B9D0
@@ -10698,12 +10704,12 @@ export class ExportFilesService {
     headers: string[];
     headerColorMap: any;
     cellHighlightMap: any;
-    keyAndDecimalMap?: Record<string, {index: number, decimal: number}[]>
+    keyAndDecimalMap?: Record<string, { index: number, decimal: number }[]>
     extraHeader?: string[][];
   }) {
     let extraHeaderRowOffset = 0;
-    if(extraHeader && extraHeader.length > 0){
-      XLSX.utils.sheet_add_aoa(ws, extraHeader, { origin: rowOffset});
+    if (extraHeader && extraHeader.length > 0) {
+      XLSX.utils.sheet_add_aoa(ws, extraHeader, { origin: rowOffset });
       extraHeaderRowOffset += extraHeader.length
 
       // ✅ Style extra header rows
@@ -10745,9 +10751,9 @@ export class ExportFilesService {
     }
 
     const headerIndexUseForDecimal: Record<number, string> = {}
-    if(keyAndDecimalMap && Object.keys(keyAndDecimalMap).length > 0){
+    if (keyAndDecimalMap && Object.keys(keyAndDecimalMap).length > 0) {
       Object.keys(keyAndDecimalMap).map(key => {
-        headerIndexUseForDecimal[headers.findIndex((header:any) => header === key)] = key
+        headerIndexUseForDecimal[headers.findIndex((header: any) => header === key)] = key
       })
     }
 
@@ -10757,7 +10763,7 @@ export class ExportFilesService {
     // ✅ Add data rows
     const jsonData = flatData.map((f) => f.result);
     const rows = jsonData.map((row) => headers.map((key) => row[key]));
-    
+
     XLSX.utils?.sheet_add_aoa(ws, rows, {
       origin: headerRows.length + rowOffset + extraHeaderRowOffset,
     });
@@ -10775,11 +10781,11 @@ export class ExportFilesService {
 
         // if (typeof cell.v === 'number') {
         // Set cell type and format for numbers
-        if(keyAndDecimalMap){
-          const decimalKey = Object.keys(keyAndDecimalMap).find((key:any) => key === headers[c])
-          if(decimalKey){
+        if (keyAndDecimalMap) {
+          const decimalKey = Object.keys(keyAndDecimalMap).find((key: any) => key === headers[c])
+          if (decimalKey) {
             const rowIndex = r - (headerRows.length + rowOffset + extraHeaderRowOffset)
-            const decimalMap = keyAndDecimalMap[decimalKey]?.find((item:any) => item.index === rowIndex)
+            const decimalMap = keyAndDecimalMap[decimalKey]?.find((item: any) => item.index === rowIndex)
             if (typeof cell.v === 'number' && decimalMap?.decimal) {
               cell.t = 'n'; // Set cell type to number
               cell.z = `#,##0${decimalMap.decimal == 0 ? '' : '.'}${'0'.repeat(decimalMap.decimal)}`; // Set number format with comma separator and decimal places
@@ -11332,7 +11338,7 @@ export class ExportFilesService {
     );
     // console.log('++++resData : ', resData);
     const shipperNameMaster = bodys?.shipper_id && await this.prisma.group.findFirst({
-      where:{
+      where: {
         id_name: bodys?.shipper_id
       },
     })
@@ -11340,18 +11346,18 @@ export class ExportFilesService {
     // bodys?.shipper_id
     // 
     const formatText = (text?: any) => {
-        // DD = DIFFICULT DAY FLOW,OFO = OPERATION FLOW, IF = INSTRACTED FLOW
+      // DD = DIFFICULT DAY FLOW,OFO = OPERATION FLOW, IF = INSTRACTED FLOW
 
-        switch (text) {
-            case 'DD':
-                return "DIFFICULT DAY FLOW"
-            case 'OFO':
-                return "OPERATION FLOW"
-            case 'IF':
-                return "INSTRACTED FLOW"
-            default:
-                return text
-        }
+      switch (text) {
+        case 'DD':
+          return "DIFFICULT DAY FLOW"
+        case 'OFO':
+          return "OPERATION FLOW"
+        case 'IF':
+          return "INSTRACTED FLOW"
+        default:
+          return text
+      }
     }
 
     const nresData = resData?.flatMap((e: any) => {
@@ -11842,70 +11848,70 @@ export class ExportFilesService {
       'Condition West': '1573A1',
     };
 
-     // VALIDATE ORDER EAST กับ WEST
+    // VALIDATE ORDER EAST กับ WEST
     type VState = 'dd' | 'ofo' | 'if' | 'alert' | 'normal' | '';
 
     const norm = (s: any): VState => {
-        const t = String(s ?? '').trim().toLowerCase();
-        if (['dd', 'ofo', 'if', 'alert', 'normal'].includes(t)) return t as VState;
-        return '';
+      const t = String(s ?? '').trim().toLowerCase();
+      if (['dd', 'ofo', 'if', 'alert', 'normal'].includes(t)) return t as VState;
+      return '';
     };
 
     // แกนตั้ง = Validate2 (system level), แกนนอน = Validate1
     // ค่าในช่อง = ผลลัพธ์ (ถ้าไม่มี = '-')
     const MATRIX: any = {
-        // Validate2 ↓  \  Validate1 →
-        dd: { dd: 'dd', ofo: 'dd', if: 'dd', alert: '', normal: '' },
-        ofo: { dd: 'ofo', ofo: 'ofo', if: '', alert: '', normal: '' },
-        if: { dd: 'if', ofo: 'if', if: 'if', alert: '', normal: '' },
-        alert: { dd: '', ofo: '', if: '', alert: '', normal: '' },
-        normal: { dd: '', ofo: '', if: '', alert: '', normal: '' },
-        '': { dd: '', ofo: '', if: '', alert: '', normal: '' },
+      // Validate2 ↓  \  Validate1 →
+      dd: { dd: 'dd', ofo: 'dd', if: 'dd', alert: '', normal: '' },
+      ofo: { dd: 'ofo', ofo: 'ofo', if: '', alert: '', normal: '' },
+      if: { dd: 'if', ofo: 'if', if: 'if', alert: '', normal: '' },
+      alert: { dd: '', ofo: '', if: '', alert: '', normal: '' },
+      normal: { dd: '', ofo: '', if: '', alert: '', normal: '' },
+      '': { dd: '', ofo: '', if: '', alert: '', normal: '' },
     };
 
     const COLOR_MAP: Record<VState, string> = {
-        // dd: 'E9D2FF',
-        // ofo: 'FFC9C9',
-        // if: 'FFCEB5',
-        // alert: 'FFFFC4',
-        // normal: 'E9FFD6',
-        // '': 'EAF5F9', // #EAF5F9
+      // dd: 'E9D2FF',
+      // ofo: 'FFC9C9',
+      // if: 'FFCEB5',
+      // alert: 'FFFFC4',
+      // normal: 'E9FFD6',
+      // '': 'EAF5F9', // #EAF5F9
 
-        dd: 'E9D2FF',
-        ofo: 'FFC9C9',
-        if: 'FFCEB5',
-        alert: 'FFFFC4',
-        normal: 'E9FFD6',
-        '': 'EAF5F9',
+      dd: 'E9D2FF',
+      ofo: 'FFC9C9',
+      if: 'FFCEB5',
+      alert: 'FFFFC4',
+      normal: 'E9FFD6',
+      '': 'EAF5F9',
     };
     const validateOrderEastWest = (
-        acc_imb_validate: any,          // Validate1 (Shipper) : DD/OFO/IF/Alert/Normal
-        acc_imb_inven_validate: any,    // Validate1 (System)  : DD/OFO/IF/Alert/Normal
-        system_level_validate: any,     // Validate2           : DD/OFO/IF/Alert/Normal
+      acc_imb_validate: any,          // Validate1 (Shipper) : DD/OFO/IF/Alert/Normal
+      acc_imb_inven_validate: any,    // Validate1 (System)  : DD/OFO/IF/Alert/Normal
+      system_level_validate: any,     // Validate2           : DD/OFO/IF/Alert/Normal
     ) => {
-        // console.log('acc_imb_validate : ', acc_imb_validate);
-        // console.log('acc_imb_inven_validate : ', acc_imb_inven_validate);
-        // console.log('system_level_validate : ', system_level_validate);
-        // console.log((bodys?.shipper_id && shipperName?.toUpperCase().includes("PTT")) ? acc_imb_inven_validate : acc_imb_validate);
+      // console.log('acc_imb_validate : ', acc_imb_validate);
+      // console.log('acc_imb_inven_validate : ', acc_imb_inven_validate);
+      // console.log('system_level_validate : ', system_level_validate);
+      // console.log((bodys?.shipper_id && shipperName?.toUpperCase().includes("PTT")) ? acc_imb_inven_validate : acc_imb_validate);
 
-        if (acc_imb_validate == 'MAX') {
-            acc_imb_validate = 'dd'
-        }
-        if (acc_imb_inven_validate == 'MAX') {
-            acc_imb_inven_validate = 'dd'
-        }
-      
+      if (acc_imb_validate == 'MAX') {
+        acc_imb_validate = 'dd'
+      }
+      if (acc_imb_inven_validate == 'MAX') {
+        acc_imb_inven_validate = 'dd'
+      }
+
       // isIncludePtt
-        // เลือก Validate1 ตามโหมด
-        const v1: VState = norm((bodys?.shipper_id && !shipperName?.toUpperCase().includes("PTT")) ? acc_imb_validate : acc_imb_inven_validate);
-        const v2: VState = norm(system_level_validate);
-        // หาของในเดอะแมททริก
-        const resultState: VState = (MATRIX[v2]?.[v1]) ?? '';
-        // console.log('resultState : ', resultState);
-        // console.log('- - - - - -');
+      // เลือก Validate1 ตามโหมด
+      const v1: VState = norm((bodys?.shipper_id && !shipperName?.toUpperCase().includes("PTT")) ? acc_imb_validate : acc_imb_inven_validate);
+      const v2: VState = norm(system_level_validate);
+      // หาของในเดอะแมททริก
+      const resultState: VState = (MATRIX[v2]?.[v1]) ?? '';
+      // console.log('resultState : ', resultState);
+      // console.log('- - - - - -');
 
-        return COLOR_MAP[resultState]
-        
+      return COLOR_MAP[resultState]
+
     };
 
 
@@ -11938,12 +11944,12 @@ export class ExportFilesService {
         // dd: 'E9D2FF',
         // if: 'FFCEB5',
 
-            max: 'E9D2FF',
-            normal: 'E9FFD6', // เขียว // alert กับ normal
-            alert: 'FFFFC4', // เหลือง // alert กับ normal
-            ofo: 'FFC9C9',
-            dd: 'E9D2FF',
-            if: 'FFCEB5',
+        max: 'E9D2FF',
+        normal: 'E9FFD6', // เขียว // alert กับ normal
+        alert: 'FFFFC4', // เหลือง // alert กับ normal
+        ofo: 'FFC9C9',
+        dd: 'E9D2FF',
+        if: 'FFCEB5',
 
       };
 
@@ -11966,30 +11972,30 @@ export class ExportFilesService {
         for (let i = 0; i < data.length; i++) {
           if (i % 2 === 1) {
             result[key][i] = color;
-        // ['level_percentage_east']: bodys?.shipper_id ? actual_?.['custom_level_percentage_east']?.['value'] && this.dcimal4(actual_?.['custom_level_percentage_east']?.['value']) : (actual_?.['level_percentage_east']?.['value'] && this.dcimal4(actual_?.['level_percentage_east']?.['value'])),
-        // ['level_percentage_west']: bodys?.shipper_id ? actual_?.['custom_level_percentage_west']?.['value'] && this.dcimal4(actual_?.['custom_level_percentage_west']?.['value']) : (actual_?.['level_percentage_west']?.['value'] && this.dcimal4(actual_?.['level_percentage_west']?.['value'])),
+            // ['level_percentage_east']: bodys?.shipper_id ? actual_?.['custom_level_percentage_east']?.['value'] && this.dcimal4(actual_?.['custom_level_percentage_east']?.['value']) : (actual_?.['level_percentage_east']?.['value'] && this.dcimal4(actual_?.['level_percentage_east']?.['value'])),
+            // ['level_percentage_west']: bodys?.shipper_id ? actual_?.['custom_level_percentage_west']?.['value'] && this.dcimal4(actual_?.['custom_level_percentage_west']?.['value']) : (actual_?.['level_percentage_west']?.['value'] && this.dcimal4(actual_?.['level_percentage_west']?.['value'])),
             // 
 
             if (
-              key === 'Order (East).MMBTU' 
+              key === 'Order (East).MMBTU'
             ) {
               const colorValition = validateOrderEastWest(nresData[i]?.validation_accImb_east, nresData[i]?.validation_accImbInv_east, nresData[i]?.temp_system_level_east)
               result[key][i] = colorValition;
             }
             if (
-              key === 'Order (East).MMSCF' 
+              key === 'Order (East).MMSCF'
             ) {
               const colorValition = validateOrderEastWest(nresData[i]?.validation_accImb_east, nresData[i]?.validation_accImbInv_east, nresData[i]?.temp_system_level_east)
               result[key][i] = colorValition;
             }
             if (
-              key === 'Order (West).MMBTU' 
+              key === 'Order (West).MMBTU'
             ) {
               const colorValition = validateOrderEastWest(nresData[i]?.validation_accImb_west, nresData[i]?.validation_accImbInv_west, nresData[i]?.temp_system_level_west)
               result[key][i] = colorValition;
             }
             if (
-              key === 'Order (West).MMSCF' 
+              key === 'Order (West).MMSCF'
             ) {
               const colorValition = validateOrderEastWest(nresData[i]?.validation_accImb_west, nresData[i]?.validation_accImbInv_west, nresData[i]?.temp_system_level_west)
               result[key][i] = colorValition;
@@ -12041,7 +12047,7 @@ export class ExportFilesService {
               result[key][i] = colorValition;
             }
             if (
-              key === 'System Level (East).%' 
+              key === 'System Level (East).%'
               &&
               nresData[i]?.['validation_system_level_east']
               // nresData[i]?.['validation_level_percentage_east']
@@ -12061,7 +12067,7 @@ export class ExportFilesService {
               result[key][i] = colorValition;
             }
             if (
-              key === 'System Level (West).%' 
+              key === 'System Level (West).%'
               &&
               nresData[i]?.['validation_system_level_west']
               // nresData[i]?.['validation_level_percentage_west']
@@ -12507,7 +12513,7 @@ export class ExportFilesService {
 
     const shipperMaster = await this.prisma.group.findMany({
       where: {
-       
+
       },
     });
 
@@ -12515,7 +12521,7 @@ export class ExportFilesService {
     const shipperName = groupMasterCheck?.name;
     const userType = groupMasterCheck?.user_type_id;
     console.log('resData : ', resData);
-    const nresData = resData?.filter((f:any) => {
+    const nresData = resData?.filter((f: any) => {
       return (
         f?.shipperData?.length > 0 &&
         f?.level !== "NORMAL" &&
@@ -12576,7 +12582,7 @@ export class ExportFilesService {
               ['Hourly']:
                 e['gas_hour'] &&
                 `${e['gas_hour'] > 10 ? e['gas_hour'] + ':00' : '0' + e['gas_hour'] + ':00'}`,
-              ['Shipper Name']: shipperData[i]?.['shipperName'] && shipperMaster?.find((f:any) => f?.id_name === shipperData[i]?.['shipperName'])?.name || '',
+              ['Shipper Name']: shipperData[i]?.['shipperName'] && shipperMaster?.find((f: any) => f?.id_name === shipperData[i]?.['shipperName'])?.name || '',
               ['Zone']: e['zone'] || '',
               ['Acc. Imbalance / Acc. Imbalance Inventory (MMBTU)']:
                 valueDigitKeyPure(shipperData[i], 'accImb_or_accImbInv'),
@@ -12697,7 +12703,7 @@ export class ExportFilesService {
             ['Hourly']:
               e['gas_hour'] &&
               `${e['gas_hour'] > 10 ? e['gas_hour'] + ':00' : '0' + e['gas_hour'] + ':00'}`,
-            ['Shipper Name']: shipperData[i]?.['shipperName'] && shipperMaster?.find((f:any) => f?.id_name === shipperData[i]?.['shipperName'])?.name  || '',
+            ['Shipper Name']: shipperData[i]?.['shipperName'] && shipperMaster?.find((f: any) => f?.id_name === shipperData[i]?.['shipperName'])?.name || '',
             ['Zone']: e['zone'] || '',
             ['Acc. Imbalance / Acc. Imbalance Inventory (MMBTU)']:
               valueDigitKeyPure(shipperData[i], 'accImb_or_accImbInv'),
@@ -12898,7 +12904,7 @@ export class ExportFilesService {
       userId,
     );
 
-        console.log('--- resData : ', resData);
+    console.log('--- resData : ', resData);
     // const FMT = 'YYYY-MM-DD';
     // const sorted_nrestype = _.orderBy(
     //   resData,
@@ -12988,7 +12994,7 @@ export class ExportFilesService {
       'detail_exit_E_east',
       'detail_exit_E_west',
     ];
- 
+
     // arr to obj
     const todayStart = getTodayStartAdd7().toDate();
     const todayEnd = getTodayEndAdd7().toDate();
@@ -13018,20 +13024,20 @@ export class ExportFilesService {
       return resultKey;
     };
 
-      const sumDetail = (values: any, startWithTag: string, excludedTags: string[]) => {
+    const sumDetail = (values: any, startWithTag: string, excludedTags: string[]) => {
       if (!values) return 0.0000;
       let numCalc = 0
       for (let ix = 0; ix < excludedTags.length; ix++) {
         // startWithTag + excludedTags[ix]
         const kN = values[startWithTag + excludedTags[ix]]
-        if(kN){
+        if (kN) {
           numCalc += kN
         }
       }
 
       return this.formatNumberFDecimal(numCalc)
 
-      };
+    };
 
     const listCustoms = (keys: any, valueObj: any) => {
       const result: any = {};
@@ -13930,9 +13936,9 @@ export class ExportFilesService {
     };
 
     const generateRandomId = () =>
-      (typeof crypto !== 'undefined' && (crypto as any).randomUUID
-        ? (crypto as any).randomUUID()
-        : require('crypto').randomUUID());
+    (typeof crypto !== 'undefined' && (crypto as any).randomUUID
+      ? (crypto as any).randomUUID()
+      : require('crypto').randomUUID());
 
     const groupDataAlloManage = (data: any[]) => {
       const grouped: any = data.reduce(
@@ -14055,11 +14061,11 @@ export class ExportFilesService {
         ['Contract Code']: '', // ""
         ['Nomination Point /Concept Point']: e['point_text'] || '',
         ['Entry / Exit']: e['entry_exit'] || '',
-        ['Nominated Value (MMBTU/D)']: this.dcimal4(rowData?.reduce((accumulator, currentValue)  => accumulator + parseToNumber(currentValue['Nominated Value (MMBTU/D)'] ?? 0),0,)), // ""
-        ['System Allocation (MMBTU/D)']: this.dcimal4(rowData?.reduce((accumulator, currentValue)  => accumulator + parseToNumber(currentValue['System Allocation (MMBTU/D)'] ?? 0),0,)),
-        ['Intraday System Allocation']: this.dcimal4(rowData?.reduce((accumulator, currentValue)  => accumulator + parseToNumber(currentValue['Intraday System Allocation'] ?? 0),0,)),
-        ['Previous Allocation TPA for Review (MMBTU/D)']: this.dcimal4(rowData?.reduce((accumulator, currentValue)  => accumulator + parseToNumber(currentValue['Previous Allocation TPA for Review (MMBTU/D)'] ?? 0),0,)),
-        ['Shipper Review Allocation (MMBTU/D)']: this.dcimal4(rowData?.reduce((accumulator, currentValue)  => accumulator + parseToNumber(currentValue['Shipper Review Allocation (MMBTU/D)'] ?? 0),0,)),
+        ['Nominated Value (MMBTU/D)']: this.dcimal4(rowData?.reduce((accumulator, currentValue) => accumulator + parseToNumber(currentValue['Nominated Value (MMBTU/D)'] ?? 0), 0,)), // ""
+        ['System Allocation (MMBTU/D)']: this.dcimal4(rowData?.reduce((accumulator, currentValue) => accumulator + parseToNumber(currentValue['System Allocation (MMBTU/D)'] ?? 0), 0,)),
+        ['Intraday System Allocation']: this.dcimal4(rowData?.reduce((accumulator, currentValue) => accumulator + parseToNumber(currentValue['Intraday System Allocation'] ?? 0), 0,)),
+        ['Previous Allocation TPA for Review (MMBTU/D)']: this.dcimal4(rowData?.reduce((accumulator, currentValue) => accumulator + parseToNumber(currentValue['Previous Allocation TPA for Review (MMBTU/D)'] ?? 0), 0,)),
+        ['Shipper Review Allocation (MMBTU/D)']: this.dcimal4(rowData?.reduce((accumulator, currentValue) => accumulator + parseToNumber(currentValue['Shipper Review Allocation (MMBTU/D)'] ?? 0), 0,)),
         ['Metering Value (MMBTU/D)']: rowData?.[0]?.['Metering Value (MMBTU/D)_temp'] !== null && this.dcimal4(parseToNumber(rowData?.[0]?.['Metering Value (MMBTU/D)_temp'])) || null,
         ['Review Code']: '', // ""
         ['Comment']: '', // ""
@@ -14284,9 +14290,9 @@ export class ExportFilesService {
     };
 
     const generateRandomId = () =>
-      (typeof crypto !== 'undefined' && (crypto as any).randomUUID
-        ? (crypto as any).randomUUID()
-        : require('crypto').randomUUID());
+    (typeof crypto !== 'undefined' && (crypto as any).randomUUID
+      ? (crypto as any).randomUUID()
+      : require('crypto').randomUUID());
 
     const groupDataAlloManage = (data: any[]) => {
       const grouped: any = data.reduce(
@@ -14663,23 +14669,23 @@ export class ExportFilesService {
 
     // const shipperIdName = groupMasterCheck?.id_name;
     // const userType = groupMasterCheck?.user_type_id;
-      
-      const valueDigitKeyPure = (hourData:any, pE: any, nKey: any) => {
-        const resultKey =
-          hourData?.find((f: any) => f?.gas_hour_text === pE)?.value?.[nKey] !==
-            undefined &&
-            hourData?.find((f: any) => f?.gas_hour_text === pE)?.value?.[nKey] !==
-            null
-            ? this.dcimal4(
-              hourData?.find((f: any) => f?.gas_hour_text === pE)?.value?.[
-              nKey
-              ],
-            )
-            : null;
 
-        return resultKey;
-      };
-    
+    const valueDigitKeyPure = (hourData: any, pE: any, nKey: any) => {
+      const resultKey =
+        hourData?.find((f: any) => f?.gas_hour_text === pE)?.value?.[nKey] !==
+          undefined &&
+          hourData?.find((f: any) => f?.gas_hour_text === pE)?.value?.[nKey] !==
+          null
+          ? this.dcimal4(
+            hourData?.find((f: any) => f?.gas_hour_text === pE)?.value?.[
+            nKey
+            ],
+          )
+          : null;
+
+      return resultKey;
+    };
+
     // previous_date always have at least 1 data that is gas_day
     const previousDate = bodys?.previous_date ?? (bodys?.gas_day ? [bodys.gas_day] : [])
     const onlyPreviousDateData = resData?.data?.filter((f: any) => previousDate.includes(f?.gas_day)) ?? []
@@ -14689,93 +14695,93 @@ export class ExportFilesService {
       const hourData = nowData?.hour;
       const dataOfEachDate = resData?.templateLabelKeys?.map((e: any) => {
 
-      // const valueDigitKeyTag = (pE: any, nKey: any) => {
-      //   const baseValue = pE?.[nKey];
-      //   const resultKey =
-      //     baseValue !== undefined && baseValue !== null
-      //       ? this.dcimal4(baseValue)
-      //       : null;
+        // const valueDigitKeyTag = (pE: any, nKey: any) => {
+        //   const baseValue = pE?.[nKey];
+        //   const resultKey =
+        //     baseValue !== undefined && baseValue !== null
+        //       ? this.dcimal4(baseValue)
+        //       : null;
 
-      //   return resultKey;
-      // };
+        //   return resultKey;
+        // };
 
-      // gas_hour_text
+        // gas_hour_text
 
-      return {
-        Info: e?.lebel || '',
-        'Date': nowData?.gas_day || '',
-        // '00:00': valueDigitKeyPure(hourData, '00:00', e?.key),
-        '01:00': valueDigitKeyPure(hourData, '01:00', e?.key),
-        '02:00': valueDigitKeyPure(hourData,'02:00', e?.key),
-        '03:00': valueDigitKeyPure(hourData,'03:00', e?.key),
-        '04:00': valueDigitKeyPure(hourData,'04:00', e?.key),
-        '05:00': valueDigitKeyPure(hourData,'05:00', e?.key),
-        '06:00': valueDigitKeyPure(hourData,'06:00', e?.key),
-        '07:00': valueDigitKeyPure(hourData,'07:00', e?.key),
-        '08:00': valueDigitKeyPure(hourData,'08:00', e?.key),
-        '09:00': valueDigitKeyPure(hourData,'09:00', e?.key),
-        '10:00': valueDigitKeyPure(hourData,'10:00', e?.key),
-        '11:00': valueDigitKeyPure(hourData,'11:00', e?.key),
-        '12:00': valueDigitKeyPure(hourData,'12:00', e?.key),
-        '13:00': valueDigitKeyPure(hourData,'13:00', e?.key),
-        '14:00': valueDigitKeyPure(hourData, '14:00', e?.key),
-        '15:00': valueDigitKeyPure(hourData,  '15:00', e?.key),
-        '16:00': valueDigitKeyPure(hourData, '16:00', e?.key),
-        '17:00': valueDigitKeyPure(hourData, '17:00', e?.key),
-        '18:00': valueDigitKeyPure(hourData, '18:00', e?.key),
-        '19:00': valueDigitKeyPure(hourData, '19:00', e?.key),
-        '20:00': valueDigitKeyPure(hourData, '20:00', e?.key),
-        '21:00': valueDigitKeyPure(hourData, '21:00', e?.key),
-        '22:00': valueDigitKeyPure(hourData, '22:00', e?.key),
-        '23:00': valueDigitKeyPure(hourData, '23:00', e?.key),
-        '00:00': valueDigitKeyPure(hourData, '24:00', e?.key)
-      };
-    }) ?? [];
-    
-    nresData.push(...dataOfEachDate)
-  }
+        return {
+          Info: e?.lebel || '',
+          'Date': nowData?.gas_day || '',
+          // '00:00': valueDigitKeyPure(hourData, '00:00', e?.key),
+          '01:00': valueDigitKeyPure(hourData, '01:00', e?.key),
+          '02:00': valueDigitKeyPure(hourData, '02:00', e?.key),
+          '03:00': valueDigitKeyPure(hourData, '03:00', e?.key),
+          '04:00': valueDigitKeyPure(hourData, '04:00', e?.key),
+          '05:00': valueDigitKeyPure(hourData, '05:00', e?.key),
+          '06:00': valueDigitKeyPure(hourData, '06:00', e?.key),
+          '07:00': valueDigitKeyPure(hourData, '07:00', e?.key),
+          '08:00': valueDigitKeyPure(hourData, '08:00', e?.key),
+          '09:00': valueDigitKeyPure(hourData, '09:00', e?.key),
+          '10:00': valueDigitKeyPure(hourData, '10:00', e?.key),
+          '11:00': valueDigitKeyPure(hourData, '11:00', e?.key),
+          '12:00': valueDigitKeyPure(hourData, '12:00', e?.key),
+          '13:00': valueDigitKeyPure(hourData, '13:00', e?.key),
+          '14:00': valueDigitKeyPure(hourData, '14:00', e?.key),
+          '15:00': valueDigitKeyPure(hourData, '15:00', e?.key),
+          '16:00': valueDigitKeyPure(hourData, '16:00', e?.key),
+          '17:00': valueDigitKeyPure(hourData, '17:00', e?.key),
+          '18:00': valueDigitKeyPure(hourData, '18:00', e?.key),
+          '19:00': valueDigitKeyPure(hourData, '19:00', e?.key),
+          '20:00': valueDigitKeyPure(hourData, '20:00', e?.key),
+          '21:00': valueDigitKeyPure(hourData, '21:00', e?.key),
+          '22:00': valueDigitKeyPure(hourData, '22:00', e?.key),
+          '23:00': valueDigitKeyPure(hourData, '23:00', e?.key),
+          '00:00': valueDigitKeyPure(hourData, '24:00', e?.key)
+        };
+      }) ?? [];
+
+      nresData.push(...dataOfEachDate)
+    }
 
     // console.log('--nresData : ', nresData);
     const formateData = nresData
-    .sort((a: any, b: any) => dayjs(a?.['Date'], "YYYY-MM-DD").valueOf() - dayjs(b?.['Date'], "YYYY-MM-DD").valueOf())
-    .map((e: any) => {
-      const setData = {
-        Info: e?.['Info'],
-        'Date': dayjs(e?.['Date'], "YYYY-MM-DD").format("DD/MM/YYYY"),
-        '01:00': e?.['01:00'],
-        '02:00': e?.['02:00'],
-        '03:00': e?.['03:00'],
-        '04:00': e?.['04:00'],
-        '05:00': e?.['05:00'],
-        '06:00': e?.['06:00'],
-        '07:00': e?.['07:00'],
-        '08:00': e?.['08:00'],
-        '09:00': e?.['09:00'],
-        '10:00': e?.['10:00'],
-        '11:00': e?.['11:00'],
-        '12:00': e?.['12:00'],
-        '13:00': e?.['13:00'],
-        '14:00': e?.['14:00'],
-        '15:00': e?.['15:00'],
-        '16:00': e?.['16:00'],
-        '17:00': e?.['17:00'],
-        '18:00': e?.['18:00'],
-        '19:00': e?.['19:00'],
-        '20:00': e?.['20:00'],
-        '21:00': e?.['21:00'],
-        '22:00': e?.['22:00'],
-        '23:00': e?.['23:00'],
-        '00:00': e?.['00:00'],
-      };
-      const filteredData = Object.keys(setData).reduce((obj, key) => {
-        obj[key] = setData[key];
-        return obj;
-      }, {});
+      .sort((a: any, b: any) => dayjs(a?.['Date'], "YYYY-MM-DD").valueOf() - dayjs(b?.['Date'], "YYYY-MM-DD").valueOf())
+      .map((e: any) => {
+        const setData = {
+          Info: e?.['Info'],
+          'Date': dayjs(e?.['Date'], "YYYY-MM-DD").format("DD/MM/YYYY"),
+          '01:00': e?.['01:00'],
+          '02:00': e?.['02:00'],
+          '03:00': e?.['03:00'],
+          '04:00': e?.['04:00'],
+          '05:00': e?.['05:00'],
+          '06:00': e?.['06:00'],
+          '07:00': e?.['07:00'],
+          '08:00': e?.['08:00'],
+          '09:00': e?.['09:00'],
+          '10:00': e?.['10:00'],
+          '11:00': e?.['11:00'],
+          '12:00': e?.['12:00'],
+          '13:00': e?.['13:00'],
+          '14:00': e?.['14:00'],
+          '15:00': e?.['15:00'],
+          '16:00': e?.['16:00'],
+          '17:00': e?.['17:00'],
+          '18:00': e?.['18:00'],
+          '19:00': e?.['19:00'],
+          '20:00': e?.['20:00'],
+          '21:00': e?.['21:00'],
+          '22:00': e?.['22:00'],
+          '23:00': e?.['23:00'],
+          '00:00': e?.['00:00'],
+        };
+        const filteredData = Object.keys(setData).reduce((obj, key) => {
+          obj[key] = setData[key];
+          return obj;
+        }, {});
 
-      //
+        //
 
-      return filteredData;
-    });
+        return filteredData;
+      });
 
     // ---------------- manage table excel
     console.log('formateData : ', formateData);
@@ -15143,7 +15149,7 @@ export class ExportFilesService {
     const resData =
       await this.balancingService.balancingMonthlyReportDownload();
     const idArray = bodys?.idAr;
-    const filt = resData?.filter((f:any) => idArray?.includes(f?.id))
+    const filt = resData?.filter((f: any) => idArray?.includes(f?.id))
     //  tab
     const sortedResData = filt.sort(
       (a, b) => idArray.indexOf(a.id) - idArray.indexOf(b.id),
@@ -15472,13 +15478,13 @@ export class ExportFilesService {
           'Nominated Value (MMBTU/D)': '1573A1', // #1573A1
           'System Allocation (MMBTU/D)': '1573A1', // #1573A1
         };
-        
+
         const extraHeaderHeader = ['Contract Code', 'Contract Point', 'Timestamp']
-        if(filterHeader.includes('Gas Hour')){
+        if (filterHeader.includes('Gas Hour')) {
           extraHeaderHeader.splice(2, 0, "Gas Hour")
         }
-        
-        const shortSheetNameList : string[] = []
+
+        const shortSheetNameList: string[] = []
         sheetNameList.map((originalKey: string, index: number) => {
           const subSheetFormatedData = filteredSubSheetResData[originalKey].map(
             (e: any) => {
@@ -15535,19 +15541,19 @@ export class ExportFilesService {
           const parentData = groupedData[originalKey];
           const extraHeaderValue = [];
           extraHeaderHeader.map((key) => {
-            if(parentData){
-              if(Array.isArray(parentData)){
-                if(parentData.length > 0){
+            if (parentData) {
+              if (Array.isArray(parentData)) {
+                if (parentData.length > 0) {
                   extraHeaderValue.push(parentData[0][key] || '')
-                }else{
+                } else {
                   extraHeaderValue.push('')
                 }
-              }else{
+              } else {
                 extraHeaderValue.push(parentData[key] || '')
               }
             }
           })
-          
+
 
           this.setWorkSheetDataAndStyle({
             ws: subWs,
@@ -15557,7 +15563,7 @@ export class ExportFilesService {
             headers: subSheetHeaders,
             headerColorMap: subSheetHeaderColorMap,
             cellHighlightMap: subSheetCellHighlightMap,
-            extraHeader: [extraHeaderHeader,extraHeaderValue]
+            extraHeader: [extraHeaderHeader, extraHeaderValue]
           });
 
           // Extract contractCode, contractPoint, gasDay, gasHour from the first item in the group
@@ -15582,15 +15588,15 @@ export class ExportFilesService {
             }
           }
 
-          if(shortSheetNameList.includes(sheetName)){
+          if (shortSheetNameList.includes(sheetName)) {
             let counter = 1;
             let newSheetName = sheetName.substring(0, sheetName.length - 3) + `(${counter})`;
-            
-            while(shortSheetNameList.includes(newSheetName)) {
+
+            while (shortSheetNameList.includes(newSheetName)) {
               counter++;
               newSheetName = sheetName.substring(0, sheetName.length - 3) + `(${counter})`;
             }
-            
+
             sheetName = newSheetName;
           }
           shortSheetNameList.push(sheetName)
@@ -15671,7 +15677,7 @@ export class ExportFilesService {
           ? dayjs(e['event_date']).format('DD/MM/YYYY')
           : '',
         ['Created by']: `${(!!e['create_by_account']?.['first_name'] &&
-            e['create_by_account']?.['first_name']) ||
+          e['create_by_account']?.['first_name']) ||
           ''
           } ${(!!e['create_by_account']?.['last_name'] &&
             e['create_by_account']?.['last_name']) ||
@@ -15896,7 +15902,7 @@ export class ExportFilesService {
             : clean(e['event_doc_emer_gas_tranmiss']?.['name'])
           : '',
         ['Created by']: `${(!!e['create_by_account']?.['first_name'] &&
-            e['create_by_account']?.['first_name']) ||
+          e['create_by_account']?.['first_name']) ||
           ''
           } ${(!!e['create_by_account']?.['last_name'] &&
             e['create_by_account']?.['last_name']) ||
@@ -16194,7 +16200,7 @@ export class ExportFilesService {
           ? dayjs(e['event_date']).format('DD/MM/YYYY')
           : '',
         ['Created by']: `${(!!e['create_by_account']?.['first_name'] &&
-            e['create_by_account']?.['first_name']) ||
+          e['create_by_account']?.['first_name']) ||
           ''
           } ${(!!e['create_by_account']?.['last_name'] &&
             e['create_by_account']?.['last_name']) ||
@@ -16239,7 +16245,7 @@ export class ExportFilesService {
             ? e?.['document7']?.find((f: any) => f?.event_doc_status_id === 6)
               ? 'Generated'
               : this.getAcknowledgeStatus(e?.['document7'])?.equ
-              ? 'Closed'
+                ? 'Closed'
                 : 'Open'
             : ''),
           (tsoD8 =
@@ -16421,7 +16427,7 @@ export class ExportFilesService {
             ? lengthSubmission.slice(0, 32700) + 'เกินลิมิตแล้วโปรดดูที่เว็บ'
             : lengthSubmission, // ""
         ['Created By']: `${(!!e['create_by_account']?.['first_name'] &&
-            e['create_by_account']?.['first_name']) ||
+          e['create_by_account']?.['first_name']) ||
           ''
           } ${(!!e['create_by_account']?.['last_name'] &&
             e['create_by_account']?.['last_name']) ||
@@ -16431,7 +16437,7 @@ export class ExportFilesService {
             : ''
           }`,
         ['Updated By']: `${(!!e['update_by_account']?.['first_name'] &&
-            e['update_by_account']?.['first_name']) ||
+          e['update_by_account']?.['first_name']) ||
           ''
           } ${(!!e['update_by_account']?.['last_name'] &&
             e['update_by_account']?.['last_name']) ||
@@ -16845,9 +16851,9 @@ export class ExportFilesService {
       'EAF5F8',
     );
     const result = this.filterNestedData(formateData, filterHeader);
-    
+
     const defaultDecimal = 3
-    const keyAndDecimalMap : Record<string, {index: number, decimal: number}[]> = {
+    const keyAndDecimalMap: Record<string, { index: number, decimal: number }[]> = {
       'Capacity Right (MMBTU)': result.map((item: any, index: number) => {
         return {
           index,
@@ -17098,7 +17104,7 @@ export class ExportFilesService {
     //   formateData,
     //   'EAF5F8',
     // );
-    
+
     // // addsection
     // const result = this.filterNestedData(formateData, filterHeader);
 
@@ -17115,9 +17121,9 @@ export class ExportFilesService {
     // );
 
     console.log('new');
-    
+
     // Number(e['capacityMMBTUValue']?.trim()?.replace(/,/g, '')) || 0;
-   
+
 
     const wb = new ExcelJS.Workbook();
     const ws = wb.addWorksheet('Report');
@@ -17135,34 +17141,34 @@ export class ExportFilesService {
     ) {
       const row = ws.getRow(startRow);
       const h1 = row.getCell(1);
-        h1.value = "Gas Day";
-        h1.alignment = { horizontal: 'center' };
-        h1.border = {
-          top: { style: 'thin' as const },
-          left: { style: 'thin' as const },
-          bottom: { style: 'thin' as const },
-          right: { style: 'thin' as const },
-        }
-        h1.fill = {
-          type: 'pattern',
-          pattern: 'solid',
-          fgColor: { argb: 'FFE0E0E0' },
-        };
+      h1.value = "Gas Day";
+      h1.alignment = { horizontal: 'center' };
+      h1.border = {
+        top: { style: 'thin' as const },
+        left: { style: 'thin' as const },
+        bottom: { style: 'thin' as const },
+        right: { style: 'thin' as const },
+      }
+      h1.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFE0E0E0' },
+      };
       ws.mergeCells('B6:G6');
       const h2 = row.getCell(2);
-        h2.value = "Daily Allocated Exit Value (MMBTU)";
-        h2.alignment = { horizontal: 'center' };
-        h2.border = {
-          top: { style: 'thin' as const },
-          left: { style: 'thin' as const },
-          bottom: { style: 'thin' as const },
-          right: { style: 'thin' as const },
-        }
-        h2.fill = {
-          type: 'pattern',
-          pattern: 'solid',
-          fgColor: { argb: 'FFE0E0E0' },
-        };
+      h2.value = "Daily Allocated Exit Value (MMBTU)";
+      h2.alignment = { horizontal: 'center' };
+      h2.border = {
+        top: { style: 'thin' as const },
+        left: { style: 'thin' as const },
+        bottom: { style: 'thin' as const },
+        right: { style: 'thin' as const },
+      }
+      h2.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFE0E0E0' },
+      };
 
       return 1
 
@@ -17173,10 +17179,10 @@ export class ExportFilesService {
       startRow: number,
       dates: any[],
     ) {
-     
-      dates.forEach((rowData:any, index) => {
+
+      dates.forEach((rowData: any, index) => {
         const row = ws.getRow(index + startRow + 6);
-        
+
         // FID (Column A)
         const fidCell = row.getCell(1);
         fidCell.value = rowData?.["Gas Day"];
@@ -17201,8 +17207,8 @@ export class ExportFilesService {
         }
 
         ws.columns = [
-            { width: 15 }, // Gas Day
-          ];
+          { width: 15 }, // Gas Day
+        ];
 
         row.height = 20;
       });
@@ -17212,39 +17218,39 @@ export class ExportFilesService {
     }
 
     function addHeaderSection(ws: ExcelJS.Worksheet, params: any) {
-        // Company Name
-        ws.mergeCells('A1:G1');
-        const companyCell = ws.getCell('A1');
-        companyCell.value = params?.companyName || "PTT Public Company Limited";
-        companyCell.font = { size: 14, bold: true };
-        companyCell.alignment = { horizontal: 'left' };
-    
-        ws.mergeCells('A2:G2');
-        const overuseCR = ws.getCell('A2');
-        overuseCR.value = `Over-Use Capacity Report : ${params?.shipperName || ""}`;
-        overuseCR.font = { size: 12, bold: true };
-        overuseCR.alignment = { horizontal: 'left' };
-        companyCell.alignment = { horizontal: 'left' };
-    
-        ws.mergeCells('A3:G3');
-        const titleCell = ws.getCell('A3');
-        titleCell.value = `Contract no. : ${params?.contract || ""}`;
-        titleCell.font = { size: 12, bold: true };
-        titleCell.alignment = { horizontal: 'left' };
-    
-        // Period
-        ws.mergeCells('A4:G4');
-        const periodCell = ws.getCell('A4');
-        periodCell.value = `Month ${params?.month || ""} Year ${params?.year || ""}`;
-        periodCell.font = { size: 12, bold: true };
-        periodCell.alignment = { horizontal: 'left' };
-    
-        // Empty row
-        ws.getRow(5).height = 20;
+      // Company Name
+      ws.mergeCells('A1:G1');
+      const companyCell = ws.getCell('A1');
+      companyCell.value = params?.companyName || "PTT Public Company Limited";
+      companyCell.font = { size: 14, bold: true };
+      companyCell.alignment = { horizontal: 'left' };
 
-        // return r + 1; // เว้น 1 แถวก่อนชุดถัดไป
-        return 6; // เว้น 1 แถวก่อนชุดถัดไป
-      }
+      ws.mergeCells('A2:G2');
+      const overuseCR = ws.getCell('A2');
+      overuseCR.value = `Over-Use Capacity Report : ${params?.shipperName || ""}`;
+      overuseCR.font = { size: 12, bold: true };
+      overuseCR.alignment = { horizontal: 'left' };
+      companyCell.alignment = { horizontal: 'left' };
+
+      ws.mergeCells('A3:G3');
+      const titleCell = ws.getCell('A3');
+      titleCell.value = `Contract no. : ${params?.contract || ""}`;
+      titleCell.font = { size: 12, bold: true };
+      titleCell.alignment = { horizontal: 'left' };
+
+      // Period
+      ws.mergeCells('A4:G4');
+      const periodCell = ws.getCell('A4');
+      periodCell.value = `Month ${params?.month || ""} Year ${params?.year || ""}`;
+      periodCell.font = { size: 12, bold: true };
+      periodCell.alignment = { horizontal: 'left' };
+
+      // Empty row
+      ws.getRow(5).height = 20;
+
+      // return r + 1; // เว้น 1 แถวก่อนชุดถัดไป
+      return 6; // เว้น 1 แถวก่อนชุดถัดไป
+    }
 
     // // ล็อคซ้าย 3 คอลัมน์ (A:B:C)
     // ws.views = [{ state: 'frozen', xSplit: 3 }];
@@ -17252,7 +17258,7 @@ export class ExportFilesService {
     let row = 1;
 
     const dataHead = dataUse?.tariff_charge
-   
+
     row = addHeaderSection(ws, {
       shipperName: dataHead?.tariff?.shipper?.name,
       month: getTodayNowAdd7(dataHead?.month_year_charge).format("MMM"),
@@ -17531,108 +17537,108 @@ export class ExportFilesService {
     // -----
 
     function addHeaderSection(ws: ExcelJS.Worksheet, params: any) {
-        // Company Name
-        ws.mergeCells('A1:M1');
-        const companyCell = ws.getCell('A1');
-        companyCell.value = params?.companyName || "PTT Public Company Limited";
-        companyCell.font = { size: 14, bold: true };
-        companyCell.alignment = { horizontal: 'left' };
-    
-        ws.mergeCells('A2:M2');
-        const overuseCR = ws.getCell('A2');
-        overuseCR.value = `Over-Use Capacity Report : ${params?.shipperName || ""}`;
-        overuseCR.font = { size: 12, bold: true };
-        overuseCR.alignment = { horizontal: 'left' };
-        companyCell.alignment = { horizontal: 'left' };
-    
-        ws.mergeCells('A3:M3');
-        const titleCell = ws.getCell('A3');
-        titleCell.value = `Contract no. : ${params?.contract || ""}`;
-        titleCell.font = { size: 12, bold: true };
-        titleCell.alignment = { horizontal: 'left' };
-    
-        // Period
-        ws.mergeCells('A4:M4');
-        const periodCell = ws.getCell('A4');
-        periodCell.value = `Month ${params?.month || ""} Year ${params?.year || ""}`;
-        periodCell.font = { size: 12, bold: true };
-        periodCell.alignment = { horizontal: 'left' };
-    
-        // Empty row
-        ws.getRow(5).height = 20;
+      // Company Name
+      ws.mergeCells('A1:M1');
+      const companyCell = ws.getCell('A1');
+      companyCell.value = params?.companyName || "PTT Public Company Limited";
+      companyCell.font = { size: 14, bold: true };
+      companyCell.alignment = { horizontal: 'left' };
 
-        // return r + 1; // เว้น 1 แถวก่อนชุดถัดไป
-        return 6; // เว้น 1 แถวก่อนชุดถัดไป
-      }
+      ws.mergeCells('A2:M2');
+      const overuseCR = ws.getCell('A2');
+      overuseCR.value = `Over-Use Capacity Report : ${params?.shipperName || ""}`;
+      overuseCR.font = { size: 12, bold: true };
+      overuseCR.alignment = { horizontal: 'left' };
+      companyCell.alignment = { horizontal: 'left' };
+
+      ws.mergeCells('A3:M3');
+      const titleCell = ws.getCell('A3');
+      titleCell.value = `Contract no. : ${params?.contract || ""}`;
+      titleCell.font = { size: 12, bold: true };
+      titleCell.alignment = { horizontal: 'left' };
+
+      // Period
+      ws.mergeCells('A4:M4');
+      const periodCell = ws.getCell('A4');
+      periodCell.value = `Month ${params?.month || ""} Year ${params?.year || ""}`;
+      periodCell.font = { size: 12, bold: true };
+      periodCell.alignment = { horizontal: 'left' };
+
+      // Empty row
+      ws.getRow(5).height = 20;
+
+      // return r + 1; // เว้น 1 แถวก่อนชุดถัดไป
+      return 6; // เว้น 1 แถวก่อนชุดถัดไป
+    }
 
 
-      function addLicenSection(ws: ExcelJS.Worksheet, params: any, data: any[]) {
-        const startRow = 6; // Adjusted for new rows (Total MMBTU + threshold row)
-        
-        // // Value legend with red text
-        // const valueRow = ws.getRow(startRow);
-        // const valueCell = valueRow.getCell(1);
-        // valueCell.value = 'Value';
-        // valueCell.font = { size: 10, color: { argb: 'FFFF0000' } }; // Red text
-        // valueCell.alignment = { horizontal: 'center' };
-    
-        // // const valuegRow = ws.getRow(startRow);
-        // const valuegCell = valueRow.getCell(2);
-        // valuegCell.value = '=';
-        // valuegCell.alignment = { horizontal: 'center' };
-    
-        // // const valuegRow = ws.getRow(startRow);
-        // const valueRemarkCell = valueRow.getCell(3);
-        // valueRemarkCell.value = 'ปริมาณความไม่สมดุลทางบวกและทางลบเกินเกณฑ์ ±5%';
-        
-    
-        // Reported By sections
-        const reportedByStartRow = startRow;
-        
-        // Left side - Reported By
-        const reportedByRow = ws.getRow(reportedByStartRow);
-        const reportedByCell = reportedByRow.getCell(1);
-        reportedByCell.value = 'Reported By ___________________________________________';
-        reportedByCell.font = { size: 10, bold: true };
-    
-        const reportedByNameRow = ws.getRow(reportedByStartRow + 1);
-        const reportedByNameCell = reportedByNameRow.getCell(1);
-        reportedByNameCell.value = `(${params.reportedBy.name})`;
-        reportedByNameCell.font = { size: 10 };
-    
-        const reportedByPositionRow = ws.getRow(reportedByStartRow + 2);
-        const reportedByPositionCell = reportedByPositionRow.getCell(1);
-        reportedByPositionCell.value = `${params.reportedBy.position} of ${params.reportedBy.division}`;
-        reportedByPositionCell.font = { size: 10 };
-    
-        // const reportedByDivisionRow = ws.getRow(reportedByStartRow + 3);
-        // const reportedByDivisionCell = reportedByDivisionRow.getCell(1);
-        // reportedByDivisionCell.value = params.reportedBy.division;
-        // reportedByDivisionCell.font = { size: 10 };
-    
-        // Right side - Manager
-        const managerRow = ws.getRow(reportedByStartRow);
-        const managerCell = managerRow.getCell(7);
-        managerCell.value = 'Approved By ___________________________________________';
-        managerCell.font = { size: 10, bold: true };
-    
-        const managerNameRow = ws.getRow(reportedByStartRow + 1);
-        const managerNameCell = managerNameRow.getCell(7);
-        managerNameCell.value = `(${params.manager.name})`;
-        managerNameCell.font = { size: 10 };
-    
-        const managerPositionRow = ws.getRow(reportedByStartRow + 2);
-        const managerPositionCell = managerPositionRow.getCell(7);
-        managerPositionCell.value = `${params.manager.position} of ${params.manager.division}`;
-        managerPositionCell.font = { size: 10 };
-    
-        // const managerDivisionRow = ws.getRow(reportedByStartRow + 3);
-        // const managerDivisionCell = managerDivisionRow.getCell(7);
-        // managerDivisionCell.value = params.manager.division;
-        // managerDivisionCell.font = { size: 10 };
+    function addLicenSection(ws: ExcelJS.Worksheet, params: any, data: any[]) {
+      const startRow = 6; // Adjusted for new rows (Total MMBTU + threshold row)
 
-        return 11; // เว้น 1 แถวก่อนชุดถัดไป
-      }
+      // // Value legend with red text
+      // const valueRow = ws.getRow(startRow);
+      // const valueCell = valueRow.getCell(1);
+      // valueCell.value = 'Value';
+      // valueCell.font = { size: 10, color: { argb: 'FFFF0000' } }; // Red text
+      // valueCell.alignment = { horizontal: 'center' };
+
+      // // const valuegRow = ws.getRow(startRow);
+      // const valuegCell = valueRow.getCell(2);
+      // valuegCell.value = '=';
+      // valuegCell.alignment = { horizontal: 'center' };
+
+      // // const valuegRow = ws.getRow(startRow);
+      // const valueRemarkCell = valueRow.getCell(3);
+      // valueRemarkCell.value = 'ปริมาณความไม่สมดุลทางบวกและทางลบเกินเกณฑ์ ±5%';
+
+
+      // Reported By sections
+      const reportedByStartRow = startRow;
+
+      // Left side - Reported By
+      const reportedByRow = ws.getRow(reportedByStartRow);
+      const reportedByCell = reportedByRow.getCell(1);
+      reportedByCell.value = 'Reported By ___________________________________________';
+      reportedByCell.font = { size: 10, bold: true };
+
+      const reportedByNameRow = ws.getRow(reportedByStartRow + 1);
+      const reportedByNameCell = reportedByNameRow.getCell(1);
+      reportedByNameCell.value = `(${params.reportedBy.name})`;
+      reportedByNameCell.font = { size: 10 };
+
+      const reportedByPositionRow = ws.getRow(reportedByStartRow + 2);
+      const reportedByPositionCell = reportedByPositionRow.getCell(1);
+      reportedByPositionCell.value = `${params.reportedBy.position} of ${params.reportedBy.division}`;
+      reportedByPositionCell.font = { size: 10 };
+
+      // const reportedByDivisionRow = ws.getRow(reportedByStartRow + 3);
+      // const reportedByDivisionCell = reportedByDivisionRow.getCell(1);
+      // reportedByDivisionCell.value = params.reportedBy.division;
+      // reportedByDivisionCell.font = { size: 10 };
+
+      // Right side - Manager
+      const managerRow = ws.getRow(reportedByStartRow);
+      const managerCell = managerRow.getCell(7);
+      managerCell.value = 'Approved By ___________________________________________';
+      managerCell.font = { size: 10, bold: true };
+
+      const managerNameRow = ws.getRow(reportedByStartRow + 1);
+      const managerNameCell = managerNameRow.getCell(7);
+      managerNameCell.value = `(${params.manager.name})`;
+      managerNameCell.font = { size: 10 };
+
+      const managerPositionRow = ws.getRow(reportedByStartRow + 2);
+      const managerPositionCell = managerPositionRow.getCell(7);
+      managerPositionCell.value = `${params.manager.position} of ${params.manager.division}`;
+      managerPositionCell.font = { size: 10 };
+
+      // const managerDivisionRow = ws.getRow(reportedByStartRow + 3);
+      // const managerDivisionCell = managerDivisionRow.getCell(7);
+      // managerDivisionCell.value = params.manager.division;
+      // managerDivisionCell.font = { size: 10 };
+
+      return 11; // เว้น 1 แถวก่อนชุดถัดไป
+    }
 
 
     // ===== ใช้งานจริง =====
@@ -17663,7 +17669,7 @@ export class ExportFilesService {
     const navy = '#163B74'; // น้ำเงินเข้มแบบภาพ
 
     const dataHead = dataUse?.tariff_charge
-   
+
     // console.log('dataHead : ', dataHead);
     row = addHeaderSection(ws, {
       shipperName: dataHead?.tariff?.shipper?.name,
@@ -17672,7 +17678,7 @@ export class ExportFilesService {
       contract: dataHead?.contract_code?.contract_code,
     })
 
-    row = addLicenSection(ws,{
+    row = addLicenSection(ws, {
       reportedBy: {
         name: 'Ms.Wipada Yenyin',
         position: 'Senior Engineer',
@@ -17683,7 +17689,7 @@ export class ExportFilesService {
         position: 'Manager of',
         division: 'Transmission Contracts & Regulatory Management Division',
       },
-    },[])
+    }, [])
 
     row = addSection(ws, row, dates, actualRows, {
       title: 'Actual', band: navy, titleBg: '#FFE600', titleFg: '#000000',
@@ -17706,19 +17712,19 @@ export class ExportFilesService {
       }]
     });
     // console.log('overuseRows : ', overuseRows);
-    const footerCalc = overuseRows?.map((c:any, i:any) => {
+    const footerCalc = overuseRows?.map((c: any, i: any) => {
       const calc = c?.values?.reduce(
-          (accumulator, currentValue) => accumulator + (currentValue && Number(currentValue) || 0),
-          0,
-        )
-    // ปัดเศษ 3 ตำแหน่ง
-     const fCalc = Math.round(calc * 1000) / 1000
+        (accumulator, currentValue) => accumulator + (currentValue && Number(currentValue) || 0),
+        0,
+      )
+      // ปัดเศษ 3 ตำแหน่ง
+      const fCalc = Math.round(calc * 1000) / 1000
       return fCalc
     })?.reduce(
-          (accumulator, currentValue) => accumulator + (currentValue && Number(currentValue) || 0),
-          0,
-        )
-        const roundfooterCalc = Math.round(footerCalc)
+      (accumulator, currentValue) => accumulator + (currentValue && Number(currentValue) || 0),
+      0,
+    )
+    const roundfooterCalc = Math.round(footerCalc)
     // console.log('footerCalc : ', footerCalc);
     // console.log('roundfooterCalc : ', roundfooterCalc);
     // 1. sum overuse entry
@@ -17731,53 +17737,53 @@ export class ExportFilesService {
 
     // addFooterSection
 
-      function addFooterSection(ws: ExcelJS.Worksheet) {
-        const startRow = 19 + actualRows.length + bookingRows.length + overuseRows.length ; // Adjusted for new rows (Total MMBTU + threshold row)
-        console.log('startRow : ', startRow);
-        // Reported By sections
-        const footerStart = startRow;
+    function addFooterSection(ws: ExcelJS.Worksheet) {
+      const startRow = 19 + actualRows.length + bookingRows.length + overuseRows.length; // Adjusted for new rows (Total MMBTU + threshold row)
+      console.log('startRow : ', startRow);
+      // Reported By sections
+      const footerStart = startRow;
 
-        // กำหนดช่วงคอลัมน์ที่ต้องการ merge
-        const LABEL_START_COL = 2;                 // คอลัมน์ C
-        const LABEL_END_COL   = dates.length + 3;  // คอลัมน์สุดท้ายของวันที่ (lastDateCol)
-        const VALUE_COL       = LABEL_END_COL + 1; // คอลัมน์ตัวเลขรวม
-        ws.mergeCells(startRow, LABEL_START_COL, startRow, LABEL_END_COL);
+      // กำหนดช่วงคอลัมน์ที่ต้องการ merge
+      const LABEL_START_COL = 2;                 // คอลัมน์ C
+      const LABEL_END_COL = dates.length + 3;  // คอลัมน์สุดท้ายของวันที่ (lastDateCol)
+      const VALUE_COL = LABEL_END_COL + 1; // คอลัมน์ตัวเลขรวม
+      ws.mergeCells(startRow, LABEL_START_COL, startRow, LABEL_END_COL);
 
-        // Left side - Reported By
-        const overuserCalc = ws.getRow(footerStart);
-        const txtoveruseByCell = overuserCalc.getCell(dates.length + 3);
-        txtoveruseByCell.value = `รวมปริมาณการใช้ความสามารถในการให้บริการเกินกำหนด`;
-        solid(txtoveruseByCell, '#e1eada'); 
-        txtoveruseByCell.font = { bold: true, color: { argb: ARGB('#000000') } };
-        txtoveruseByCell.alignment = { vertical: 'middle', horizontal: 'right' };
-        const overuseByCell = overuserCalc.getCell(dates.length + 4);
-        overuseByCell.value = footerCalc;
-        solid(overuseByCell, '#e0ead9'); 
-        overuseByCell.font = { bold: true, color: { argb: ARGB('#000000') } };
-        overuseByCell.alignment = { vertical: 'middle', horizontal: 'right' };
-        
-        const r2 = startRow + 1;
-        ws.mergeCells(r2, LABEL_START_COL, r2, LABEL_END_COL);
-        const totalCalc = ws.getRow(footerStart + 1);
-        const txttotalByCell = totalCalc.getCell(dates.length + 3);
-        txttotalByCell.value = `สรุปปริมาณการใช้ความสามารถในการให้บริการเกินกำหนดประจำเดือน`;
-        solid(txttotalByCell, '#fef0c8'); 
-        txttotalByCell.font = { bold: true, color: { argb: ARGB('#000000') } };
-        txttotalByCell.alignment = { vertical: 'middle', horizontal: 'right' };
-        const totalByCell = totalCalc.getCell(dates.length + 4);
-        totalByCell.value = roundfooterCalc;
-        solid(totalByCell, '#fdd764'); 
-        totalByCell.font = { bold: true, color: { argb: ARGB('#000000') } };
-        totalByCell.alignment = { vertical: 'middle', horizontal: 'right' };
+      // Left side - Reported By
+      const overuserCalc = ws.getRow(footerStart);
+      const txtoveruseByCell = overuserCalc.getCell(dates.length + 3);
+      txtoveruseByCell.value = `รวมปริมาณการใช้ความสามารถในการให้บริการเกินกำหนด`;
+      solid(txtoveruseByCell, '#e1eada');
+      txtoveruseByCell.font = { bold: true, color: { argb: ARGB('#000000') } };
+      txtoveruseByCell.alignment = { vertical: 'middle', horizontal: 'right' };
+      const overuseByCell = overuserCalc.getCell(dates.length + 4);
+      overuseByCell.value = footerCalc;
+      solid(overuseByCell, '#e0ead9');
+      overuseByCell.font = { bold: true, color: { argb: ARGB('#000000') } };
+      overuseByCell.alignment = { vertical: 'middle', horizontal: 'right' };
 
-        return 1; // เว้น 1 แถวก่อนชุดถัดไป
-      }
+      const r2 = startRow + 1;
+      ws.mergeCells(r2, LABEL_START_COL, r2, LABEL_END_COL);
+      const totalCalc = ws.getRow(footerStart + 1);
+      const txttotalByCell = totalCalc.getCell(dates.length + 3);
+      txttotalByCell.value = `สรุปปริมาณการใช้ความสามารถในการให้บริการเกินกำหนดประจำเดือน`;
+      solid(txttotalByCell, '#fef0c8');
+      txttotalByCell.font = { bold: true, color: { argb: ARGB('#000000') } };
+      txttotalByCell.alignment = { vertical: 'middle', horizontal: 'right' };
+      const totalByCell = totalCalc.getCell(dates.length + 4);
+      totalByCell.value = roundfooterCalc;
+      solid(totalByCell, '#fdd764');
+      totalByCell.font = { bold: true, color: { argb: ARGB('#000000') } };
+      totalByCell.alignment = { vertical: 'middle', horizontal: 'right' };
+
+      return 1; // เว้น 1 แถวก่อนชุดถัดไป
+    }
 
     row = addFooterSection(ws)
-      
 
 
-      
+
+
 
     const fileName = `${dayjs().format('YYYY-MM-DD_HH-mm')}_Tariff Charge Report / CapacityOveruseCharge${bodys?.tariff_type_charge_id === 5 ? "Entry" : "Exit"}_report.xlsx`;
 

@@ -37,7 +37,17 @@ export class UseItOrLoseItService {
     private prisma: PrismaService,
     private readonly releaseCapacitySubmissionService: ReleaseCapacitySubmissionService,
     // @Inject(CACHE_MANAGER) private cacheService: Cache,
-  ) {}
+  ) { }
+
+  private safeParseJSON(data: any, defaultValue: any = null) {
+    if (!data) return defaultValue;
+    try {
+      return typeof data === 'string' ? JSON.parse(data) : data;
+    } catch (e) {
+      console.error('JSON parse error:', e);
+      return defaultValue;
+    }
+  }
 
   deepEqual(obj1, obj2) {
     if (obj1 === obj2) return true;
@@ -111,7 +121,7 @@ export class UseItOrLoseItService {
     for (let ic = 0; ic < contractCode.length; ic++) {
       const useData = contractCode[ic]?.booking_version[0]?.booking_row_json;
       const convertData = (useData && Array.isArray(useData)) ? useData.map((e: any) => {
-        return { ...e, data_temp: JSON.parse(e['data_temp']) };
+        return { ...e, data_temp: this.safeParseJSON(e['data_temp']) };
       }) : [];
 
       const nowDates = getTodayNowAdd7().toDate();
@@ -132,7 +142,7 @@ export class UseItOrLoseItService {
 
       const pathEntryExit = pathManagement['path_management_config'].map(
         (e: any) => {
-          return { ...e, temps: JSON.parse(e['temps']) };
+          return { ...e, temps: this.safeParseJSON(e['temps']) };
         },
       );
       const findEntry = pathEntryExit.map((e: any) => {
@@ -167,9 +177,9 @@ export class UseItOrLoseItService {
         (!!contractCode[ic]?.booking_version[0]?.booking_full_json[0]?.[
           'data_temp'
         ] &&
-          JSON.parse(
+          this.safeParseJSON(
             contractCode[ic]?.booking_version[0]?.booking_full_json[0]?.[
-              'data_temp'
+            'data_temp'
             ],
           )) ||
         null;
@@ -367,7 +377,7 @@ export class UseItOrLoseItService {
     for (let ic = 0; ic < contractCode.length; ic++) {
       const useData = contractCode[ic]?.booking_version[0]?.booking_row_json;
       const convertData = (useData && Array.isArray(useData)) ? useData.map((e: any) => {
-        return { ...e, data_temp: JSON.parse(e['data_temp']) };
+        return { ...e, data_temp: this.safeParseJSON(e['data_temp']) };
       }) : [];
 
       const nowDates = getTodayNowAdd7().toDate();
@@ -388,7 +398,7 @@ export class UseItOrLoseItService {
 
       const pathEntryExit = pathManagement['path_management_config'].map(
         (e: any) => {
-          return { ...e, temps: JSON.parse(e['temps']) };
+          return { ...e, temps: this.safeParseJSON(e['temps']) };
         },
       );
       const findEntry = pathEntryExit.map((e: any) => {
@@ -423,9 +433,9 @@ export class UseItOrLoseItService {
         (!!contractCode[ic]?.booking_version[0]?.booking_full_json[0]?.[
           'data_temp'
         ] &&
-          JSON.parse(
+          this.safeParseJSON(
             contractCode[ic]?.booking_version[0]?.booking_full_json[0]?.[
-              'data_temp'
+            'data_temp'
             ],
           )) ||
         null;
@@ -680,7 +690,7 @@ export class UseItOrLoseItService {
   getContractValueSummaryByGroup(allValueInContractList: any[]) {
     const groupedContractPoints = allValueInContractList.reduce((groups: any, item: any) => {
       const groupKey = `${item.area_text}_${item.entry_exit?.name || item.entry_exit_id || 'Unknown'}_${item.zone_text}`;
-      
+
       if (!groups[groupKey]) {
         groups[groupKey] = {
           area_text: item.area_text,
@@ -693,15 +703,15 @@ export class UseItOrLoseItService {
           maximum_mmscfd_summary: {}
         };
       }
-      
+
       // groups[groupKey].items.push(item);
-      
+
       // Summary contracted_mmbtu_d_array values grouped by date
       if (item.contracted_mmbtu_d_array && Array.isArray(item.contracted_mmbtu_d_array)) {
         item.contracted_mmbtu_d_array.forEach((arrayItem: any) => {
           const date = arrayItem.date;
           const value = arrayItem.value || 0;
-          
+
           if (!groups[groupKey].contracted_mmbtu_d_summary[date]) {
             groups[groupKey].contracted_mmbtu_d_summary[date] = {
               date: date,
@@ -709,7 +719,7 @@ export class UseItOrLoseItService {
               count: 0
             };
           }
-          
+
           groups[groupKey].contracted_mmbtu_d_summary[date].total_value += value;
           groups[groupKey].contracted_mmbtu_d_summary[date].count += 1;
         });
@@ -720,7 +730,7 @@ export class UseItOrLoseItService {
         item.contracted_mmscfd_array.forEach((arrayItem: any) => {
           const date = arrayItem.date;
           const value = arrayItem.value || 0;
-          
+
           if (!groups[groupKey].contracted_mmscfd_summary[date]) {
             groups[groupKey].contracted_mmscfd_summary[date] = {
               date: date,
@@ -728,7 +738,7 @@ export class UseItOrLoseItService {
               count: 0
             };
           }
-          
+
           groups[groupKey].contracted_mmscfd_summary[date].total_value += value;
           groups[groupKey].contracted_mmscfd_summary[date].count += 1;
         });
@@ -739,7 +749,7 @@ export class UseItOrLoseItService {
         item.maximum_mmbtu_array.forEach((arrayItem: any) => {
           const date = arrayItem.date;
           const value = arrayItem.value || 0;
-      
+
           if (!groups[groupKey].maximum_mmbtu_summary[date]) {
             groups[groupKey].maximum_mmbtu_summary[date] = {
               date: date,
@@ -747,7 +757,7 @@ export class UseItOrLoseItService {
               count: 0
             };
           }
-          
+
           groups[groupKey].maximum_mmbtu_summary[date].total_value += value;
           groups[groupKey].maximum_mmbtu_summary[date].count += 1;
         });
@@ -771,70 +781,70 @@ export class UseItOrLoseItService {
           groups[groupKey].maximum_mmscfd_summary[date].count += 1;
         });
       }
-      
+
       return groups;
     }, {});
     return groupedContractPoints
   }
 
-   getAllocatedValueByAreaEntryExitZone(evidenData: any[], gasDay: dayjs.Dayjs, areaText: string, entryExitName: string, zoneText: string) {
-     let totalAllocatedValue = 0;
-     let count = 0;
-     const foundItems: any[] = [];
-     let hasValidValues = false;
+  getAllocatedValueByAreaEntryExitZone(evidenData: any[], gasDay: dayjs.Dayjs, areaText: string, entryExitName: string, zoneText: string) {
+    let totalAllocatedValue = 0;
+    let count = 0;
+    const foundItems: any[] = [];
+    let hasValidValues = false;
 
-     // Filter evidenData by gas_day that is in the same month as gasDay
-     const filteredEvidenData = evidenData.filter((item: any) => {
-       const itemGasDay = item.gas_day || item.date || item.day;
-       if (itemGasDay) {
-         const itemDate = dayjs(itemGasDay);
-         return itemDate.isValid() && itemDate.isSame(gasDay, 'month');
-       }
-       return false;
-     });
-     filteredEvidenData.forEach((item: any) => {
-       if (item.data && Array.isArray(item.data)) {
+    // Filter evidenData by gas_day that is in the same month as gasDay
+    const filteredEvidenData = evidenData.filter((item: any) => {
+      const itemGasDay = item.gas_day || item.date || item.day;
+      if (itemGasDay) {
+        const itemDate = dayjs(itemGasDay);
+        return itemDate.isValid() && itemDate.isSame(gasDay, 'month');
+      }
+      return false;
+    });
+    filteredEvidenData.forEach((item: any) => {
+      if (item.data && Array.isArray(item.data)) {
         item.data.map((contractDataItem: any) => {
           contractDataItem?.data?.map((dataItem: any) => {
-           const area = dataItem.area;
-           const entry_exit = dataItem.entry_exit;
-           const zone = dataItem.zone;
-           
-           // Check if this item matches the criteria
-           if (isMatch(area, areaText) && isMatch(entry_exit, entryExitName) && isMatch(zone, zoneText)) {
-             // Find allocatedValue in values array
-             if (dataItem.values && Array.isArray(dataItem.values)) {
-               const allocatedValueItem = dataItem.values.find((valueItem: any) => 
-                 valueItem.tag === 'allocatedValue'
-               );
-               
-               if (allocatedValueItem) {
-                 const value = allocatedValueItem.value;
-                 try {
-                   const numValue = Number(value);
-                   if (!isNaN(numValue) && isFinite(numValue)) {
-                     totalAllocatedValue += numValue;
-                     hasValidValues = true;
-                   }
-                 } catch (error) {
-                   // Invalid value, skip it
-                 }
-                 count += 1;
-                 foundItems.push({
-                   contract: item.contract,
-                   shipper: item.shipper,
-                   contract_point: dataItem.contract_point,
-                   allocated_value: allocatedValueItem.value
-                 });
-               }
-             }
-           }
-         });
-        })
-       }
-     });
+            const area = dataItem.area;
+            const entry_exit = dataItem.entry_exit;
+            const zone = dataItem.zone;
 
-     return {
+            // Check if this item matches the criteria
+            if (isMatch(area, areaText) && isMatch(entry_exit, entryExitName) && isMatch(zone, zoneText)) {
+              // Find allocatedValue in values array
+              if (dataItem.values && Array.isArray(dataItem.values)) {
+                const allocatedValueItem = dataItem.values.find((valueItem: any) =>
+                  valueItem.tag === 'allocatedValue'
+                );
+
+                if (allocatedValueItem) {
+                  const value = allocatedValueItem.value;
+                  try {
+                    const numValue = Number(value);
+                    if (!isNaN(numValue) && isFinite(numValue)) {
+                      totalAllocatedValue += numValue;
+                      hasValidValues = true;
+                    }
+                  } catch (error) {
+                    // Invalid value, skip it
+                  }
+                  count += 1;
+                  foundItems.push({
+                    contract: item.contract,
+                    shipper: item.shipper,
+                    contract_point: dataItem.contract_point,
+                    allocated_value: allocatedValueItem.value
+                  });
+                }
+              }
+            }
+          });
+        })
+      }
+    });
+
+    return {
       gasDay: gasDay.format('MM/YYYY'),
       area_text: areaText,
       entry_exit_name: entryExitName,
@@ -842,19 +852,19 @@ export class UseItOrLoseItService {
       total_allocated_value: hasValidValues ? totalAllocatedValue : undefined,
       count: count,
       found_items: foundItems
-     };
-   }
+    };
+  }
 
-   async findAll2(payload: any) {
+  async findAll2(payload: any) {
     const { startDate, shipper } = payload;
     const todayStart = getTodayStartAdd7().toDate();
     let lastDate = dayjs(startDate, 'MM/YYYY').endOf('month')
-    if(!lastDate.isValid()){
+    if (!lastDate.isValid()) {
       lastDate = dayjs().endOf('month')
     }
     const firstDate = lastDate.subtract(11, 'month').startOf('month')
 
-    const andInWhere : Prisma.contract_codeWhereInput[] = [
+    const andInWhere: Prisma.contract_codeWhereInput[] = [
       {
         status_capacity_request_management_id: {
           in: [2, 5]
@@ -900,7 +910,7 @@ export class UseItOrLoseItService {
         ],
       },
     ]
-    if(shipper){
+    if (shipper) {
       andInWhere.push({
         group_id: Number(shipper),
       })
@@ -952,7 +962,7 @@ export class UseItOrLoseItService {
 
     const pathEntryExit = pathManagement['path_management_config'].map(
       (e: any) => {
-        return { ...e, temps: JSON.parse(e['temps']) };
+        return { ...e, temps: this.safeParseJSON(e['temps']) };
       },
     );
 
@@ -985,17 +995,17 @@ export class UseItOrLoseItService {
 
     let evidenData: any[] = [];
     try {
-      
+
       // ถ้าเรียกไปเกินวันที่มี eviden จะ error ต้องรอเขาแก้ก่อน
       let endDate = lastDate;
-      if(lastDate.isAfter(dayjs(), 'day')){
+      if (lastDate.isAfter(dayjs(), 'day')) {
         endDate = dayjs();
       }
       const agent = new https.Agent({
         rejectUnauthorized: true,
       });
       const body = {
-        start_date:  firstDate.tz('Asia/Bangkok').format('YYYY-MM-DD'),
+        start_date: firstDate.tz('Asia/Bangkok').format('YYYY-MM-DD'),
         end_date: endDate.tz('Asia/Bangkok').format('YYYY-MM-DD'),
         // start_date: '2025-01-01',
         // end_date: '2025-02-28',
@@ -1004,7 +1014,7 @@ export class UseItOrLoseItService {
         skip: Number(0),
         limit: Number(1),
       }
-      if(shipperObj){
+      if (shipperObj) {
         body['shipper'] = shipperObj.id_name
       }
       const dataToGetLimit = JSON.stringify(body);
@@ -1025,18 +1035,18 @@ export class UseItOrLoseItService {
         if (Array.isArray(resToGetLimit.data) && resToGetLimit.data.length > 0) {
           let total_record = undefined;
           resToGetLimit.data.map((resEvidenData: any) => {
-            if(resEvidenData?.total_record) {
+            if (resEvidenData?.total_record) {
               try {
                 const total = Number(resEvidenData?.total_record);
-                if(!Number.isNaN(total)) {
-                  if(total_record) {
+                if (!Number.isNaN(total)) {
+                  if (total_record) {
                     total_record += total;
                   } else {
                     total_record = total;
                   }
                 }
               } catch (error) {
-                if(total_record) {
+                if (total_record) {
                   total_record += 0;
                 }
               }
@@ -1048,7 +1058,7 @@ export class UseItOrLoseItService {
         }
       }
       const data = JSON.stringify(body);
-  
+
       const config = {
         method: `${process.env.METHOD_EVIDEN}`,
         maxBodyLength: Infinity,
@@ -1067,18 +1077,18 @@ export class UseItOrLoseItService {
         if (Array.isArray(resEviden.data) && resEviden.data.length > 0) {
           let total_record = undefined;
           resEviden.data.map((resEvidenData: any) => {
-            if(resEvidenData?.total_record) {
+            if (resEvidenData?.total_record) {
               try {
                 const totalRecord = Number(resEvidenData?.total_record);
-                if(!Number.isNaN(totalRecord)) {
-                  if(total_record) {
+                if (!Number.isNaN(totalRecord)) {
+                  if (total_record) {
                     total_record += totalRecord;
                   } else {
                     total_record = totalRecord;
                   }
                 }
               } catch (error) {
-                if(total_record) {
+                if (total_record) {
                   total_record += 0;
                 }
               }
@@ -1105,31 +1115,31 @@ export class UseItOrLoseItService {
     for (let ic = 0; ic < contractCode.length; ic++) {
       const convertDataFull =
         contractCode[ic]?.booking_version[0]?.booking_full_json[0];
-      convertDataFull['data_temp'] = JSON.parse(
+      convertDataFull['data_temp'] = this.safeParseJSON(
         contractCode[ic]?.booking_version[0]?.booking_full_json[0]['data_temp'],
       );
 
       const convertData = (
         contractCode[ic]?.booking_version[0]?.booking_row_json || []
       ).map((e: any) => {
-        return { ...e, data_temp: JSON.parse(e['data_temp']) };
+        return { ...e, data_temp: this.safeParseJSON(e['data_temp']) };
       });
 
       const headMMBTU =
         convertDataFull['data_temp']['headerEntry'][
-          'Capacity Daily Booking (MMBTU/d)'
+        'Capacity Daily Booking (MMBTU/d)'
         ];
       const headMMSCFD =
         convertDataFull['data_temp']['headerEntry'][
-          'Capacity Daily Booking (MMscfd)'
+        'Capacity Daily Booking (MMscfd)'
         ];
       const headMMBTUH =
         convertDataFull['data_temp']['headerEntry'][
-          'Maximum Hour Booking (MMBTU/h)'
+        'Maximum Hour Booking (MMBTU/h)'
         ];
       const headMMSCFH =
         convertDataFull['data_temp']['headerEntry'][
-          'Maximum Hour Booking (MMscfh)'
+        'Maximum Hour Booking (MMscfh)'
         ];
 
       const keysMMBTU = Object.keys(headMMBTU)
@@ -1230,7 +1240,7 @@ export class UseItOrLoseItService {
 
         const fullData: any =
           contractCode[ic]?.booking_version[0]?.booking_full_json[0]?.[
-            'data_temp'
+          'data_temp'
           ] || null;
 
         const headEntry =
@@ -1302,15 +1312,15 @@ export class UseItOrLoseItService {
               const ed =
                 kix === keysMMBTU.length - 1
                   ? dayjs(eSum['data_temp'][fromTo + 1], 'DD/MM/YYYY')
-                      .subtract(1, 'day')
-                      .format('DD/MM/YYYY')
+                    .subtract(1, 'day')
+                    .format('DD/MM/YYYY')
                   : keysMMBTU.length > 0
                     ? dayjs(keysMMBTU[kix + 1]?.date, 'DD/MM/YYYY')
-                        .subtract(1, 'day')
-                        .format('DD/MM/YYYY')
+                      .subtract(1, 'day')
+                      .format('DD/MM/YYYY')
                     : dayjs(eSum['data_temp'][fromTo + 1], 'DD/MM/YYYY')
-                        .subtract(1, 'day')
-                        .format('DD/MM/YYYY');
+                      .subtract(1, 'day')
+                      .format('DD/MM/YYYY');
               return {
                 ...ks,
                 value:
@@ -1328,15 +1338,15 @@ export class UseItOrLoseItService {
               const ed =
                 kix === keysMMBTH.length - 1
                   ? dayjs(eSum['data_temp'][fromTo + 1], 'DD/MM/YYYY')
-                      .subtract(1, 'day')
-                      .format('DD/MM/YYYY')
+                    .subtract(1, 'day')
+                    .format('DD/MM/YYYY')
                   : keysMMBTH.length > 0
                     ? dayjs(keysMMBTH[kix + 1]?.date, 'DD/MM/YYYY')
-                        .subtract(1, 'day')
-                        .format('DD/MM/YYYY')
+                      .subtract(1, 'day')
+                      .format('DD/MM/YYYY')
                     : dayjs(eSum['data_temp'][fromTo + 1], 'DD/MM/YYYY')
-                        .subtract(1, 'day')
-                        .format('DD/MM/YYYY');
+                      .subtract(1, 'day')
+                      .format('DD/MM/YYYY');
               return {
                 ...ks,
                 value:
@@ -1350,68 +1360,68 @@ export class UseItOrLoseItService {
           contracted_mmscfd_array:
             eSum['entry_exit_id'] === 1
               ? keysMMSCFD.map((ks: any, kix: number) => {
-                  const st =
-                    kix === 0
-                      ? eSum['data_temp'][fromTo]
-                      : keysMMSCFD[kix]?.date;
-                  const ed =
-                    kix === keysMMSCFD.length - 1
-                      ? dayjs(eSum['data_temp'][fromTo + 1], 'DD/MM/YYYY')
-                          .subtract(1, 'day')
-                          .format('DD/MM/YYYY')
-                      : keysMMSCFD.length > 0
-                        ? dayjs(keysMMSCFD[kix + 1]?.date, 'DD/MM/YYYY')
-                            .subtract(1, 'day')
-                            .format('DD/MM/YYYY')
-                        : dayjs(eSum['data_temp'][fromTo + 1], 'DD/MM/YYYY')
-                            .subtract(1, 'day')
-                            .format('DD/MM/YYYY');
-                  return {
-                    ...ks,
-                    value:
-                      (!!result[ks['key']] &&
-                        Number(result[ks['key']].replace(/,/g, ''))) ||
-                      null,
-                    start_date: st,
-                    end_date: ed,
-                  };
-                })
+                const st =
+                  kix === 0
+                    ? eSum['data_temp'][fromTo]
+                    : keysMMSCFD[kix]?.date;
+                const ed =
+                  kix === keysMMSCFD.length - 1
+                    ? dayjs(eSum['data_temp'][fromTo + 1], 'DD/MM/YYYY')
+                      .subtract(1, 'day')
+                      .format('DD/MM/YYYY')
+                    : keysMMSCFD.length > 0
+                      ? dayjs(keysMMSCFD[kix + 1]?.date, 'DD/MM/YYYY')
+                        .subtract(1, 'day')
+                        .format('DD/MM/YYYY')
+                      : dayjs(eSum['data_temp'][fromTo + 1], 'DD/MM/YYYY')
+                        .subtract(1, 'day')
+                        .format('DD/MM/YYYY');
+                return {
+                  ...ks,
+                  value:
+                    (!!result[ks['key']] &&
+                      Number(result[ks['key']].replace(/,/g, ''))) ||
+                    null,
+                  start_date: st,
+                  end_date: ed,
+                };
+              })
               : [],
           maximum_mmscfd_array:
             eSum['entry_exit_id'] === 1
               ? keysMMSCFH.map((ks: any, kix: number) => {
-                  const st =
-                    kix === 0
-                      ? eSum['data_temp'][fromTo]
-                      : keysMMSCFH[kix]?.date;
-                  const ed =
-                    kix === keysMMSCFH.length - 1
-                      ? dayjs(eSum['data_temp'][fromTo + 1], 'DD/MM/YYYY')
-                          .subtract(1, 'day')
-                          .format('DD/MM/YYYY')
-                      : keysMMSCFH.length > 0
-                        ? dayjs(keysMMSCFH[kix + 1]?.date, 'DD/MM/YYYY')
-                            .subtract(1, 'day')
-                            .format('DD/MM/YYYY')
-                        : dayjs(eSum['data_temp'][fromTo + 1], 'DD/MM/YYYY')
-                            .subtract(1, 'day')
-                            .format('DD/MM/YYYY');
-                  return {
-                    ...ks,
-                    value:
-                      (!!result[ks['key']] &&
-                        Number(result[ks['key']].replace(/,/g, ''))) ||
-                      null,
-                    start_date: st,
-                    end_date: ed,
-                  };
-                })
+                const st =
+                  kix === 0
+                    ? eSum['data_temp'][fromTo]
+                    : keysMMSCFH[kix]?.date;
+                const ed =
+                  kix === keysMMSCFH.length - 1
+                    ? dayjs(eSum['data_temp'][fromTo + 1], 'DD/MM/YYYY')
+                      .subtract(1, 'day')
+                      .format('DD/MM/YYYY')
+                    : keysMMSCFH.length > 0
+                      ? dayjs(keysMMSCFH[kix + 1]?.date, 'DD/MM/YYYY')
+                        .subtract(1, 'day')
+                        .format('DD/MM/YYYY')
+                      : dayjs(eSum['data_temp'][fromTo + 1], 'DD/MM/YYYY')
+                        .subtract(1, 'day')
+                        .format('DD/MM/YYYY');
+                return {
+                  ...ks,
+                  value:
+                    (!!result[ks['key']] &&
+                      Number(result[ks['key']].replace(/,/g, ''))) ||
+                    null,
+                  start_date: st,
+                  end_date: ed,
+                };
+              })
               : [],
           value: transformedData,
         };
       });
 
-      if(setData && setData.length > 0){
+      if (setData && setData.length > 0) {
         allContractPointInContractList.push(...setData)
       }
 
@@ -1477,8 +1487,8 @@ export class UseItOrLoseItService {
       exs['data'] = exs['data'].map((exss: any) => {
         const value3Et = this.generateDateData12BF(startDate);
         const value3Ex = this.generateDateData12BF(startDate);
-        const oldEntry= exss['entryData']
-        const oldExit= exss['exitData']
+        const oldEntry = exss['entryData']
+        const oldExit = exss['exitData']
         const oldEntryAreaText = oldEntry?.area_text
         const oldEntryEntryExitName = oldEntry?.entry_exit?.name || oldEntry?.entry_exit_id || 'Unknown'
         const oldEntryZoneText = oldEntry?.zone_text
@@ -1507,22 +1517,22 @@ export class UseItOrLoseItService {
 
             // Get allocatedValue summary for specific area, entry_exit, and zone
             const allocatedSummary = this.getAllocatedValueByAreaEntryExitZone(
-              evidenData, 
-              gasDay, 
-              oldEntryAreaText, 
-              oldEntryEntryExitName, 
+              evidenData,
+              gasDay,
+              oldEntryAreaText,
+              oldEntryEntryExitName,
               oldEntryZoneText
             );
-            
-            if(totalMmbtuByArea && gasDay.isValid() && allocatedSummary.total_allocated_value != undefined){
-              value3Et[monthYear] = { 
+
+            if (totalMmbtuByArea && gasDay.isValid() && allocatedSummary.total_allocated_value != undefined) {
+              value3Et[monthYear] = {
                 ...valueOldEntry[matchingKey],
                 allocated_value: allocatedSummary.total_allocated_value / totalMmbtuByArea
               }
-             }
-             else{
-            value3Et[monthYear] = valueOldEntry[matchingKey];
-             }
+            }
+            else {
+              value3Et[monthYear] = valueOldEntry[matchingKey];
+            }
           }
         });
 
@@ -1541,24 +1551,24 @@ export class UseItOrLoseItService {
 
             // Get allocatedValue summary for specific area, entry_exit, and zone
             const allocatedSummary = this.getAllocatedValueByAreaEntryExitZone(
-              evidenData, 
-              gasDay, 
-              oldExitAreaText, 
-              oldExitEntryExitName, 
+              evidenData,
+              gasDay,
+              oldExitAreaText,
+              oldExitEntryExitName,
               oldExitZoneText
             );
 
 
-            
-            if(totalMmbtuByArea && gasDay.isValid() && allocatedSummary.total_allocated_value != undefined){
-              value3Et[monthYear] = { 
+
+            if (totalMmbtuByArea && gasDay.isValid() && allocatedSummary.total_allocated_value != undefined) {
+              value3Et[monthYear] = {
                 ...valueOldEntry[matchingKey],
                 allocated_value: allocatedSummary.total_allocated_value / totalMmbtuByArea
               }
-             }
-             else{
-            value3Ex[monthYear] = valueOldExit[matchingKey];
-             }
+            }
+            else {
+              value3Ex[monthYear] = valueOldExit[matchingKey];
+            }
           }
         });
 
@@ -1616,7 +1626,7 @@ export class UseItOrLoseItService {
       dataArr.push({
         release_summary_id: summary?.id,
         entry_exit_id: Number(data[i]?.entry_exit_id),
-      
+
         temp_contract_point: data[i]?.contract_point,
         temp_area: data[i]?.area_text,
         temp_zone: data[i]?.zone_text,
@@ -1634,7 +1644,7 @@ export class UseItOrLoseItService {
         create_date: dateCre.toDate(),
         create_by: Number(userId),
         create_date_num: getTodayNowAdd7().unix(),
-       
+
       });
     }
     await this.prisma.release_summary_detail.createMany({

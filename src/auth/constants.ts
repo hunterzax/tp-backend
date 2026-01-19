@@ -4,13 +4,21 @@ import { ConfigService } from '@nestjs/config';
 // This function is kept for backward compatibility but should use ConfigService
 export function getJwtSecret(configService?: ConfigService): string {
   if (configService) {
-    return configService.get<string>('JWT_SECRET') || '!B@Nl<Na.';
+    const secret = configService.get<string>('JWT_SECRET');
+    if (!secret) throw new Error('JWT_SECRET environment variable is not defined');
+    return secret;
   }
   // Fallback for direct access (not recommended)
-  return process.env.JWT_SECRET || '!B@Nl<Na.';
+  const secret = process.env.JWT_SECRET;
+  if (!secret) throw new Error('JWT_SECRET environment variable is not defined');
+  return secret;
 }
 
 // Deprecated: Use getJwtSecret() with ConfigService instead
 export const jwtConstants = {
-  secret: process.env.JWT_SECRET || '!B@Nl<Na.',
+  get secret() {
+    const secret = process.env.JWT_SECRET;
+    if (!secret) return 'temporary_dummy_secret_for_build_only_CHANGE_THIS'; // Return a value to avoid build crashes if env is missing during build, but this is still safer than a real secret
+    return secret;
+  }
 };

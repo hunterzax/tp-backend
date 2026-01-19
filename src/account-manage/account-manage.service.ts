@@ -31,7 +31,17 @@ export class AccountManageService {
     private jwtService: JwtService,
     private prisma: PrismaService,
     private readonly emailClientService: EmailClientService,
-  ) {}
+  ) { }
+
+  private safeParseJSON(data: any, defaultValue: any = null) {
+    if (!data) return defaultValue;
+    try {
+      return typeof data === 'string' ? JSON.parse(data) : data;
+    } catch (e) {
+      console.error('JSON parse error:', e);
+      return defaultValue;
+    }
+  }
 
   async loginLogs(id: any, event: any, temps: any) {
     const loginLogs = await this.prisma.login_logs.create({
@@ -140,12 +150,12 @@ export class AccountManageService {
           },
         },
       });
-      const isInRangeRole = dayjs(todayStart).isBetween(
+      const isInRangeRole = (!!roleExp?.start_date && !!roleExp?.end_date) ? dayjs(todayStart).isBetween(
         dayjs(roleExp?.start_date),
         dayjs(roleExp?.end_date),
         null,
         '[]',
-      );
+      ) : false;
       if (!isInRangeRole) {
         throw new HttpException(
           {
@@ -166,12 +176,12 @@ export class AccountManageService {
           },
         },
       });
-      const isInRangeGroup = dayjs(todayStart).isBetween(
+      const isInRangeGroup = (!!groupExp?.start_date && !!groupExp?.end_date) ? dayjs(todayStart).isBetween(
         dayjs(groupExp?.start_date),
         dayjs(groupExp?.end_date),
         null,
         '[]',
-      );
+      ) : false;
       if (!isInRangeGroup) {
         throw new HttpException(
           {
@@ -279,24 +289,24 @@ export class AccountManageService {
             },
           },
           account_password_check: {
-            orderBy:{
+            orderBy: {
               create_date: "asc"
             }
           },
         },
       });
 
-      if (account?.account_password_check.length > 0) {
+      if (account?.account_password_check?.length > 0) {
         const dateCk =
           account?.account_password_check[
-            account?.account_password_check.length - 1
+            account?.account_password_check?.length - 1
           ]?.create_date;
-          // console.log('account : ', account);
-          // console.log('dateCk : ', dateCk);
-          // console.log(getTodayNowAdd7().toDate());
-          // console.log(dayjs(getTodayNowAdd7().toDate()).diff(dayjs(dateCk), 'day'));
-        const isMoreThan90Days =
-          dayjs(getTodayNowAdd7().toDate()).diff(dayjs(dateCk), 'day') > 90;
+        // console.log('account : ', account);
+        // console.log('dateCk : ', dateCk);
+        // console.log(getTodayNowAdd7().toDate());
+        // console.log(dayjs(getTodayNowAdd7().toDate()).diff(dayjs(dateCk), 'day'));
+        const isMoreThan90Days = dateCk ?
+          dayjs(getTodayNowAdd7().toDate()).diff(dayjs(dateCk), 'day') > 90 : false;
         if (isMoreThan90Days) {
           throw new HttpException(
             {
@@ -1036,8 +1046,8 @@ export class AccountManageService {
       let account = null;
       if (
         account_manage?.mode_account_id === 1 ||
-        findAcc?.account_manage[0]?.mode_account_id ===
-          account_manage?.mode_account_id
+        (findAcc?.account_manage?.[0]?.mode_account_id ===
+          account_manage?.mode_account_id)
       ) {
         const password_gen_flag =
           account_manage?.mode_account_id === 1
@@ -1160,9 +1170,9 @@ export class AccountManageService {
       // console.log('Removed Items:', removedItems); // ผลลัพธ์จะเป็น [1]
 
       if (
-        findAcc?.account_manage[0]?.mode_account_id !==
-          account_manage?.mode_account_id ||
-        removedItems.length > 0
+        findAcc?.account_manage?.[0]?.mode_account_id !==
+        account_manage?.mode_account_id ||
+        removedItems?.length > 0
       ) {
         for (let i = 0; i < removedItems.length; i++) {
           await this.prisma.system_login_account.deleteMany({

@@ -53,7 +53,17 @@ export class EventService {
   constructor(
     private jwtService: JwtService,
     private prisma: PrismaService,
-  ) {}
+  ) { }
+
+  private safeParseJSON(data: any, defaultValue: any = null) {
+    if (!data) return defaultValue;
+    try {
+      return typeof data === 'string' ? JSON.parse(data) : data;
+    } catch (e) {
+      console.error('JSON parse error:', e);
+      return defaultValue;
+    }
+  }
 
   async useReqs(req: any) {
     const ip = req.headers['x-forwarded-for'] || req.ip;
@@ -94,26 +104,27 @@ export class EventService {
   // menus_id: 107, // Off-spec Gas
   // menus_id: 106, // Emergency/Difficult Day
   // menus_id: 1013, // OFO
-  async tesoNotiCenter(menu_id:any){
-      const roleMenuAllocationManagementNoticeEmail =
-    await this.prisma.account.findMany({
-      where: {
-        id: {
-          not: 99999,
-        },
-        account_manage: {
-          some: {
-            account_role: {
-              some: {
-                role: {
-                  user_type_id: 2,
-                  menus_config: {
-                    some: {
-                      menus_id: menu_id,
-                      // menus_id: 107, // Off-spec Gas
-                      // menus_id: 106, // Emergency/Difficult Day
-                      // menus_id: 1013, // OFO
-                      f_noti_email: 1,
+  async tesoNotiCenter(menu_id: any) {
+    const roleMenuAllocationManagementNoticeEmail =
+      await this.prisma.account.findMany({
+        where: {
+          id: {
+            not: 99999,
+          },
+          account_manage: {
+            some: {
+              account_role: {
+                some: {
+                  role: {
+                    user_type_id: 2,
+                    menus_config: {
+                      some: {
+                        menus_id: menu_id,
+                        // menus_id: 107, // Off-spec Gas
+                        // menus_id: 106, // Emergency/Difficult Day
+                        // menus_id: 1013, // OFO
+                        f_noti_email: 1,
+                      },
                     },
                   },
                 },
@@ -121,29 +132,28 @@ export class EventService {
             },
           },
         },
-      },
-      select: {
-        id: true,
-        email: true,
-        first_name: true,
-        last_name: true,
-        telephone: true,
-        account_manage: {
-          include: {
-            account_role: {
-              include: {
-                role: true,
+        select: {
+          id: true,
+          email: true,
+          first_name: true,
+          last_name: true,
+          telephone: true,
+          account_manage: {
+            include: {
+              account_role: {
+                include: {
+                  role: true,
+                },
               },
             },
           },
         },
-      },
-      orderBy: {
-        id: 'asc',
-      },
-    });
+        orderBy: {
+          id: 'asc',
+        },
+      });
 
-    return roleMenuAllocationManagementNoticeEmail?.map((e:any) => e?.email)
+    return roleMenuAllocationManagementNoticeEmail?.map((e: any) => e?.email)
   }
 
   // prover email
@@ -456,33 +466,34 @@ export class EventService {
         },
       },
     });
-    const userTypeId = group.user_type?.id;
+    if (!group) return []; // or appropriate empty response
+    const userTypeId = group?.user_type?.id;
     const groupId = group?.id;
 
     const eventDateCondition =
       !!eventDateFrom && !!eventDateTo
         ? {
-            event_date: {
-              gte: getTodayNowYYYYMMDDDfaultAdd7(eventDateFrom).toDate(),
-              lte: getTodayNowYYYYMMDDDfaultAdd7(eventDateTo)
-                .endOf('day')
-                .toDate(),
-            },
-          }
+          event_date: {
+            gte: getTodayNowYYYYMMDDDfaultAdd7(eventDateFrom).toDate(),
+            lte: getTodayNowYYYYMMDDDfaultAdd7(eventDateTo)
+              .endOf('day')
+              .toDate(),
+          },
+        }
         : eventDateFrom
           ? {
-              event_date: {
-                gte: getTodayNowYYYYMMDDDfaultAdd7(eventDateFrom).toDate(),
-              },
-            }
+            event_date: {
+              gte: getTodayNowYYYYMMDDDfaultAdd7(eventDateFrom).toDate(),
+            },
+          }
           : eventDateTo
             ? {
-                event_date: {
-                  lte: getTodayNowYYYYMMDDDfaultAdd7(eventDateTo)
-                    .endOf('day')
-                    .toDate(),
-                },
-              }
+              event_date: {
+                lte: getTodayNowYYYYMMDDDfaultAdd7(eventDateTo)
+                  .endOf('day')
+                  .toDate(),
+              },
+            }
             : {};
 
     // // STEP 1: ดึง id ทั้งหมด (ตามเงื่อนไข)
@@ -1541,13 +1552,12 @@ export class EventService {
           <li>Event Code: ${docId?.event_runnumber?.event_nember || ''}</li>
           <li>จุดที่ส่งเข้าที่เกิดเหตุ :  ${docId?.input_delivery_point_at_the_scene || ''}</li>
           <li>วัน/เวลาที่เกิดเหตุ :  ${docId?.input_date_time_of_the_incident || ''}</li>
-          ${
-            (event_doc_status_id === 5 &&
-              `
+          ${(event_doc_status_id === 5 &&
+          `
             <li>Comment :  ${input_note || ''}</li>
             `) ||
-            ''
-          }
+        ''
+        }
         </ul>
       </div>
       `,
@@ -1594,7 +1604,7 @@ export class EventService {
 
       return {
         ...nE,
-        row: temp ? JSON.parse(temp) : null,
+        row: this.safeParseJSON(temp),
       };
     });
     return nresData;
@@ -1668,8 +1678,8 @@ export class EventService {
     const fromFullname =
       event_document_action[event_document_action.length - 1]?.create_by_account
         ?.first_name &&
-      event_document_action[event_document_action.length - 1]?.create_by_account
-        ?.last_name
+        event_document_action[event_document_action.length - 1]?.create_by_account
+          ?.last_name
         ? `${event_document_action[event_document_action.length - 1]?.create_by_account?.first_name} ${event_document_action[event_document_action.length - 1]?.create_by_account?.last_name}`
         : '';
     const fromCompany =
@@ -1696,7 +1706,7 @@ export class EventService {
     );
     const toFullname =
       toAction?.create_by_account?.first_name &&
-      toAction?.create_by_account?.last_name
+        toAction?.create_by_account?.last_name
         ? `${toAction?.create_by_account?.first_name} ${toAction?.create_by_account?.last_name}`
         : '';
     const toCompany = 'บริษัท ปตท.จำกัด (มหาชน)';
@@ -1999,15 +2009,15 @@ export class EventService {
                     //   ],
                     //   margin: [0, 0, 0, 2],
                     // },
-                     {
-                          text: [
-                            'หมายเหตุ : ',
-                            {
-                              text:
-                                input_note ? input_note : '____________',
-                              decoration: input_note && 'underline',
-                            },
-                          ],
+                    {
+                      text: [
+                        'หมายเหตุ : ',
+                        {
+                          text:
+                            input_note ? input_note : '____________',
+                          decoration: input_note && 'underline',
+                        },
+                      ],
                       margin: [0, 5, 0, 2],
                     },
                     // {
@@ -2046,18 +2056,18 @@ export class EventService {
                     // https://app.clickup.com/t/86eum0nv1
                     fromSignature
                       ? {
-                          columns: [
-                            { text: 'แจ้งโดย ', width: 'auto', alignment: 'right' },
-                            {
-                              image: fromSignature, // base64 หรือ path
-                              width: 50,
-                              alignment: 'center',
-                            },
-                            { text: '', width: 'auto', alignment: 'left' },
-                          ],
-                          columnGap: 15, // ระยะห่างระหว่างวงเล็บกับภาพ
-                          margin: [0, 2, 0, 5], // ปรับระยะรอบภาพ
-                        }
+                        columns: [
+                          { text: 'แจ้งโดย ', width: 'auto', alignment: 'right' },
+                          {
+                            image: fromSignature, // base64 หรือ path
+                            width: 50,
+                            alignment: 'center',
+                          },
+                          { text: '', width: 'auto', alignment: 'left' },
+                        ],
+                        columnGap: 15, // ระยะห่างระหว่างวงเล็บกับภาพ
+                        margin: [0, 2, 0, 5], // ปรับระยะรอบภาพ
+                      }
                       : { text: `แจ้งโดย ` },
                     { text: fromFullname ? `( ${fromFullname} )` : `(                                   )` },
 
@@ -2089,18 +2099,18 @@ export class EventService {
                     { text: `รับทราบโดย ${toFullname}` },
                     toSignature
                       ? {
-                          columns: [
-                            { text: '(', width: 'auto', alignment: 'right' },
-                            {
-                              image: toSignature, // base64 หรือ path
-                              width: 50,
-                              alignment: 'center',
-                            },
-                            { text: ')', width: 'auto', alignment: 'left' },
-                          ],
-                          columnGap: 5, // ระยะห่างระหว่างวงเล็บกับภาพ
-                          margin: [0, 2, 0, 5], // ปรับระยะรอบภาพ
-                        }
+                        columns: [
+                          { text: '(', width: 'auto', alignment: 'right' },
+                          {
+                            image: toSignature, // base64 หรือ path
+                            width: 50,
+                            alignment: 'center',
+                          },
+                          { text: ')', width: 'auto', alignment: 'left' },
+                        ],
+                        columnGap: 5, // ระยะห่างระหว่างวงเล็บกับภาพ
+                        margin: [0, 2, 0, 5], // ปรับระยะรอบภาพ
+                      }
                       : { text: `(                                   )` },
                     {
                       text: `หน่วยงาน ${rdoc1Find?.event_doc_status?.id === 2 ? ' ' : toCompany} (ผู้ให้บริการ)`,
@@ -2712,12 +2722,12 @@ export class EventService {
           };
         });
 
-        const maxGroupId = (payload?.document41 ?? []).reduce((mx, r) => {
-          const n = Number(r?.group_id);
-          return Number.isFinite(n) && n > mx ? n : mx;
-        }, -Infinity) ?? null;
+      const maxGroupId = (payload?.document41 ?? []).reduce((mx, r) => {
+        const n = Number(r?.group_id);
+        return Number.isFinite(n) && n > mx ? n : mx;
+      }, -Infinity) ?? null;
       for (let i = 0; i < payload?.document41?.length; i++) {
-        if(payload?.document41?.[i]?.seq === maxGroupId){ // ส่งแค่ version ล่าสุด https://app.clickup.com/t/86eum0nzk
+        if (payload?.document41?.[i]?.seq === maxGroupId) { // ส่งแค่ version ล่าสุด https://app.clickup.com/t/86eum0nzk
           const excelBuffer = await this.doc41PDF(
             payload?.document41?.[i]?.id,
             null,
@@ -2735,7 +2745,7 @@ export class EventService {
           const sendEmail = [payload?.document41?.[i]?.group?.email, ...sGm]?.filter(
             (f: any) => f !== null,
           );
-  
+
           const templateDocCreate = {
             cc: emailUse?.ccEmail,
             header: header,
@@ -3096,13 +3106,13 @@ export class EventService {
           };
         });
 
-       const maxGroupId = (payload?.document7 ?? []).reduce((mx, r) => {
-          const n = Number(r?.group_id);
-          return Number.isFinite(n) && n > mx ? n : mx;
-        }, -Infinity) ?? null;
+      const maxGroupId = (payload?.document7 ?? []).reduce((mx, r) => {
+        const n = Number(r?.group_id);
+        return Number.isFinite(n) && n > mx ? n : mx;
+      }, -Infinity) ?? null;
 
       for (let i = 0; i < payload?.document7?.length; i++) {
-        if(payload?.document7?.[i]?.seq === maxGroupId){
+        if (payload?.document7?.[i]?.seq === maxGroupId) {
           const excelBuffer = await this.doc7PDF(
             payload?.document7?.[i]?.id,
             null,
@@ -3608,80 +3618,80 @@ export class EventService {
 
       const createEventRunnumber = !ref_document
         ? await prisma.event_runnumber.create({
-            data: {
-              event_nember: eventNumber,
-              event_date: getTodayNowAdd7().toDate(),
-              event_status: {
-                connect: {
-                  id: 1,
-                },
-              },
-              group: {
-                connect: {
-                  id: groupId,
-                },
-              },
-              user_type: {
-                connect: {
-                  id: userTypeId,
-                },
-              },
-              create_date: getTodayNowAdd7().toDate(),
-              create_date_num: getTodayNowAdd7().unix(),
-              create_by_account: {
-                connect: {
-                  id: Number(userId),
-                },
+          data: {
+            event_nember: eventNumber,
+            event_date: getTodayNowAdd7().toDate(),
+            event_status: {
+              connect: {
+                id: 1,
               },
             },
-            include: {
-              event_status: true,
-              group: true,
-              user_type: true,
-              create_by_account: {
-                select: {
-                  id: true,
-                  email: true,
-                  first_name: true,
-                  last_name: true,
-                },
-              },
-              update_by_account: {
-                select: {
-                  id: true,
-                  email: true,
-                  first_name: true,
-                  last_name: true,
-                },
+            group: {
+              connect: {
+                id: groupId,
               },
             },
-          })
+            user_type: {
+              connect: {
+                id: userTypeId,
+              },
+            },
+            create_date: getTodayNowAdd7().toDate(),
+            create_date_num: getTodayNowAdd7().unix(),
+            create_by_account: {
+              connect: {
+                id: Number(userId),
+              },
+            },
+          },
+          include: {
+            event_status: true,
+            group: true,
+            user_type: true,
+            create_by_account: {
+              select: {
+                id: true,
+                email: true,
+                first_name: true,
+                last_name: true,
+              },
+            },
+            update_by_account: {
+              select: {
+                id: true,
+                email: true,
+                first_name: true,
+                last_name: true,
+              },
+            },
+          },
+        })
         : await prisma.event_runnumber.findFirst({
-            where: {
-              id: Number(ref_document),
-            },
-            include: {
-              event_status: true,
-              group: true,
-              user_type: true,
-              create_by_account: {
-                select: {
-                  id: true,
-                  email: true,
-                  first_name: true,
-                  last_name: true,
-                },
-              },
-              update_by_account: {
-                select: {
-                  id: true,
-                  email: true,
-                  first_name: true,
-                  last_name: true,
-                },
+          where: {
+            id: Number(ref_document),
+          },
+          include: {
+            event_status: true,
+            group: true,
+            user_type: true,
+            create_by_account: {
+              select: {
+                id: true,
+                email: true,
+                first_name: true,
+                last_name: true,
               },
             },
-          });
+            update_by_account: {
+              select: {
+                id: true,
+                email: true,
+                first_name: true,
+                last_name: true,
+              },
+            },
+          },
+        });
 
       // -----
 
@@ -4436,8 +4446,26 @@ export class EventService {
 
     const group = shipperIds
       ? await this.prisma.group.findFirst({
+        where: {
+          id: shipperIds,
+        },
+        select: {
+          id: true,
+          user_type: {
+            select: {
+              id: true,
+            },
+          },
+        },
+      })
+      : userId
+        ? await this.prisma.group.findFirst({
           where: {
-            id: shipperIds,
+            account_manage: {
+              some: {
+                account_id: Number(userId),
+              },
+            },
           },
           select: {
             id: true,
@@ -4448,24 +4476,6 @@ export class EventService {
             },
           },
         })
-      : userId
-        ? await this.prisma.group.findFirst({
-            where: {
-              account_manage: {
-                some: {
-                  account_id: Number(userId),
-                },
-              },
-            },
-            select: {
-              id: true,
-              user_type: {
-                select: {
-                  id: true,
-                },
-              },
-            },
-          })
         : groupObj;
     console.log('group : ', group);
     const userTypeId = group?.user_type?.id;
@@ -4476,243 +4486,243 @@ export class EventService {
     const result =
       userTypeId === 3
         ? await this.prisma.event_document.findFirst({
-            where: {
-              event_runnumber_id: Number(id),
-              event_doc_master_id: 2,
-              ref_document: {
-                not: null,
-              },
-              group_id: Number(groupId),
+          where: {
+            event_runnumber_id: Number(id),
+            event_doc_master_id: 2,
+            ref_document: {
+              not: null,
             },
-            include: {
-              event_runnumber: {
-                include: {
-                  event_status: true,
-                },
+            group_id: Number(groupId),
+          },
+          include: {
+            event_runnumber: {
+              include: {
+                event_status: true,
               },
-              event_doc_master: true,
-              event_doc_status: true,
-              group: true,
-              user_type: true,
-              create_by_account: {
-                select: {
-                  id: true,
-                  email: true,
-                  first_name: true,
-                  last_name: true,
-                  signature_base_64: true,
-                },
+            },
+            event_doc_master: true,
+            event_doc_status: true,
+            group: true,
+            user_type: true,
+            create_by_account: {
+              select: {
+                id: true,
+                email: true,
+                first_name: true,
+                last_name: true,
+                signature_base_64: true,
               },
-              update_by_account: {
-                select: {
-                  id: true,
-                  email: true,
-                  first_name: true,
-                  last_name: true,
-                  signature_base_64: true,
-                },
+            },
+            update_by_account: {
+              select: {
+                id: true,
+                email: true,
+                first_name: true,
+                last_name: true,
+                signature_base_64: true,
               },
-              event_document_file: {
-                include: {
-                  create_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                    },
-                  },
-                  update_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                    },
+            },
+            event_document_file: {
+              include: {
+                create_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
                   },
                 },
-                orderBy: { id: 'desc' },
-              },
-              event_document_file_pdf: {
-                include: {
-                  create_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                    },
-                  },
-                  update_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                    },
+                update_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
                   },
                 },
               },
-              event_document_action: {
-                include: {
-                  event_doc_master: true,
-                  event_doc_status: true,
-                  group: true,
-                  user_type: true,
-                  create_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                      signature: true,
-                      signature_base_64: true,
-                    },
-                  },
-                  update_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                      signature: true,
-                      signature_base_64: true,
-                    },
+              orderBy: { id: 'desc' },
+            },
+            event_document_file_pdf: {
+              include: {
+                create_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
                   },
                 },
-                orderBy: {
-                  id: 'desc',
+                update_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                  },
                 },
               },
             },
-          })
+            event_document_action: {
+              include: {
+                event_doc_master: true,
+                event_doc_status: true,
+                group: true,
+                user_type: true,
+                create_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                    signature: true,
+                    signature_base_64: true,
+                  },
+                },
+                update_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                    signature: true,
+                    signature_base_64: true,
+                  },
+                },
+              },
+              orderBy: {
+                id: 'desc',
+              },
+            },
+          },
+        })
         : await this.prisma.event_document.findFirst({
-            where: {
-              event_runnumber_id: Number(id),
-              event_doc_master_id: 2,
-              ref_document: null,
-            },
-            include: {
-              event_runnumber: {
-                include: {
-                  event_status: true,
-                  event_document: {
-                    include: {
-                      event_doc_status: true,
-                      group: true,
-                      user_type: true,
-                    },
-                    where: {
-                      user_type: {
-                        id: 3,
-                      },
-                      event_doc_master_id: 2,
-                    },
+          where: {
+            event_runnumber_id: Number(id),
+            event_doc_master_id: 2,
+            ref_document: null,
+          },
+          include: {
+            event_runnumber: {
+              include: {
+                event_status: true,
+                event_document: {
+                  include: {
+                    event_doc_status: true,
+                    group: true,
+                    user_type: true,
                   },
-                },
-              },
-              event_doc_master: true,
-              event_doc_status: true,
-              event_document_cc_email: true,
-              event_document_email_group_for_event: {
-                include: {
-                  edit_email_group_for_event: true,
-                },
-              },
-              group: true,
-              user_type: true,
-              create_by_account: {
-                select: {
-                  id: true,
-                  email: true,
-                  first_name: true,
-                  last_name: true,
-                  signature_base_64: true,
-                },
-              },
-              update_by_account: {
-                select: {
-                  id: true,
-                  email: true,
-                  first_name: true,
-                  last_name: true,
-                  signature_base_64: true,
-                },
-              },
-              event_document_file: {
-                include: {
-                  create_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
+                  where: {
+                    user_type: {
+                      id: 3,
                     },
+                    event_doc_master_id: 2,
                   },
-                  update_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                    },
-                  },
-                },
-                orderBy: { id: 'desc' },
-              },
-              event_document_file_pdf: {
-                include: {
-                  create_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                    },
-                  },
-                  update_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                    },
-                  },
-                },
-              },
-              event_document_action: {
-                include: {
-                  event_doc_master: true,
-                  event_doc_status: true,
-                  group: true,
-                  user_type: true,
-                  create_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                      signature: true,
-                      signature_base_64: true,
-                    },
-                  },
-                  update_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                      signature: true,
-                      signature_base_64: true,
-                    },
-                  },
-                },
-                orderBy: {
-                  id: 'desc',
                 },
               },
             },
-          });
+            event_doc_master: true,
+            event_doc_status: true,
+            event_document_cc_email: true,
+            event_document_email_group_for_event: {
+              include: {
+                edit_email_group_for_event: true,
+              },
+            },
+            group: true,
+            user_type: true,
+            create_by_account: {
+              select: {
+                id: true,
+                email: true,
+                first_name: true,
+                last_name: true,
+                signature_base_64: true,
+              },
+            },
+            update_by_account: {
+              select: {
+                id: true,
+                email: true,
+                first_name: true,
+                last_name: true,
+                signature_base_64: true,
+              },
+            },
+            event_document_file: {
+              include: {
+                create_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                  },
+                },
+                update_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                  },
+                },
+              },
+              orderBy: { id: 'desc' },
+            },
+            event_document_file_pdf: {
+              include: {
+                create_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                  },
+                },
+                update_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                  },
+                },
+              },
+            },
+            event_document_action: {
+              include: {
+                event_doc_master: true,
+                event_doc_status: true,
+                group: true,
+                user_type: true,
+                create_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                    signature: true,
+                    signature_base_64: true,
+                  },
+                },
+                update_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                    signature: true,
+                    signature_base_64: true,
+                  },
+                },
+              },
+              orderBy: {
+                id: 'desc',
+              },
+            },
+          },
+        });
     console.log('result : ', result);
     return result;
   }
@@ -4722,14 +4732,14 @@ export class EventService {
       where: {
         ...(tso
           ? {
-              event_document: {
-                event_runnumber_id: Number(id),
-                event_doc_master_id: 2,
-              },
-            }
+            event_document: {
+              event_runnumber_id: Number(id),
+              event_doc_master_id: 2,
+            },
+          }
           : {
-              event_document_id: Number(id),
-            }),
+            event_document_id: Number(id),
+          }),
       },
       include: {
         group: true,
@@ -4757,7 +4767,7 @@ export class EventService {
 
       return {
         ...nE,
-        row: temp ? JSON.parse(temp) : null,
+        row: this.safeParseJSON(temp),
       };
     });
     return nresData;
@@ -5057,15 +5067,15 @@ export class EventService {
       where: {
         ...(shipperIds
           ? {
-              id: shipperIds,
-            }
+            id: shipperIds,
+          }
           : {
-              account_manage: {
-                some: {
-                  account_id: Number(userId),
-                },
+            account_manage: {
+              some: {
+                account_id: Number(userId),
               },
-            }),
+            },
+          }),
       },
       select: {
         id: true,
@@ -5100,14 +5110,14 @@ export class EventService {
       console.log('toAction : ', toAction);
       const toFullname =
         toAction?.event_doc_status_id !== 1 &&
-        toAction?.event_doc_status_id !== 2 &&
-        toAction?.create_by_account?.first_name &&
-        toAction?.create_by_account?.last_name
+          toAction?.event_doc_status_id !== 2 &&
+          toAction?.create_by_account?.first_name &&
+          toAction?.create_by_account?.last_name
           ? `${toAction?.create_by_account?.first_name} ${toAction?.create_by_account?.last_name}`
           : '';
 
       const toCompany =
-        (toAction?.group?.company_name && toAction?.group?.company_name) ||
+        (toAction?.group?.company_name) ||
         '';
       const toDate = dayjs(toAction?.create_date).locale('th');
       const toSignature =
@@ -5119,7 +5129,7 @@ export class EventService {
       // ----
       const fromFullname =
         rdoc1Find?.create_by_account?.first_name &&
-        rdoc1Find?.create_by_account?.last_name
+          rdoc1Find?.create_by_account?.last_name
           ? `${rdoc1Find?.create_by_account?.first_name} ${rdoc1Find?.create_by_account?.last_name}`
           : '';
       const fromCompany = 'บริษัท ปตท.จำกัด (มหาชน)';
@@ -5454,18 +5464,18 @@ export class EventService {
                       // // https://app.clickup.com/t/86eug8bw8
                       fromSignature
                         ? {
-                            columns: [
-                              { text: 'แจ้งโดย ', width: 'auto', alignment: 'right' },
-                              {
-                                image: fromSignature, // base64 หรือ path
-                                width: 50,
-                                alignment: 'center',
-                              },
-                              { text: '', width: 'auto', alignment: 'left' },
-                            ],
-                            columnGap: 15, // ระยะห่างระหว่างวงเล็บกับภาพ
-                            margin: [0, 2, 0, 5], // ปรับระยะรอบภาพ
-                          }
+                          columns: [
+                            { text: 'แจ้งโดย ', width: 'auto', alignment: 'right' },
+                            {
+                              image: fromSignature, // base64 หรือ path
+                              width: 50,
+                              alignment: 'center',
+                            },
+                            { text: '', width: 'auto', alignment: 'left' },
+                          ],
+                          columnGap: 15, // ระยะห่างระหว่างวงเล็บกับภาพ
+                          margin: [0, 2, 0, 5], // ปรับระยะรอบภาพ
+                        }
                         : { text: `แจ้งโดย ` },
                       { text: fromFullname ? `( ${fromFullname} )` : `(                                   )` },
 
@@ -5497,18 +5507,18 @@ export class EventService {
                       // // https://app.clickup.com/t/86eug8bw8
                       toSignature
                         ? {
-                            columns: [
-                              { text: 'รับทราบโดย ', width: 'auto', alignment: 'right' },
-                              {
-                                image: toSignature, // base64 หรือ path
-                                width: 50,
-                                alignment: 'center',
-                              },
-                              { text: '', width: 'auto', alignment: 'left' },
-                            ],
-                            columnGap: 15, // ระยะห่างระหว่างวงเล็บกับภาพ
-                            margin: [0, 2, 0, 5], // ปรับระยะรอบภาพ
-                          }
+                          columns: [
+                            { text: 'รับทราบโดย ', width: 'auto', alignment: 'right' },
+                            {
+                              image: toSignature, // base64 หรือ path
+                              width: 50,
+                              alignment: 'center',
+                            },
+                            { text: '', width: 'auto', alignment: 'left' },
+                          ],
+                          columnGap: 15, // ระยะห่างระหว่างวงเล็บกับภาพ
+                          margin: [0, 2, 0, 5], // ปรับระยะรอบภาพ
+                        }
                         : { text: `รับทราบโดย ` },
                       { text: toFullname ? `( ${toFullname} )` : `(                                   )` },
                       // { text: `รับทราบโดย ${toFullname}` },
@@ -5644,14 +5654,14 @@ export class EventService {
         console.log('toAction : ', toAction);
         const toFullname =
           toAction?.event_doc_status_id !== 1 &&
-          toAction?.event_doc_status_id !== 2 &&
-          toAction?.create_by_account?.first_name &&
-          toAction?.create_by_account?.last_name
+            toAction?.event_doc_status_id !== 2 &&
+            toAction?.create_by_account?.first_name &&
+            toAction?.create_by_account?.last_name
             ? `${toAction?.create_by_account?.first_name} ${toAction?.create_by_account?.last_name}`
             : '';
 
         const toCompany =
-          (toAction?.group?.company_name && toAction?.group?.company_name) ||
+          (toAction?.group?.company_name) ||
           '';
         const toDate = dayjs(toAction?.create_date).locale('th');
         const toSignature =
@@ -5663,7 +5673,7 @@ export class EventService {
         // ----
         const fromFullname =
           rdoc1Find?.create_by_account?.first_name &&
-          rdoc1Find?.create_by_account?.last_name
+            rdoc1Find?.create_by_account?.last_name
             ? `${rdoc1Find?.create_by_account?.first_name} ${rdoc1Find?.create_by_account?.last_name}`
             : '';
         const fromCompany = 'บริษัท ปตท.จำกัด (มหาชน)';
@@ -5790,214 +5800,214 @@ export class EventService {
             },
 
             // ======== กรอบ "ส่วนของผู้ใช้บริการ" =========
-          {
-            table: {
-              widths: ['*'],
-              body: [
-                [
-                  {
-                    stack: [
-                      {
-                        text: 'ส่วนของผู้ใช้บริการ (ผู้ทำให้เกิดเหตุการณ์)',
-                        bold: true,
-                        decoration: 'underline',
-                        margin: [0, 0, 0, 5],
-                      },
-                      {
-                        ul: [
-                          {
-                            text: [
-                              'จุดส่งเข้าที่ก๊าซไม่อยู่ในข้อกำหนดคุณภาพก๊าซ : ',
-                              {
-                                text: input_delivery_point_at_the_scene ? input_delivery_point_at_the_scene : '_______________',
-                                decoration: input_delivery_point_at_the_scene && 'underline',
-                              },
-                            ],
-                          },
-                          {
-                            text: [
-                              'เวลาที่ก๊าซไม่อยู่ในข้อกำหนดคุณภาพก๊าซ : ',
-                              {
-                                text: input_date_time_of_the_incident ? input_date_time_of_the_incident : '_______________',
-                                decoration: input_date_time_of_the_incident && 'underline',
-                              },
-                            ],
-                          },
-                          {
-                            text: [
-                              'ประเภทและค่าของคุณภาพก๊าซไม่อยู่ในข้อกำหนดคุณภาพก๊าซ : ',
-                              {
-                                text: input_gas_quality_is_not_in_the_gas_quality_requirements ? input_gas_quality_is_not_in_the_gas_quality_requirements : '_______________',
-                                decoration: input_gas_quality_is_not_in_the_gas_quality_requirements && 'underline',
-                              },
-                            ],
-                          },
-                          {
-                            text: [
-                              'สาเหตุที่ทำให้ก๊าซไม่อยู่ในข้อกำหนดคุณภาพก๊าซ : ',
-                              {
-                                text: input_reason_the_gas_quality_requirements ? input_reason_the_gas_quality_requirements : '_______________',
-                                decoration: input_reason_the_gas_quality_requirements && 'underline',
-                              },
-                            ],
-                          },
-                          {
-                            text: [
-                              'ระยะเวลาที่คาดว่าจะแก้ไขแล้วเสร็จ : ',
-                              {
-                                text: input_duration_that_is_expected_to_be_completed ? input_duration_that_is_expected_to_be_completed : '_______________',
-                                decoration: input_duration_that_is_expected_to_be_completed && 'underline',
-                              },
-                            ],
-                          },
-                          {
-                            text: [
-                              'ระยะเวลาที่ก๊าซฯ เดินทางถึงจุดต่าง ๆ : ',
-                              {
-                                text: input_duration_of_the_gas_travel_to_various_points ? input_duration_of_the_gas_travel_to_various_points : '_______________',
-                                decoration: input_duration_of_the_gas_travel_to_various_points && 'underline',
-                              },
-                            ],
-                          },
-                          // `จุดส่งเข้าที่ก๊าซไม่อยู่ในข้อกำหนดคุณภาพก๊าซ: ${input_delivery_point_at_the_scene || '-'}`,
-                          // `วัน/เวลาที่ก๊าซไม่อยู่ในข้อกำหนดคุณภาพก๊าซ: ${input_date_time_of_the_incident || '-'}`,
-                          // `ประเภทและค่าของคุณภาพก๊าซไม่อยู่ในข้อกำหนดคุณภาพก๊าซ: ${input_gas_quality_is_not_in_the_gas_quality_requirements || '-'}`,
-                          // `สาเหตุที่ทำให้ก๊าซไม่อยู่ในข้อกำหนดคุณภาพก๊าซ: ${input_reason_the_gas_quality_requirements || '-'}`,
-                          // `ระยะเวลาที่คาดว่าจะแก้ไขแล้วเสร็จ : ${input_duration_that_is_expected_to_be_completed || '-'}`,
-                          // `ระยะเวลาที่ก๊าซฯ เดินทางถึงจุดต่าง ๆ : ${input_duration_of_the_gas_travel_to_various_points || '-'}`,
-                        ],
-                      },
-                    ],
-                    margin: [5, 5, 5, 5],
-                  },
+            {
+              table: {
+                widths: ['*'],
+                body: [
+                  [
+                    {
+                      stack: [
+                        {
+                          text: 'ส่วนของผู้ใช้บริการ (ผู้ทำให้เกิดเหตุการณ์)',
+                          bold: true,
+                          decoration: 'underline',
+                          margin: [0, 0, 0, 5],
+                        },
+                        {
+                          ul: [
+                            {
+                              text: [
+                                'จุดส่งเข้าที่ก๊าซไม่อยู่ในข้อกำหนดคุณภาพก๊าซ : ',
+                                {
+                                  text: input_delivery_point_at_the_scene ? input_delivery_point_at_the_scene : '_______________',
+                                  decoration: input_delivery_point_at_the_scene && 'underline',
+                                },
+                              ],
+                            },
+                            {
+                              text: [
+                                'เวลาที่ก๊าซไม่อยู่ในข้อกำหนดคุณภาพก๊าซ : ',
+                                {
+                                  text: input_date_time_of_the_incident ? input_date_time_of_the_incident : '_______________',
+                                  decoration: input_date_time_of_the_incident && 'underline',
+                                },
+                              ],
+                            },
+                            {
+                              text: [
+                                'ประเภทและค่าของคุณภาพก๊าซไม่อยู่ในข้อกำหนดคุณภาพก๊าซ : ',
+                                {
+                                  text: input_gas_quality_is_not_in_the_gas_quality_requirements ? input_gas_quality_is_not_in_the_gas_quality_requirements : '_______________',
+                                  decoration: input_gas_quality_is_not_in_the_gas_quality_requirements && 'underline',
+                                },
+                              ],
+                            },
+                            {
+                              text: [
+                                'สาเหตุที่ทำให้ก๊าซไม่อยู่ในข้อกำหนดคุณภาพก๊าซ : ',
+                                {
+                                  text: input_reason_the_gas_quality_requirements ? input_reason_the_gas_quality_requirements : '_______________',
+                                  decoration: input_reason_the_gas_quality_requirements && 'underline',
+                                },
+                              ],
+                            },
+                            {
+                              text: [
+                                'ระยะเวลาที่คาดว่าจะแก้ไขแล้วเสร็จ : ',
+                                {
+                                  text: input_duration_that_is_expected_to_be_completed ? input_duration_that_is_expected_to_be_completed : '_______________',
+                                  decoration: input_duration_that_is_expected_to_be_completed && 'underline',
+                                },
+                              ],
+                            },
+                            {
+                              text: [
+                                'ระยะเวลาที่ก๊าซฯ เดินทางถึงจุดต่าง ๆ : ',
+                                {
+                                  text: input_duration_of_the_gas_travel_to_various_points ? input_duration_of_the_gas_travel_to_various_points : '_______________',
+                                  decoration: input_duration_of_the_gas_travel_to_various_points && 'underline',
+                                },
+                              ],
+                            },
+                            // `จุดส่งเข้าที่ก๊าซไม่อยู่ในข้อกำหนดคุณภาพก๊าซ: ${input_delivery_point_at_the_scene || '-'}`,
+                            // `วัน/เวลาที่ก๊าซไม่อยู่ในข้อกำหนดคุณภาพก๊าซ: ${input_date_time_of_the_incident || '-'}`,
+                            // `ประเภทและค่าของคุณภาพก๊าซไม่อยู่ในข้อกำหนดคุณภาพก๊าซ: ${input_gas_quality_is_not_in_the_gas_quality_requirements || '-'}`,
+                            // `สาเหตุที่ทำให้ก๊าซไม่อยู่ในข้อกำหนดคุณภาพก๊าซ: ${input_reason_the_gas_quality_requirements || '-'}`,
+                            // `ระยะเวลาที่คาดว่าจะแก้ไขแล้วเสร็จ : ${input_duration_that_is_expected_to_be_completed || '-'}`,
+                            // `ระยะเวลาที่ก๊าซฯ เดินทางถึงจุดต่าง ๆ : ${input_duration_of_the_gas_travel_to_various_points || '-'}`,
+                          ],
+                        },
+                      ],
+                      margin: [5, 5, 5, 5],
+                    },
+                  ],
                 ],
-              ],
+              },
+              layout: {
+                hLineWidth: () => 0.5,
+                vLineWidth: () => 0.5,
+              },
+              margin: [0, 0, 0, 0],
             },
-            layout: {
-              hLineWidth: () => 0.5,
-              vLineWidth: () => 0.5,
-            },
-            margin: [0, 0, 0, 0],
-          },
 
-          // ======== กรอบ "ส่วน" =========
-          {
-            table: {
-              widths: ['*'],
-              body: [
-                [
-                  {
-                    stack: [
-                      {
-                        text: 'ส่วนของผู้ใช้บริการ',
-                        bold: true,
-                        decoration: 'underline',
-                        margin: [0, 0, 0, 5],
-                      },
-                      {
-                        columns: [
-                          {
-                            width: 15,
-                            image:
-                              event_doc_status === 3 ? logoUsed : logoNotUsed, // แทนด้วย base64 string //event_doc_status
-                            verticalAlignment: 'middle',
-                            alignment: 'center',
-                            fit: [12, 12],
-                          },
-                          {
-                            text: [
-                              { text: 'รับ ', bold: true },
-                              'ก๊าซไม่อยู่ในข้อกำหนดคุณภาพก๊าซ',
-                            ],
-                            margin: [5, 0, 0, 0], // เว้นระยะจากรูป
-                            alignment: 'left',
-                          },
-                        ],
-                        margin: [0, 0, 0, 2],
-                      },
-                      {
-                        columns: [
-                          {
-                            width: 15,
-                            image:
-                              event_doc_status === 4 ? logoUsed : logoNotUsed, // แทนด้วย base64 string
-                            verticalAlignment: 'middle',
-                            alignment: 'center',
-                            fit: [12, 12],
-                          },
-                          {
-                            text: [
-                              { text: 'ปฏิเสธ ', bold: true },
-                              'ก๊าซไม่อยู่ในข้อกำหนดคุณภาพก๊าซ (ระบุชื่อลูกค้าที่ไม่สามารถใช้ก๊าซฯ ดังกล่าว)',
-                            ],
-                            margin: [5, 0, 0, 0], // เว้นระยะจากรูป
-                            alignment: 'left',
-                          },
-                        ],
-                        margin: [0, 0, 0, 2],
-                      },
-                      // {
-                      //   columns: [
-                      //     {
-                      //       width: 15,
-                      //       image:
-                      //         event_doc_status === 5 ? logoUsed : logoNotUsed, // แทนด้วย base64 string
-                      //       verticalAlignment: 'middle',
-                      //       alignment: 'center',
-                      //       fit: [12, 12],
-                      //     },
-                      //     {
-                      //       text: 'รับทราบ',
-                      //       bold: true,
-                      //       margin: [5, 0, 0, 0], // เว้นระยะจากรูป
-                      //       alignment: 'left',
-                      //     },
-                      //   ],
-                      //   margin: [0, 0, 0, 2],
-                      // },
-                      {
-                        // text: `หมายเหตุ: ${input_note || '-'}`,
-                        text: [
-                          'หมายเหตุ : ',
-                          {
-                            text: input_note ? input_note : '_______________',
-                            decoration: input_note && 'underline',
-                          },
-                        ],
-                        margin: [0, 5, 0, 2],
-                      },
-                      // {
-                      //   text: 'สวัสดี...:',
-                      //   margin: [0, 0, 0, 0],
-                      //   // decoration: 'underline',
-                      // },
+            // ======== กรอบ "ส่วน" =========
+            {
+              table: {
+                widths: ['*'],
+                body: [
+                  [
+                    {
+                      stack: [
+                        {
+                          text: 'ส่วนของผู้ใช้บริการ',
+                          bold: true,
+                          decoration: 'underline',
+                          margin: [0, 0, 0, 5],
+                        },
+                        {
+                          columns: [
+                            {
+                              width: 15,
+                              image:
+                                event_doc_status === 3 ? logoUsed : logoNotUsed, // แทนด้วย base64 string //event_doc_status
+                              verticalAlignment: 'middle',
+                              alignment: 'center',
+                              fit: [12, 12],
+                            },
+                            {
+                              text: [
+                                { text: 'รับ ', bold: true },
+                                'ก๊าซไม่อยู่ในข้อกำหนดคุณภาพก๊าซ',
+                              ],
+                              margin: [5, 0, 0, 0], // เว้นระยะจากรูป
+                              alignment: 'left',
+                            },
+                          ],
+                          margin: [0, 0, 0, 2],
+                        },
+                        {
+                          columns: [
+                            {
+                              width: 15,
+                              image:
+                                event_doc_status === 4 ? logoUsed : logoNotUsed, // แทนด้วย base64 string
+                              verticalAlignment: 'middle',
+                              alignment: 'center',
+                              fit: [12, 12],
+                            },
+                            {
+                              text: [
+                                { text: 'ปฏิเสธ ', bold: true },
+                                'ก๊าซไม่อยู่ในข้อกำหนดคุณภาพก๊าซ (ระบุชื่อลูกค้าที่ไม่สามารถใช้ก๊าซฯ ดังกล่าว)',
+                              ],
+                              margin: [5, 0, 0, 0], // เว้นระยะจากรูป
+                              alignment: 'left',
+                            },
+                          ],
+                          margin: [0, 0, 0, 2],
+                        },
+                        // {
+                        //   columns: [
+                        //     {
+                        //       width: 15,
+                        //       image:
+                        //         event_doc_status === 5 ? logoUsed : logoNotUsed, // แทนด้วย base64 string
+                        //       verticalAlignment: 'middle',
+                        //       alignment: 'center',
+                        //       fit: [12, 12],
+                        //     },
+                        //     {
+                        //       text: 'รับทราบ',
+                        //       bold: true,
+                        //       margin: [5, 0, 0, 0], // เว้นระยะจากรูป
+                        //       alignment: 'left',
+                        //     },
+                        //   ],
+                        //   margin: [0, 0, 0, 2],
+                        // },
+                        {
+                          // text: `หมายเหตุ: ${input_note || '-'}`,
+                          text: [
+                            'หมายเหตุ : ',
+                            {
+                              text: input_note ? input_note : '_______________',
+                              decoration: input_note && 'underline',
+                            },
+                          ],
+                          margin: [0, 5, 0, 2],
+                        },
+                        // {
+                        //   text: 'สวัสดี...:',
+                        //   margin: [0, 0, 0, 0],
+                        //   // decoration: 'underline',
+                        // },
 
-                      // 'สวัสดี_______________________________________________________',
-                      // '_______________________________________________________',
-                    ],
-                    margin: [5, 5, 5, 5],
-                  },
+                        // 'สวัสดี_______________________________________________________',
+                        // '_______________________________________________________',
+                      ],
+                      margin: [5, 5, 5, 5],
+                    },
+                  ],
                 ],
-              ],
+              },
+              layout: {
+                hLineWidth: () => 0.5,
+                vLineWidth: () => 0.5,
+              },
+              margin: [0, 0, 0, 0],
             },
-            layout: {
-              hLineWidth: () => 0.5,
-              vLineWidth: () => 0.5,
-            },
-            margin: [0, 0, 0, 0],
-          },
 
             // ======== กรอบช่องเซ็นชื่อ =========
-          {
-            table: {
-              widths: ['*', '*'],
-              body: [
-                [
-                  {
-                    stack: [
-                      // // https://app.clickup.com/t/86eug8bw8
-                      fromSignature
-                        ? {
+            {
+              table: {
+                widths: ['*', '*'],
+                body: [
+                  [
+                    {
+                      stack: [
+                        // // https://app.clickup.com/t/86eug8bw8
+                        fromSignature
+                          ? {
                             columns: [
                               { text: 'แจ้งโดย ', width: 'auto', alignment: 'right' },
                               {
@@ -6010,37 +6020,37 @@ export class EventService {
                             columnGap: 15, // ระยะห่างระหว่างวงเล็บกับภาพ
                             margin: [0, 2, 0, 5], // ปรับระยะรอบภาพ
                           }
-                        : { text: `แจ้งโดย ` },
-                      { text: fromFullname ? `( ${fromFullname} )` : `(                                   )` },
+                          : { text: `แจ้งโดย ` },
+                        { text: fromFullname ? `( ${fromFullname} )` : `(                                   )` },
 
-                      // { text: `แจ้งโดย ${fromFullname}` },
-                      // fromSignature
-                      //   ? {
-                      //       columns: [
-                      //         { text: '(', width: 'auto', alignment: 'right' },
-                      //         {
-                      //           image: fromSignature, // base64 หรือ path
-                      //           width: 50,
-                      //           alignment: 'center',
-                      //         },
-                      //         { text: ')', width: 'auto', alignment: 'left' },
-                      //       ],
-                      //       columnGap: 15, // ระยะห่างระหว่างวงเล็บกับภาพ
-                      //       margin: [0, 2, 0, 5], // ปรับระยะรอบภาพ
-                      //     }
-                      //   : { text: `(                                   )` },
-                      { text: `หน่วยงาน ${fromCompany} (ผู้ให้บริการ)` },
-                      {
-                        text: `เวลา : ${fromDate.format('HH:mm')} น. วันที่/เดือน/ปี: ${fromDate.format('DD')} / ${fromDate.format('MM')} / ${fromDate.format('BB')}`,
-                      },
-                    ],
-                    margin: [5, 5, 5, 5],
-                  },
-                  {
-                    stack: [
-                      // // https://app.clickup.com/t/86eug8bw8
-                      toSignature
-                        ? {
+                        // { text: `แจ้งโดย ${fromFullname}` },
+                        // fromSignature
+                        //   ? {
+                        //       columns: [
+                        //         { text: '(', width: 'auto', alignment: 'right' },
+                        //         {
+                        //           image: fromSignature, // base64 หรือ path
+                        //           width: 50,
+                        //           alignment: 'center',
+                        //         },
+                        //         { text: ')', width: 'auto', alignment: 'left' },
+                        //       ],
+                        //       columnGap: 15, // ระยะห่างระหว่างวงเล็บกับภาพ
+                        //       margin: [0, 2, 0, 5], // ปรับระยะรอบภาพ
+                        //     }
+                        //   : { text: `(                                   )` },
+                        { text: `หน่วยงาน ${fromCompany} (ผู้ให้บริการ)` },
+                        {
+                          text: `เวลา : ${fromDate.format('HH:mm')} น. วันที่/เดือน/ปี: ${fromDate.format('DD')} / ${fromDate.format('MM')} / ${fromDate.format('BB')}`,
+                        },
+                      ],
+                      margin: [5, 5, 5, 5],
+                    },
+                    {
+                      stack: [
+                        // // https://app.clickup.com/t/86eug8bw8
+                        toSignature
+                          ? {
                             columns: [
                               { text: 'รับทราบโดย ', width: 'auto', alignment: 'right' },
                               {
@@ -6053,42 +6063,42 @@ export class EventService {
                             columnGap: 15, // ระยะห่างระหว่างวงเล็บกับภาพ
                             margin: [0, 2, 0, 5], // ปรับระยะรอบภาพ
                           }
-                        : { text: `รับทราบโดย ` },
-                      { text: toFullname ? `( ${toFullname} )` : `(                                   )` },
-                      // { text: `รับทราบโดย ${toFullname}` },
-                      // toSignature
-                      //   ? {
-                      //       columns: [
-                      //         { text: '(', width: 'auto', alignment: 'right' },
-                      //         {
-                      //           image: toSignature, // base64 หรือ path
-                      //           width: 50,
-                      //           alignment: 'center',
-                      //         },
-                      //         { text: ')', width: 'auto', alignment: 'left' },
-                      //       ],
-                      //       columnGap: 5, // ระยะห่างระหว่างวงเล็บกับภาพ
-                      //       margin: [0, 2, 0, 5], // ปรับระยะรอบภาพ
-                      //     }
-                      //   : { text: `(                                   )` },
-                      {
-                        text: `หน่วยงาน ${rdoc1Find?.event_doc_status?.id === 2 ? ' ' : toCompany} (ผู้ใช้บริการ)`,
-                      },
-                      {
-                        text: `เวลา : ${rdoc1Find?.event_doc_status?.id === 2 ? ' ' : toDate.format('HH:mm')} น. วันที่/เดือน/ปี: ${rdoc1Find?.event_doc_status?.id === 2 ? ' ' : toDate.format('DD')} / ${rdoc1Find?.event_doc_status?.id === 2 ? ' ' : toDate.format('MM')} / ${rdoc1Find?.event_doc_status?.id === 2 ? ' ' : toDate.format('BB')}`,
-                      },
-                    ],
-                    margin: [5, 5, 5, 5],
-                  },
+                          : { text: `รับทราบโดย ` },
+                        { text: toFullname ? `( ${toFullname} )` : `(                                   )` },
+                        // { text: `รับทราบโดย ${toFullname}` },
+                        // toSignature
+                        //   ? {
+                        //       columns: [
+                        //         { text: '(', width: 'auto', alignment: 'right' },
+                        //         {
+                        //           image: toSignature, // base64 หรือ path
+                        //           width: 50,
+                        //           alignment: 'center',
+                        //         },
+                        //         { text: ')', width: 'auto', alignment: 'left' },
+                        //       ],
+                        //       columnGap: 5, // ระยะห่างระหว่างวงเล็บกับภาพ
+                        //       margin: [0, 2, 0, 5], // ปรับระยะรอบภาพ
+                        //     }
+                        //   : { text: `(                                   )` },
+                        {
+                          text: `หน่วยงาน ${rdoc1Find?.event_doc_status?.id === 2 ? ' ' : toCompany} (ผู้ใช้บริการ)`,
+                        },
+                        {
+                          text: `เวลา : ${rdoc1Find?.event_doc_status?.id === 2 ? ' ' : toDate.format('HH:mm')} น. วันที่/เดือน/ปี: ${rdoc1Find?.event_doc_status?.id === 2 ? ' ' : toDate.format('DD')} / ${rdoc1Find?.event_doc_status?.id === 2 ? ' ' : toDate.format('MM')} / ${rdoc1Find?.event_doc_status?.id === 2 ? ' ' : toDate.format('BB')}`,
+                        },
+                      ],
+                      margin: [5, 5, 5, 5],
+                    },
+                  ],
                 ],
-              ],
+              },
+              layout: {
+                hLineWidth: () => 0.5,
+                vLineWidth: () => 0.5,
+              },
+              margin: [0, 0, 0, 0],
             },
-            layout: {
-              hLineWidth: () => 0.5,
-              vLineWidth: () => 0.5,
-            },
-            margin: [0, 0, 0, 0],
-          },
 
             // ======== Footer ========
             // {
@@ -7872,8 +7882,26 @@ export class EventService {
     console.log('userId : ', userId);
     const group = shipperIds
       ? await this.prisma.group.findFirst({
+        where: {
+          id: shipperIds,
+        },
+        select: {
+          id: true,
+          user_type: {
+            select: {
+              id: true,
+            },
+          },
+        },
+      })
+      : userId
+        ? await this.prisma.group.findFirst({
           where: {
-            id: shipperIds,
+            account_manage: {
+              some: {
+                account_id: Number(userId),
+              },
+            },
           },
           select: {
             id: true,
@@ -7884,24 +7912,6 @@ export class EventService {
             },
           },
         })
-      : userId
-        ? await this.prisma.group.findFirst({
-            where: {
-              account_manage: {
-                some: {
-                  account_id: Number(userId),
-                },
-              },
-            },
-            select: {
-              id: true,
-              user_type: {
-                select: {
-                  id: true,
-                },
-              },
-            },
-          })
         : groupObj;
 
     const userTypeId = group.user_type?.id;
@@ -7912,293 +7922,293 @@ export class EventService {
     const result =
       userTypeId === 3
         ? await this.prisma.event_document.findFirst({
-            where: {
-              event_runnumber_id: Number(id),
-              event_doc_master_id: 3,
-              // ref_document: {
-              //   not: null,
-              // },
-              group_id: Number(groupId),
-            },
-            include: {
-              event_runnumber: {
-                include: {
-                  event_status: true,
-                  group: true,
-                  user_type: true,
-                  create_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                      signature_base_64: true,
-                    },
-                  },
-                  update_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                      signature_base_64: true,
-                    },
+          where: {
+            event_runnumber_id: Number(id),
+            event_doc_master_id: 3,
+            // ref_document: {
+            //   not: null,
+            // },
+            group_id: Number(groupId),
+          },
+          include: {
+            event_runnumber: {
+              include: {
+                event_status: true,
+                group: true,
+                user_type: true,
+                create_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                    signature_base_64: true,
                   },
                 },
-              },
-              event_doc_master: true,
-              event_doc_status: true,
-              group: true,
-              user_type: true,
-              create_by_account: {
-                select: {
-                  id: true,
-                  email: true,
-                  first_name: true,
-                  last_name: true,
-                  signature_base_64: true,
-                  account_manage: {
-                    include: {
-                      group: true,
-                    },
+                update_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                    signature_base_64: true,
                   },
-                },
-              },
-              update_by_account: {
-                select: {
-                  id: true,
-                  email: true,
-                  first_name: true,
-                  last_name: true,
-                  signature_base_64: true,
-                },
-              },
-              event_document_file: {
-                include: {
-                  create_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                    },
-                  },
-                  update_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                    },
-                  },
-                },
-                orderBy: { id: 'desc' },
-              },
-              event_document_file_pdf: {
-                include: {
-                  create_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                    },
-                  },
-                  update_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                    },
-                  },
-                },
-              },
-              event_document_action: {
-                include: {
-                  event_doc_master: true,
-                  event_doc_status: true,
-                  group: true,
-                  user_type: true,
-                  create_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                      signature: true,
-                      signature_base_64: true,
-                    },
-                  },
-                  update_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                      signature: true,
-                      signature_base_64: true,
-                    },
-                  },
-                },
-                orderBy: {
-                  id: 'desc',
                 },
               },
             },
-          })
+            event_doc_master: true,
+            event_doc_status: true,
+            group: true,
+            user_type: true,
+            create_by_account: {
+              select: {
+                id: true,
+                email: true,
+                first_name: true,
+                last_name: true,
+                signature_base_64: true,
+                account_manage: {
+                  include: {
+                    group: true,
+                  },
+                },
+              },
+            },
+            update_by_account: {
+              select: {
+                id: true,
+                email: true,
+                first_name: true,
+                last_name: true,
+                signature_base_64: true,
+              },
+            },
+            event_document_file: {
+              include: {
+                create_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                  },
+                },
+                update_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                  },
+                },
+              },
+              orderBy: { id: 'desc' },
+            },
+            event_document_file_pdf: {
+              include: {
+                create_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                  },
+                },
+                update_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                  },
+                },
+              },
+            },
+            event_document_action: {
+              include: {
+                event_doc_master: true,
+                event_doc_status: true,
+                group: true,
+                user_type: true,
+                create_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                    signature: true,
+                    signature_base_64: true,
+                  },
+                },
+                update_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                    signature: true,
+                    signature_base_64: true,
+                  },
+                },
+              },
+              orderBy: {
+                id: 'desc',
+              },
+            },
+          },
+        })
         : await this.prisma.event_document.findFirst({
-            where: {
-              event_runnumber_id: Number(id),
-              event_doc_master_id: 3,
-              ref_document: null,
-            },
-            include: {
-              event_runnumber: {
-                include: {
-                  group: true,
-                  user_type: true,
-                  create_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                      signature_base_64: true,
-                    },
-                  },
-                  update_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                      signature_base_64: true,
-                    },
-                  },
-                  event_status: true,
-                  event_document: {
-                    include: {
-                      event_doc_status: true,
-                      group: true,
-                      user_type: true,
-                    },
-                    where: {
-                      user_type: {
-                        id: 3,
-                      },
-                      event_doc_master_id: 3,
-                    },
+          where: {
+            event_runnumber_id: Number(id),
+            event_doc_master_id: 3,
+            ref_document: null,
+          },
+          include: {
+            event_runnumber: {
+              include: {
+                group: true,
+                user_type: true,
+                create_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                    signature_base_64: true,
                   },
                 },
-              },
-              event_doc_master: true,
-              event_doc_status: true,
-              event_document_cc_email: true,
-              event_document_email_group_for_event: {
-                include: {
-                  edit_email_group_for_event: true,
-                },
-              },
-              group: true,
-              user_type: true,
-              create_by_account: {
-                select: {
-                  id: true,
-                  email: true,
-                  first_name: true,
-                  last_name: true,
-                  signature_base_64: true,
-                  account_manage: {
-                    include: {
-                      group: true,
-                    },
+                update_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                    signature_base_64: true,
                   },
                 },
-              },
-              update_by_account: {
-                select: {
-                  id: true,
-                  email: true,
-                  first_name: true,
-                  last_name: true,
-                  signature_base_64: true,
-                },
-              },
-              event_document_file: {
-                include: {
-                  create_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                    },
+                event_status: true,
+                event_document: {
+                  include: {
+                    event_doc_status: true,
+                    group: true,
+                    user_type: true,
                   },
-                  update_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
+                  where: {
+                    user_type: {
+                      id: 3,
                     },
+                    event_doc_master_id: 3,
                   },
-                },
-                orderBy: { id: 'desc' },
-              },
-              event_document_file_pdf: {
-                include: {
-                  create_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                    },
-                  },
-                  update_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                    },
-                  },
-                },
-              },
-              event_document_action: {
-                include: {
-                  event_doc_master: true,
-                  event_doc_status: true,
-                  group: true,
-                  user_type: true,
-                  create_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                      signature: true,
-                      signature_base_64: true,
-                    },
-                  },
-                  update_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                      signature: true,
-                      signature_base_64: true,
-                    },
-                  },
-                },
-                orderBy: {
-                  id: 'desc',
                 },
               },
             },
-          });
+            event_doc_master: true,
+            event_doc_status: true,
+            event_document_cc_email: true,
+            event_document_email_group_for_event: {
+              include: {
+                edit_email_group_for_event: true,
+              },
+            },
+            group: true,
+            user_type: true,
+            create_by_account: {
+              select: {
+                id: true,
+                email: true,
+                first_name: true,
+                last_name: true,
+                signature_base_64: true,
+                account_manage: {
+                  include: {
+                    group: true,
+                  },
+                },
+              },
+            },
+            update_by_account: {
+              select: {
+                id: true,
+                email: true,
+                first_name: true,
+                last_name: true,
+                signature_base_64: true,
+              },
+            },
+            event_document_file: {
+              include: {
+                create_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                  },
+                },
+                update_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                  },
+                },
+              },
+              orderBy: { id: 'desc' },
+            },
+            event_document_file_pdf: {
+              include: {
+                create_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                  },
+                },
+                update_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                  },
+                },
+              },
+            },
+            event_document_action: {
+              include: {
+                event_doc_master: true,
+                event_doc_status: true,
+                group: true,
+                user_type: true,
+                create_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                    signature: true,
+                    signature_base_64: true,
+                  },
+                },
+                update_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                    signature: true,
+                    signature_base_64: true,
+                  },
+                },
+              },
+              orderBy: {
+                id: 'desc',
+              },
+            },
+          },
+        });
     console.log('result : ', result);
     return result;
   }
@@ -8208,14 +8218,14 @@ export class EventService {
       where: {
         ...(tso
           ? {
-              event_document: {
-                event_runnumber_id: Number(id),
-                event_doc_master_id: 3,
-              },
-            }
+            event_document: {
+              event_runnumber_id: Number(id),
+              event_doc_master_id: 3,
+            },
+          }
           : {
-              event_document_id: Number(id),
-            }),
+            event_document_id: Number(id),
+          }),
       },
       include: {
         group: true,
@@ -8243,7 +8253,7 @@ export class EventService {
 
       return {
         ...nE,
-        row: temp ? JSON.parse(temp) : null,
+        row: this.safeParseJSON(temp),
       };
     });
     return nresData;
@@ -8519,15 +8529,15 @@ export class EventService {
       where: {
         ...(shipperIds
           ? {
-              id: Number(shipperIds),
-            }
+            id: Number(shipperIds),
+          }
           : {
-              account_manage: {
-                some: {
-                  account_id: Number(userId),
-                },
+            account_manage: {
+              some: {
+                account_id: Number(userId),
               },
-            }),
+            },
+          }),
       },
       select: {
         id: true,
@@ -8547,17 +8557,17 @@ export class EventService {
     const groupId = group?.id;
     // userId tso ไว้ก่อน
     if (userTypeId === 3) {
-        // {
-        //                   text: [
-        //                     'หมายเหตุ : ',
-        //                     {
-        //                       text:
-        //                         input_note ? input_note : '____________',
-        //                       decoration: input_note && 'underline',
-        //                     },
-        //                   ],
-        //               margin: [0, 5, 0, 2],
-        //             },
+      // {
+      //                   text: [
+      //                     'หมายเหตุ : ',
+      //                     {
+      //                       text:
+      //                         input_note ? input_note : '____________',
+      //                       decoration: input_note && 'underline',
+      //                     },
+      //                   ],
+      //               margin: [0, 5, 0, 2],
+      //             },
       const findRunnumber = await this.prisma.event_runnumber?.findFirst({
         where: { event_document: { some: { id: Number(id) } } },
       });
@@ -8583,14 +8593,14 @@ export class EventService {
 
       const toFullname =
         toAction?.event_doc_status_id !== 1 &&
-        toAction?.event_doc_status_id !== 2 &&
-        toAction?.create_by_account?.first_name &&
-        toAction?.create_by_account?.last_name
+          toAction?.event_doc_status_id !== 2 &&
+          toAction?.create_by_account?.first_name &&
+          toAction?.create_by_account?.last_name
           ? `${toAction?.create_by_account?.first_name} ${toAction?.create_by_account?.last_name}`
           : '';
 
       const toCompany =
-        (toAction?.group?.company_name && toAction?.group?.company_name) || "";
+        (toAction?.group?.company_name) || "";
       const toDate = dayjs(toAction?.create_date).locale('th');
       const toSignature =
         (toAction?.event_doc_status_id !== 1 &&
@@ -8608,7 +8618,7 @@ export class EventService {
         '';
       const fromFullname =
         rdoc1Find?.create_by_account?.first_name &&
-        rdoc1Find?.create_by_account?.last_name
+          rdoc1Find?.create_by_account?.last_name
           ? `${rdoc1Find?.create_by_account?.first_name} ${rdoc1Find?.create_by_account?.last_name}`
           : '';
       const fromCompany =
@@ -8781,24 +8791,24 @@ export class EventService {
                               {
                                 text:
                                   input_shipper_cpn_name ? input_shipper_cpn_name : '____________',
-                                  decoration: input_shipper_cpn_name && 'underline',
+                                decoration: input_shipper_cpn_name && 'underline',
                               },
                               ' ได้แจ้งเรื่องคุณภาพก๊าซไม่อยู่ในข้อกำหนดคุณภาพก๊าซ / ปริมาณก๊าซนำเข้าเบี่ยงเบนจาก Nomination มากกว่าเกณฑ์ที่กำหนด ดังรายละเอียดในเอกสารเลขที่ ',
                               {
                                 text:
-                                input_shipper_doc_number ? input_shipper_doc_number : '____________',
+                                  input_shipper_doc_number ? input_shipper_doc_number : '____________',
                                 decoration: input_shipper_doc_number && 'underline',
                               },
                               ' (เอกสารแจ้งเตือนคุณภาพ ',
                               {
                                 text:
-                                input_shipper_doc_quality ? input_shipper_doc_quality : '____________',
+                                  input_shipper_doc_quality ? input_shipper_doc_quality : '____________',
                                 decoration: input_shipper_doc_quality && 'underline',
                               },
                               ' ) ลงวันที่ ',
                               {
                                 text:
-                                input_shipper_down_date ? input_shipper_down_date : '____________',
+                                  input_shipper_down_date ? input_shipper_down_date : '____________',
                                 decoration: input_shipper_down_date && 'underline',
                               },
                             ],
@@ -8828,27 +8838,27 @@ export class EventService {
                                   {
                                     text:
                                       input_shipper_time_event_start_date ? input_shipper_time_event_start_date : '____________',
-                                      decoration: input_shipper_time_event_start_date && 'underline',
-                                    },
-                                    ' เวลา ',
-                                    {
-                                      text:
+                                    decoration: input_shipper_time_event_start_date && 'underline',
+                                  },
+                                  ' เวลา ',
+                                  {
+                                    text:
                                       input_shipper_time_event_start_time ? input_shipper_time_event_start_time : '____________',
-                                      decoration: input_shipper_time_event_start_time && 'underline',
-                                    },
-                                    ' น. ถึง วันที่ ',
-                                    {
-                                      text:
+                                    decoration: input_shipper_time_event_start_time && 'underline',
+                                  },
+                                  ' น. ถึง วันที่ ',
+                                  {
+                                    text:
                                       input_shipper_time_event_end_date ? input_shipper_time_event_end_date : '____________',
-                                      decoration: input_shipper_time_event_end_date && 'underline',
-                                    },
-                                    ' เวลา ',
-                                    {
-                                      text:
+                                    decoration: input_shipper_time_event_end_date && 'underline',
+                                  },
+                                  ' เวลา ',
+                                  {
+                                    text:
                                       input_shipper_time_event_end_time ? input_shipper_time_event_end_time : '____________',
-                                      decoration: input_shipper_time_event_end_time && 'underline',
-                                    },
-                                    ' น. ',
+                                    decoration: input_shipper_time_event_end_time && 'underline',
+                                  },
+                                  ' น. ',
                                 ]
                               },
                             ],
@@ -8863,9 +8873,9 @@ export class EventService {
                                   {
                                     text:
                                       input_shipper_time_event_summary ? input_shipper_time_event_summary : '____________',
-                                      decoration: input_shipper_time_event_summary && 'underline',
-                                    },
-                                  ]
+                                    decoration: input_shipper_time_event_summary && 'underline',
+                                  },
+                                ]
                               },
                             ],
                             margin: [22, 0, 0, 0],
@@ -8906,19 +8916,19 @@ export class EventService {
                           {
                             // text: `ตามที่ส่วนบริหารและควบคุมระบบส่งก๊าซ (บค.บคต.) ได้แจ้งคุณภาพก๊าซผสม ไม่อยู่ในข้อกำหนดคุณภาพก๊าซของ TSO Code ดังรายละเอียดในเอกสารเลขที่ ${input_tso_doc_number} (เอกสารแจ้งเตือนคุณภาพ 2) ${input_tso_down_date}`,
                             text: [
-                                  'ตามที่ส่วนบริหารและควบคุมระบบส่งก๊าซ (บค.บคต.) ได้แจ้งคุณภาพก๊าซผสม ไม่อยู่ในข้อกำหนดคุณภาพก๊าซของ TSO Code ดังรายละเอียดในเอกสารเลขที่ ',
-                                  {
-                                    text:
-                                    input_tso_doc_number ? input_tso_doc_number : '____________',
-                                    decoration: input_tso_doc_number && 'underline',
-                                  },
-                                  ' (เอกสารแจ้งเตือนคุณภาพ 2) ',
-                                  {
-                                    text:
-                                    input_tso_down_date ? input_tso_down_date : '____________',
-                                    decoration: input_tso_down_date && 'underline',
-                                  },
-                                  ]
+                              'ตามที่ส่วนบริหารและควบคุมระบบส่งก๊าซ (บค.บคต.) ได้แจ้งคุณภาพก๊าซผสม ไม่อยู่ในข้อกำหนดคุณภาพก๊าซของ TSO Code ดังรายละเอียดในเอกสารเลขที่ ',
+                              {
+                                text:
+                                  input_tso_doc_number ? input_tso_doc_number : '____________',
+                                decoration: input_tso_doc_number && 'underline',
+                              },
+                              ' (เอกสารแจ้งเตือนคุณภาพ 2) ',
+                              {
+                                text:
+                                  input_tso_down_date ? input_tso_down_date : '____________',
+                                decoration: input_tso_down_date && 'underline',
+                              },
+                            ]
                           },
                         ],
                         margin: [0, 0, 0, 5],
@@ -8930,20 +8940,20 @@ export class EventService {
                           {
                             // text: `โดยก๊าซฯที่ไม่อยู่ในคุณสมบัติที่กำหนดตามข้อกำหนด TSO Code ได้หมดไปจากระบบส่งก๊าซฯ เมื่อ วันที่ ${input_tso_disapeared_date} เวลา ${input_tso_disapeared_time} น.`,
                             text: [
-                                  'โดยก๊าซฯที่ไม่อยู่ในคุณสมบัติที่กำหนดตามข้อกำหนด TSO Code ได้หมดไปจากระบบส่งก๊าซฯ เมื่อ วันที่ ',
-                                  {
-                                    text:
-                                    input_tso_disapeared_date ? input_tso_disapeared_date : '____________',
-                                    decoration: input_tso_disapeared_date && 'underline',
-                                  },
-                                  ' เวลา ',
-                                  {
-                                    text:
-                                    input_tso_disapeared_time ? input_tso_disapeared_time : '____________',
-                                    decoration: input_tso_disapeared_time && 'underline',
-                                  },
-                                  ' น. ',
-                                  ]
+                              'โดยก๊าซฯที่ไม่อยู่ในคุณสมบัติที่กำหนดตามข้อกำหนด TSO Code ได้หมดไปจากระบบส่งก๊าซฯ เมื่อ วันที่ ',
+                              {
+                                text:
+                                  input_tso_disapeared_date ? input_tso_disapeared_date : '____________',
+                                decoration: input_tso_disapeared_date && 'underline',
+                              },
+                              ' เวลา ',
+                              {
+                                text:
+                                  input_tso_disapeared_time ? input_tso_disapeared_time : '____________',
+                                decoration: input_tso_disapeared_time && 'underline',
+                              },
+                              ' น. ',
+                            ]
                           },
                         ],
                         margin: [0, 0, 0, 5],
@@ -8970,7 +8980,7 @@ export class EventService {
                 [
                   {
                     stack: [
-                       // https://app.clickup.com/t/86eug8cfe
+                      // https://app.clickup.com/t/86eug8cfe
                       // {
                       //   text: toFullname
                       //     ? `${toFullname}`
@@ -8978,20 +8988,20 @@ export class EventService {
                       // },
                       fromSignature && rdoc1Find?.user_type_id !== 3 // (PTT TSO) https://app.clickup.com/t/86eum0pbr
                         ? {
-                            columns: [
-                              { text: 'แจ้งโดย ', width: 'auto', alignment: 'right' },
-                              {
-                                image: fromSignature, // base64 หรือ path
-                                width: 50,
-                                alignment: 'center',
-                              },
-                              { text: '', width: 'auto', alignment: 'left' },
-                            ],
-                            columnGap: 5, // ระยะห่างระหว่างวงเล็บกับภาพ
-                            margin: [0, 2, 0, 5], // ปรับระยะรอบภาพ
-                          }
+                          columns: [
+                            { text: 'แจ้งโดย ', width: 'auto', alignment: 'right' },
+                            {
+                              image: fromSignature, // base64 หรือ path
+                              width: 50,
+                              alignment: 'center',
+                            },
+                            { text: '', width: 'auto', alignment: 'left' },
+                          ],
+                          columnGap: 5, // ระยะห่างระหว่างวงเล็บกับภาพ
+                          margin: [0, 2, 0, 5], // ปรับระยะรอบภาพ
+                        }
                         : fromSignature && rdoc1Find?.user_type_id === 3 ? { text: `แจ้งโดย (PTT TSO)` } // (PTT TSO) https://app.clickup.com/t/86eum0pbr
-                        : { text: `แจ้งโดย ` },
+                          : { text: `แจ้งโดย ` },
                       { text: fromFullnameH ? `( ${fromFullnameH} )` : `(                                   )` },
                       // 
                       // { text: `แจ้งโดย ${fromFullnameH}` },
@@ -9035,21 +9045,21 @@ export class EventService {
                       // },
                       toSignature
                         ? {
-                            columns: [
-                              { text: 'รับทราบโดย ', width: 'auto', alignment: 'right' },
-                              {
-                                image: toSignature, // base64 หรือ path
-                                width: 50,
-                                alignment: 'center',
-                              },
-                              { text: '', width: 'auto', alignment: 'left' },
-                            ],
-                            columnGap: 5, // ระยะห่างระหว่างวงเล็บกับภาพ
-                            margin: [0, 2, 0, 5], // ปรับระยะรอบภาพ
-                          }
+                          columns: [
+                            { text: 'รับทราบโดย ', width: 'auto', alignment: 'right' },
+                            {
+                              image: toSignature, // base64 หรือ path
+                              width: 50,
+                              alignment: 'center',
+                            },
+                            { text: '', width: 'auto', alignment: 'left' },
+                          ],
+                          columnGap: 5, // ระยะห่างระหว่างวงเล็บกับภาพ
+                          margin: [0, 2, 0, 5], // ปรับระยะรอบภาพ
+                        }
                         : { text: `รับทราบโดย ` },
                       { text: toGroupName ? `( ${toGroupName} )` : `(                                   )` },
-                      
+
                       // { text: `รับทราบโดย ${toGroupName}` },
                       // {
                       //   text: toFullname
@@ -9201,14 +9211,14 @@ export class EventService {
 
         const toFullname =
           toAction?.event_doc_status_id !== 1 &&
-          toAction?.event_doc_status_id !== 2 &&
-          toAction?.create_by_account?.first_name &&
-          toAction?.create_by_account?.last_name
+            toAction?.event_doc_status_id !== 2 &&
+            toAction?.create_by_account?.first_name &&
+            toAction?.create_by_account?.last_name
             ? `${toAction?.create_by_account?.first_name} ${toAction?.create_by_account?.last_name}`
             : '';
 
         const toCompany =
-          (toAction?.group?.company_name && toAction?.group?.company_name) || "";
+          (toAction?.group?.company_name) || "";
         const toDate = dayjs(toAction?.create_date).locale('th');
         const toSignature =
           (toAction?.event_doc_status_id !== 1 &&
@@ -9226,7 +9236,7 @@ export class EventService {
           '';
         const fromFullname =
           rdoc1Find?.create_by_account?.first_name &&
-          rdoc1Find?.create_by_account?.last_name
+            rdoc1Find?.create_by_account?.last_name
             ? `${rdoc1Find?.create_by_account?.first_name} ${rdoc1Find?.create_by_account?.last_name}`
             : '';
         const fromCompany =
@@ -9377,226 +9387,226 @@ export class EventService {
             },
 
             // ! ======== กรอบ "ส่วนของผู้ใช้บริการ / ผู้ให้บริการ (ผู้ทีท าให้เกิดเหตุการณ์)" =========
-          {
-            table: {
-              widths: ['*'],
-              body: [
-                [
-                  {
-                    stack: [
-                      {
-                        text: 'ส่วนของผู้ใช้บริการ / ผู้ให้บริการ (ผู้ที่ทำให้เกิดเหตุการณ์)',
-                        bold: true,
-                        decoration: 'underline',
-                        margin: [0, 0, 0, 5],
-                      },
-                      {
-                        text: [
-                          { text: `space`, opacity: 0 },
-                          {
-                            // text: `ตามที่ ${input_shipper_cpn_name} ได้แจ้งเรื่องคุณภาพก๊าซไม่อยู่ในข้อกำหนดคุณภาพก๊าซ / ปริมาณก๊าซนำเข้าเบี่ยงเบนจาก Nomination มากกว่าเกณฑ์ที่กำหนด ดังรายละเอียดในเอกสารเลขที่ ${input_shipper_doc_number} (เอกสารแจ้งเตือนคุณภาพ ${input_shipper_doc_quality} ) ลงวันที่ ${input_shipper_down_date}`,
-                            text: [
-                              'ตามที่ ',
-                              {
-                                text:
-                                  input_shipper_cpn_name ? input_shipper_cpn_name : '____________',
+            {
+              table: {
+                widths: ['*'],
+                body: [
+                  [
+                    {
+                      stack: [
+                        {
+                          text: 'ส่วนของผู้ใช้บริการ / ผู้ให้บริการ (ผู้ที่ทำให้เกิดเหตุการณ์)',
+                          bold: true,
+                          decoration: 'underline',
+                          margin: [0, 0, 0, 5],
+                        },
+                        {
+                          text: [
+                            { text: `space`, opacity: 0 },
+                            {
+                              // text: `ตามที่ ${input_shipper_cpn_name} ได้แจ้งเรื่องคุณภาพก๊าซไม่อยู่ในข้อกำหนดคุณภาพก๊าซ / ปริมาณก๊าซนำเข้าเบี่ยงเบนจาก Nomination มากกว่าเกณฑ์ที่กำหนด ดังรายละเอียดในเอกสารเลขที่ ${input_shipper_doc_number} (เอกสารแจ้งเตือนคุณภาพ ${input_shipper_doc_quality} ) ลงวันที่ ${input_shipper_down_date}`,
+                              text: [
+                                'ตามที่ ',
+                                {
+                                  text:
+                                    input_shipper_cpn_name ? input_shipper_cpn_name : '____________',
                                   decoration: input_shipper_cpn_name && 'underline',
-                              },
-                              ' ได้แจ้งเรื่องคุณภาพก๊าซไม่อยู่ในข้อกำหนดคุณภาพก๊าซ / ปริมาณก๊าซนำเข้าเบี่ยงเบนจาก Nomination มากกว่าเกณฑ์ที่กำหนด ดังรายละเอียดในเอกสารเลขที่ ',
-                              {
-                                text:
-                                input_shipper_doc_number ? input_shipper_doc_number : '____________',
-                                decoration: input_shipper_doc_number && 'underline',
-                              },
-                              ' (เอกสารแจ้งเตือนคุณภาพ ',
-                              {
-                                text:
-                                input_shipper_doc_quality ? input_shipper_doc_quality : '____________',
-                                decoration: input_shipper_doc_quality && 'underline',
-                              },
-                              ' ) ลงวันที่ ',
-                              {
-                                text:
-                                input_shipper_down_date ? input_shipper_down_date : '____________',
-                                decoration: input_shipper_down_date && 'underline',
-                              },
-                            ],
-                          },
-                        ],
-                        margin: [0, 0, 0, 5],
-                        alignment: 'justify',
-                      },
-                      {
-                        text: [
-                          { text: `space`, opacity: 0 },
-                          {
-                            text: `บัดนี้ คุณภาพก๊าซดังกล่าว มีคุณภาพ / ปริมาณเป็นไปตามข้อกำหนด / เกณฑ์ที่กำหนด โดยมีข้อสรุปดังนี้ `,
-                          },
-                        ],
-                        margin: [0, 0, 0, 5],
-                        alignment: 'justify',
-                      },
-                      {
-                        ul: [
-                          {
-                            text: [
-                              {
-                                // text: `ช่วงเวลาของเหตุการณ์: วันที่ ${input_shipper_time_event_start_date} เวลา ${input_shipper_time_event_start_time} น. ถึง วันที่ ${input_shipper_time_event_end_date} เวลา ${input_shipper_time_event_end_time} น.`,
-                                text: [
-                                  'ช่วงเวลาของเหตุการณ์: วันที่ ',
-                                  {
-                                    text:
-                                      input_shipper_time_event_start_date ? input_shipper_time_event_start_date : '____________',
+                                },
+                                ' ได้แจ้งเรื่องคุณภาพก๊าซไม่อยู่ในข้อกำหนดคุณภาพก๊าซ / ปริมาณก๊าซนำเข้าเบี่ยงเบนจาก Nomination มากกว่าเกณฑ์ที่กำหนด ดังรายละเอียดในเอกสารเลขที่ ',
+                                {
+                                  text:
+                                    input_shipper_doc_number ? input_shipper_doc_number : '____________',
+                                  decoration: input_shipper_doc_number && 'underline',
+                                },
+                                ' (เอกสารแจ้งเตือนคุณภาพ ',
+                                {
+                                  text:
+                                    input_shipper_doc_quality ? input_shipper_doc_quality : '____________',
+                                  decoration: input_shipper_doc_quality && 'underline',
+                                },
+                                ' ) ลงวันที่ ',
+                                {
+                                  text:
+                                    input_shipper_down_date ? input_shipper_down_date : '____________',
+                                  decoration: input_shipper_down_date && 'underline',
+                                },
+                              ],
+                            },
+                          ],
+                          margin: [0, 0, 0, 5],
+                          alignment: 'justify',
+                        },
+                        {
+                          text: [
+                            { text: `space`, opacity: 0 },
+                            {
+                              text: `บัดนี้ คุณภาพก๊าซดังกล่าว มีคุณภาพ / ปริมาณเป็นไปตามข้อกำหนด / เกณฑ์ที่กำหนด โดยมีข้อสรุปดังนี้ `,
+                            },
+                          ],
+                          margin: [0, 0, 0, 5],
+                          alignment: 'justify',
+                        },
+                        {
+                          ul: [
+                            {
+                              text: [
+                                {
+                                  // text: `ช่วงเวลาของเหตุการณ์: วันที่ ${input_shipper_time_event_start_date} เวลา ${input_shipper_time_event_start_time} น. ถึง วันที่ ${input_shipper_time_event_end_date} เวลา ${input_shipper_time_event_end_time} น.`,
+                                  text: [
+                                    'ช่วงเวลาของเหตุการณ์: วันที่ ',
+                                    {
+                                      text:
+                                        input_shipper_time_event_start_date ? input_shipper_time_event_start_date : '____________',
                                       decoration: input_shipper_time_event_start_date && 'underline',
                                     },
                                     ' เวลา ',
                                     {
                                       text:
-                                      input_shipper_time_event_start_time ? input_shipper_time_event_start_time : '____________',
+                                        input_shipper_time_event_start_time ? input_shipper_time_event_start_time : '____________',
                                       decoration: input_shipper_time_event_start_time && 'underline',
                                     },
                                     ' น. ถึง วันที่ ',
                                     {
                                       text:
-                                      input_shipper_time_event_end_date ? input_shipper_time_event_end_date : '____________',
+                                        input_shipper_time_event_end_date ? input_shipper_time_event_end_date : '____________',
                                       decoration: input_shipper_time_event_end_date && 'underline',
                                     },
                                     ' เวลา ',
                                     {
                                       text:
-                                      input_shipper_time_event_end_time ? input_shipper_time_event_end_time : '____________',
+                                        input_shipper_time_event_end_time ? input_shipper_time_event_end_time : '____________',
                                       decoration: input_shipper_time_event_end_time && 'underline',
                                     },
                                     ' น. ',
-                                ]
-                              },
-                            ],
-                            margin: [22, 0, 0, 0],
-                          },
-                          {
-                            text: [
-                              {
-                                // text: `สรุปการแก้ไข: ${input_shipper_time_event_summary}`,
-                                text: [
-                                  'สรุปการแก้ไข: ',
-                                  {
-                                    text:
-                                      input_shipper_time_event_summary ? input_shipper_time_event_summary : '____________',
+                                  ]
+                                },
+                              ],
+                              margin: [22, 0, 0, 0],
+                            },
+                            {
+                              text: [
+                                {
+                                  // text: `สรุปการแก้ไข: ${input_shipper_time_event_summary}`,
+                                  text: [
+                                    'สรุปการแก้ไข: ',
+                                    {
+                                      text:
+                                        input_shipper_time_event_summary ? input_shipper_time_event_summary : '____________',
                                       decoration: input_shipper_time_event_summary && 'underline',
                                     },
                                   ]
-                              },
-                            ],
-                            margin: [22, 0, 0, 0],
-                          },
-                        ],
-                      },
-                    ],
-                    margin: [5, 5, 5, 5],
-                  },
+                                },
+                              ],
+                              margin: [22, 0, 0, 0],
+                            },
+                          ],
+                        },
+                      ],
+                      margin: [5, 5, 5, 5],
+                    },
+                  ],
                 ],
-              ],
+              },
+              layout: {
+                hLineWidth: () => 0.5,
+                vLineWidth: () => 0.5,
+              },
+              margin: [0, 0, 0, 0],
             },
-            layout: {
-              hLineWidth: () => 0.5,
-              vLineWidth: () => 0.5,
-            },
-            margin: [0, 0, 0, 0],
-          },
 
-          // ! ======== กรอบ "ส่วนของผู้ให้บริการ" =========
-          {
-            table: {
-              widths: ['*'],
-              body: [
-                [
-                  {
-                    stack: [
-                      {
-                        text: 'ส่วนของผู้ให้บริการ',
-                        bold: true,
-                        decoration: 'underline',
-                        margin: [0, 0, 0, 5],
-                      },
+            // ! ======== กรอบ "ส่วนของผู้ให้บริการ" =========
+            {
+              table: {
+                widths: ['*'],
+                body: [
+                  [
+                    {
+                      stack: [
+                        {
+                          text: 'ส่วนของผู้ให้บริการ',
+                          bold: true,
+                          decoration: 'underline',
+                          margin: [0, 0, 0, 5],
+                        },
 
-                      {
-                        text: [
-                          { text: `space`, opacity: 0 },
-                          {
-                            // text: `ตามที่ส่วนบริหารและควบคุมระบบส่งก๊าซ (บค.บคต.) ได้แจ้งคุณภาพก๊าซผสม ไม่อยู่ในข้อกำหนดคุณภาพก๊าซของ TSO Code ดังรายละเอียดในเอกสารเลขที่ ${input_tso_doc_number} (เอกสารแจ้งเตือนคุณภาพ 2) ${input_tso_down_date}`,
-                            text: [
-                                  'ตามที่ส่วนบริหารและควบคุมระบบส่งก๊าซ (บค.บคต.) ได้แจ้งคุณภาพก๊าซผสม ไม่อยู่ในข้อกำหนดคุณภาพก๊าซของ TSO Code ดังรายละเอียดในเอกสารเลขที่ ',
-                                  {
-                                    text:
+                        {
+                          text: [
+                            { text: `space`, opacity: 0 },
+                            {
+                              // text: `ตามที่ส่วนบริหารและควบคุมระบบส่งก๊าซ (บค.บคต.) ได้แจ้งคุณภาพก๊าซผสม ไม่อยู่ในข้อกำหนดคุณภาพก๊าซของ TSO Code ดังรายละเอียดในเอกสารเลขที่ ${input_tso_doc_number} (เอกสารแจ้งเตือนคุณภาพ 2) ${input_tso_down_date}`,
+                              text: [
+                                'ตามที่ส่วนบริหารและควบคุมระบบส่งก๊าซ (บค.บคต.) ได้แจ้งคุณภาพก๊าซผสม ไม่อยู่ในข้อกำหนดคุณภาพก๊าซของ TSO Code ดังรายละเอียดในเอกสารเลขที่ ',
+                                {
+                                  text:
                                     input_tso_doc_number ? input_tso_doc_number : '____________',
-                                    decoration: input_tso_doc_number && 'underline',
-                                  },
-                                  ' (เอกสารแจ้งเตือนคุณภาพ 2) ',
-                                  {
-                                    text:
+                                  decoration: input_tso_doc_number && 'underline',
+                                },
+                                ' (เอกสารแจ้งเตือนคุณภาพ 2) ',
+                                {
+                                  text:
                                     input_tso_down_date ? input_tso_down_date : '____________',
-                                    decoration: input_tso_down_date && 'underline',
-                                  },
-                                  ]
-                          },
-                        ],
-                        margin: [0, 0, 0, 5],
-                        alignment: 'justify',
-                      },
-                      {
-                        text: [
-                          { text: `space`, opacity: 0 },
-                          {
-                            // text: `โดยก๊าซฯที่ไม่อยู่ในคุณสมบัติที่กำหนดตามข้อกำหนด TSO Code ได้หมดไปจากระบบส่งก๊าซฯ เมื่อ วันที่ ${input_tso_disapeared_date} เวลา ${input_tso_disapeared_time} น.`,
-                            text: [
-                                  'โดยก๊าซฯที่ไม่อยู่ในคุณสมบัติที่กำหนดตามข้อกำหนด TSO Code ได้หมดไปจากระบบส่งก๊าซฯ เมื่อ วันที่ ',
-                                  {
-                                    text:
+                                  decoration: input_tso_down_date && 'underline',
+                                },
+                              ]
+                            },
+                          ],
+                          margin: [0, 0, 0, 5],
+                          alignment: 'justify',
+                        },
+                        {
+                          text: [
+                            { text: `space`, opacity: 0 },
+                            {
+                              // text: `โดยก๊าซฯที่ไม่อยู่ในคุณสมบัติที่กำหนดตามข้อกำหนด TSO Code ได้หมดไปจากระบบส่งก๊าซฯ เมื่อ วันที่ ${input_tso_disapeared_date} เวลา ${input_tso_disapeared_time} น.`,
+                              text: [
+                                'โดยก๊าซฯที่ไม่อยู่ในคุณสมบัติที่กำหนดตามข้อกำหนด TSO Code ได้หมดไปจากระบบส่งก๊าซฯ เมื่อ วันที่ ',
+                                {
+                                  text:
                                     input_tso_disapeared_date ? input_tso_disapeared_date : '____________',
-                                    decoration: input_tso_disapeared_date && 'underline',
-                                  },
-                                  ' เวลา ',
-                                  {
-                                    text:
+                                  decoration: input_tso_disapeared_date && 'underline',
+                                },
+                                ' เวลา ',
+                                {
+                                  text:
                                     input_tso_disapeared_time ? input_tso_disapeared_time : '____________',
-                                    decoration: input_tso_disapeared_time && 'underline',
-                                  },
-                                  ' น. ',
-                                  ]
-                          },
-                        ],
-                        margin: [0, 0, 0, 5],
-                        alignment: 'justify',
-                      },
-                    ],
-                    margin: [5, 5, 5, 5],
-                  },
+                                  decoration: input_tso_disapeared_time && 'underline',
+                                },
+                                ' น. ',
+                              ]
+                            },
+                          ],
+                          margin: [0, 0, 0, 5],
+                          alignment: 'justify',
+                        },
+                      ],
+                      margin: [5, 5, 5, 5],
+                    },
+                  ],
                 ],
-              ],
+              },
+              layout: {
+                hLineWidth: () => 0.5,
+                vLineWidth: () => 0.5,
+              },
+              margin: [0, 0, 0, 0],
             },
-            layout: {
-              hLineWidth: () => 0.5,
-              vLineWidth: () => 0.5,
-            },
-            margin: [0, 0, 0, 0],
-          },
 
-           // ======== กรอบช่องเซ็นชื่อ =========
-          {
-            table: {
-              widths: ['*', '*', '*'],
-              body: [
-                [
-                  {
-                    stack: [
-                       // https://app.clickup.com/t/86eug8cfe
-                      // {
-                      //   text: toFullname
-                      //     ? `${toFullname}`
-                      //     : `_____________________`,
-                      // },
-                      fromSignature && rdoc1Find?.user_type_id !== 3 // (PTT TSO) https://app.clickup.com/t/86eum0pbr
-                        ? {
+            // ======== กรอบช่องเซ็นชื่อ =========
+            {
+              table: {
+                widths: ['*', '*', '*'],
+                body: [
+                  [
+                    {
+                      stack: [
+                        // https://app.clickup.com/t/86eug8cfe
+                        // {
+                        //   text: toFullname
+                        //     ? `${toFullname}`
+                        //     : `_____________________`,
+                        // },
+                        fromSignature && rdoc1Find?.user_type_id !== 3 // (PTT TSO) https://app.clickup.com/t/86eum0pbr
+                          ? {
                             columns: [
                               { text: 'แจ้งโดย ', width: 'auto', alignment: 'right' },
                               {
@@ -9609,51 +9619,51 @@ export class EventService {
                             columnGap: 5, // ระยะห่างระหว่างวงเล็บกับภาพ
                             margin: [0, 2, 0, 5], // ปรับระยะรอบภาพ
                           }
-                        : fromSignature && rdoc1Find?.user_type_id === 3 ? { text: `แจ้งโดย (PTT TSO)` } // (PTT TSO) https://app.clickup.com/t/86eum0pbr
-                        : { text: `แจ้งโดย ` },
-                      { text: fromFullnameH ? `( ${fromFullnameH} )` : `(                                   )` },
-                      // 
-                      // { text: `แจ้งโดย ${fromFullnameH}` },
-                      // {
-                      //   text: fromFullname
-                      //     ? `${fromFullname}`
-                      //     : `_____________________`,
-                      // },
-                      // fromSignature
-                      //   ? {
-                      //       columns: [
-                      //         { text: '(', width: 'auto', alignment: 'right' },
-                      //         {
-                      //           image: fromSignature, // base64 หรือ path
-                      //           width: 50,
-                      //           alignment: 'center',
-                      //         },
-                      //         { text: ')', width: 'auto', alignment: 'left' },
-                      //       ],
-                      //       columnGap: 15, // ระยะห่างระหว่างวงเล็บกับภาพ
-                      //       margin: [0, 2, 0, 5], // ปรับระยะรอบภาพ
-                      //     }
-                      //   : { text: `(                                   )` },
-                      { text: `หน่วยงาน ${fromCompany}` }, // https://app.clickup.com/t/86eum0pah
-                      {
-                        text: `วันที่เดือนปี: ${fromDate.format('DD')} / ${fromDate.format('MM')} / ${fromDate.format('BB')}`,
-                      },
-                      {
-                        text: `เวลา : ${fromDate.format('HH:mm')} น.`,
-                      },
-                    ],
-                    margin: [5, 5, 5, 5],
-                  },
-                  {
-                    stack: [
-                      // https://app.clickup.com/t/86eug8cfe
-                      // {
-                      //   text: toFullname
-                      //     ? `${toFullname}`
-                      //     : `_____________________`,
-                      // },
-                      toSignature
-                        ? {
+                          : fromSignature && rdoc1Find?.user_type_id === 3 ? { text: `แจ้งโดย (PTT TSO)` } // (PTT TSO) https://app.clickup.com/t/86eum0pbr
+                            : { text: `แจ้งโดย ` },
+                        { text: fromFullnameH ? `( ${fromFullnameH} )` : `(                                   )` },
+                        // 
+                        // { text: `แจ้งโดย ${fromFullnameH}` },
+                        // {
+                        //   text: fromFullname
+                        //     ? `${fromFullname}`
+                        //     : `_____________________`,
+                        // },
+                        // fromSignature
+                        //   ? {
+                        //       columns: [
+                        //         { text: '(', width: 'auto', alignment: 'right' },
+                        //         {
+                        //           image: fromSignature, // base64 หรือ path
+                        //           width: 50,
+                        //           alignment: 'center',
+                        //         },
+                        //         { text: ')', width: 'auto', alignment: 'left' },
+                        //       ],
+                        //       columnGap: 15, // ระยะห่างระหว่างวงเล็บกับภาพ
+                        //       margin: [0, 2, 0, 5], // ปรับระยะรอบภาพ
+                        //     }
+                        //   : { text: `(                                   )` },
+                        { text: `หน่วยงาน ${fromCompany}` }, // https://app.clickup.com/t/86eum0pah
+                        {
+                          text: `วันที่เดือนปี: ${fromDate.format('DD')} / ${fromDate.format('MM')} / ${fromDate.format('BB')}`,
+                        },
+                        {
+                          text: `เวลา : ${fromDate.format('HH:mm')} น.`,
+                        },
+                      ],
+                      margin: [5, 5, 5, 5],
+                    },
+                    {
+                      stack: [
+                        // https://app.clickup.com/t/86eug8cfe
+                        // {
+                        //   text: toFullname
+                        //     ? `${toFullname}`
+                        //     : `_____________________`,
+                        // },
+                        toSignature
+                          ? {
                             columns: [
                               { text: 'รับทราบโดย ', width: 'auto', alignment: 'right' },
                               {
@@ -9666,62 +9676,62 @@ export class EventService {
                             columnGap: 5, // ระยะห่างระหว่างวงเล็บกับภาพ
                             margin: [0, 2, 0, 5], // ปรับระยะรอบภาพ
                           }
-                        : { text: `รับทราบโดย ` },
-                      { text: toGroupName ? `( ${toGroupName} )` : `(                                   )` },
-                      
-                      // { text: `รับทราบโดย ${toGroupName}` },
-                      // {
-                      //   text: toFullname
-                      //     ? `${toFullname}`
-                      //     : `_____________________`,
-                      // },
-                      // toSignature
-                      //   ? {
-                      //       columns: [
-                      //         { text: '(', width: 'auto', alignment: 'right' },
-                      //         {
-                      //           image: toSignature, // base64 หรือ path
-                      //           width: 50,
-                      //           alignment: 'center',
-                      //         },
-                      //         { text: ')', width: 'auto', alignment: 'left' },
-                      //       ],
-                      //       columnGap: 5, // ระยะห่างระหว่างวงเล็บกับภาพ
-                      //       margin: [0, 2, 0, 5], // ปรับระยะรอบภาพ
-                      //     }
-                      //   : { text: `(                                   )` },
-                      { text: `หน่วยงาน ${toCompany} (ผู้ให้บริการ)` },
-                      {
-                        text: `วันที่เดือนปี: ${!toFullname ? ' ' : toDate.format('DD')} / ${!toFullname ? ' ' : toDate.format('MM')} / ${!toFullname ? ' ' : toDate.format('BB')}`,
-                      },
-                      {
-                        text: `เวลา : ${!toFullname ? ' ' : toDate.format('HH:mm')} น.`,
-                      },
-                    ],
-                    margin: [5, 5, 5, 5],
-                  },
-                  {
-                    stack: [
-                      { text: `รับทราบโดย` },
-                      { text: `…………………………………………` },
-                      { text: `(                                   )` },
-                      { text: `หน่วยงาน ………………………………………` },
-                      { text: `วันที่เดือนปี : ………/…………/…………` },
-                      {
-                        text: `เวลา : ………………………………………`,
-                      },
-                    ],
-                    margin: [5, 5, 5, 5],
-                  },
+                          : { text: `รับทราบโดย ` },
+                        { text: toGroupName ? `( ${toGroupName} )` : `(                                   )` },
+
+                        // { text: `รับทราบโดย ${toGroupName}` },
+                        // {
+                        //   text: toFullname
+                        //     ? `${toFullname}`
+                        //     : `_____________________`,
+                        // },
+                        // toSignature
+                        //   ? {
+                        //       columns: [
+                        //         { text: '(', width: 'auto', alignment: 'right' },
+                        //         {
+                        //           image: toSignature, // base64 หรือ path
+                        //           width: 50,
+                        //           alignment: 'center',
+                        //         },
+                        //         { text: ')', width: 'auto', alignment: 'left' },
+                        //       ],
+                        //       columnGap: 5, // ระยะห่างระหว่างวงเล็บกับภาพ
+                        //       margin: [0, 2, 0, 5], // ปรับระยะรอบภาพ
+                        //     }
+                        //   : { text: `(                                   )` },
+                        { text: `หน่วยงาน ${toCompany} (ผู้ให้บริการ)` },
+                        {
+                          text: `วันที่เดือนปี: ${!toFullname ? ' ' : toDate.format('DD')} / ${!toFullname ? ' ' : toDate.format('MM')} / ${!toFullname ? ' ' : toDate.format('BB')}`,
+                        },
+                        {
+                          text: `เวลา : ${!toFullname ? ' ' : toDate.format('HH:mm')} น.`,
+                        },
+                      ],
+                      margin: [5, 5, 5, 5],
+                    },
+                    {
+                      stack: [
+                        { text: `รับทราบโดย` },
+                        { text: `…………………………………………` },
+                        { text: `(                                   )` },
+                        { text: `หน่วยงาน ………………………………………` },
+                        { text: `วันที่เดือนปี : ………/…………/…………` },
+                        {
+                          text: `เวลา : ………………………………………`,
+                        },
+                      ],
+                      margin: [5, 5, 5, 5],
+                    },
+                  ],
                 ],
-              ],
+              },
+              layout: {
+                hLineWidth: () => 0.5,
+                vLineWidth: () => 0.5,
+              },
+              margin: [0, 0, 0, 0],
             },
-            layout: {
-              hLineWidth: () => 0.5,
-              vLineWidth: () => 0.5,
-            },
-            margin: [0, 0, 0, 0],
-          },
 
             // // ======== กรอบช่องเซ็นชื่อ =========
             // {
@@ -10170,7 +10180,7 @@ export class EventService {
               },
             },
           },
-          orderBy: { id: "desc" } 
+          orderBy: { id: "desc" }
         },
       },
     });
@@ -10216,27 +10226,27 @@ export class EventService {
     const eventDateCondition =
       !!eventDateFrom && !!eventDateTo
         ? {
-            event_date: {
-              gte: getTodayNowYYYYMMDDDfaultAdd7(eventDateFrom).toDate(),
-              lte: getTodayNowYYYYMMDDDfaultAdd7(eventDateTo)
-                .endOf('day')
-                .toDate(),
-            },
-          }
+          event_date: {
+            gte: getTodayNowYYYYMMDDDfaultAdd7(eventDateFrom).toDate(),
+            lte: getTodayNowYYYYMMDDDfaultAdd7(eventDateTo)
+              .endOf('day')
+              .toDate(),
+          },
+        }
         : eventDateFrom
           ? {
-              event_date: {
-                gte: getTodayNowYYYYMMDDDfaultAdd7(eventDateFrom).toDate(),
-              },
-            }
+            event_date: {
+              gte: getTodayNowYYYYMMDDDfaultAdd7(eventDateFrom).toDate(),
+            },
+          }
           : eventDateTo
             ? {
-                event_date: {
-                  lte: getTodayNowYYYYMMDDDfaultAdd7(eventDateTo)
-                    .endOf('day')
-                    .toDate(),
-                },
-              }
+              event_date: {
+                lte: getTodayNowYYYYMMDDDfaultAdd7(eventDateTo)
+                  .endOf('day')
+                  .toDate(),
+              },
+            }
             : {};
 
     const result = await this.prisma.event_runnumber_emer.findMany({
@@ -10496,11 +10506,11 @@ export class EventService {
     const frData =
       userTypeId === 3
         ? newData?.filter((f: any) => {
-            return (
-              f?.document39 !== null
-              // f?.document4.length !== 0
-            );
-          })
+          return (
+            f?.document39 !== null
+            // f?.document4.length !== 0
+          );
+        })
         : newData;
 
     const calcLength = Math.abs(frData.length - newData.length);
@@ -10558,9 +10568,9 @@ export class EventService {
       document39 = document39CkGen
         ? null
         : event_document_emer?.find(
-            (f: any) =>
-              f?.event_doc_master_id === 309 && f?.group_id === groupId, // เป็น obj 1
-          );
+          (f: any) =>
+            f?.event_doc_master_id === 309 && f?.group_id === groupId, // เป็น obj 1
+        );
 
       const document4CkGen = event_document_emer?.find(
         (f: any) =>
@@ -10572,9 +10582,9 @@ export class EventService {
       document41 = document4CkGen
         ? []
         : event_document_emer?.filter(
-            (f: any) =>
-              f?.event_doc_master_id === 41 && f?.group_id === groupId, // เป็น obj 1
-          );
+          (f: any) =>
+            f?.event_doc_master_id === 41 && f?.group_id === groupId, // เป็น obj 1
+        );
 
       document5 = event_document_emer?.find(
         (f: any) => f?.event_doc_master_id === 5 && f?.group_id === groupId, // เป็น obj 1
@@ -11909,10 +11919,10 @@ export class EventService {
       //       ccEmail: ncc_email,
       //     };
       const emailUse = {
-            shipper: nshipper,
-            emailGroup: nemail_event_for_shipper,
-            ccEmail: ncc_email,
-          }
+        shipper: nshipper,
+        emailGroup: nemail_event_for_shipper,
+        ccEmail: ncc_email,
+      }
 
       return {
         createEventRunnumber: {
@@ -11967,8 +11977,26 @@ export class EventService {
 
     const group = shipperIds
       ? await this.prisma.group.findFirst({
+        where: {
+          id: shipperIds,
+        },
+        select: {
+          id: true,
+          user_type: {
+            select: {
+              id: true,
+            },
+          },
+        },
+      })
+      : userId
+        ? await this.prisma.group.findFirst({
           where: {
-            id: shipperIds,
+            account_manage: {
+              some: {
+                account_id: Number(userId),
+              },
+            },
           },
           select: {
             id: true,
@@ -11979,24 +12007,6 @@ export class EventService {
             },
           },
         })
-      : userId
-        ? await this.prisma.group.findFirst({
-            where: {
-              account_manage: {
-                some: {
-                  account_id: Number(userId),
-                },
-              },
-            },
-            select: {
-              id: true,
-              user_type: {
-                select: {
-                  id: true,
-                },
-              },
-            },
-          })
         : groupObj;
     console.log('group : ', group);
     const userTypeId = group?.user_type?.id;
@@ -12007,243 +12017,243 @@ export class EventService {
     const result =
       userTypeId === 3
         ? await this.prisma.event_document_emer.findFirst({
-            where: {
-              event_runnumber_emer_id: Number(id),
-              event_doc_master_id: 309,
-              ref_document: {
-                not: null,
-              },
-              group_id: Number(groupId),
+          where: {
+            event_runnumber_emer_id: Number(id),
+            event_doc_master_id: 309,
+            ref_document: {
+              not: null,
             },
-            include: {
-              event_runnumber_emer: {
-                include: {
-                  event_status: true,
-                },
+            group_id: Number(groupId),
+          },
+          include: {
+            event_runnumber_emer: {
+              include: {
+                event_status: true,
               },
-              event_doc_master: true,
-              event_doc_status: true,
-              group: true,
-              user_type: true,
-              create_by_account: {
-                select: {
-                  id: true,
-                  email: true,
-                  first_name: true,
-                  last_name: true,
-                  signature_base_64: true,
-                },
+            },
+            event_doc_master: true,
+            event_doc_status: true,
+            group: true,
+            user_type: true,
+            create_by_account: {
+              select: {
+                id: true,
+                email: true,
+                first_name: true,
+                last_name: true,
+                signature_base_64: true,
               },
-              update_by_account: {
-                select: {
-                  id: true,
-                  email: true,
-                  first_name: true,
-                  last_name: true,
-                  signature_base_64: true,
-                },
+            },
+            update_by_account: {
+              select: {
+                id: true,
+                email: true,
+                first_name: true,
+                last_name: true,
+                signature_base_64: true,
               },
-              event_document_emer_file: {
-                include: {
-                  create_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                    },
-                  },
-                  update_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                    },
+            },
+            event_document_emer_file: {
+              include: {
+                create_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
                   },
                 },
-                orderBy: { id: 'desc' },
-              },
-              event_document_emer_file_pdf: {
-                include: {
-                  create_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                    },
-                  },
-                  update_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                    },
+                update_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
                   },
                 },
               },
-              event_document_emer_action: {
-                include: {
-                  event_doc_master: true,
-                  event_doc_status: true,
-                  group: true,
-                  user_type: true,
-                  create_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                      signature: true,
-                      signature_base_64: true,
-                    },
-                  },
-                  update_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                      signature: true,
-                      signature_base_64: true,
-                    },
+              orderBy: { id: 'desc' },
+            },
+            event_document_emer_file_pdf: {
+              include: {
+                create_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
                   },
                 },
-                orderBy: {
-                  id: 'desc',
+                update_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                  },
                 },
               },
             },
-          })
+            event_document_emer_action: {
+              include: {
+                event_doc_master: true,
+                event_doc_status: true,
+                group: true,
+                user_type: true,
+                create_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                    signature: true,
+                    signature_base_64: true,
+                  },
+                },
+                update_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                    signature: true,
+                    signature_base_64: true,
+                  },
+                },
+              },
+              orderBy: {
+                id: 'desc',
+              },
+            },
+          },
+        })
         : await this.prisma.event_document_emer.findFirst({
-            where: {
-              event_runnumber_emer_id: Number(id),
-              event_doc_master_id: 309,
-              ref_document: null,
-            },
-            include: {
-              event_runnumber_emer: {
-                include: {
-                  event_status: true,
-                  event_document_emer: {
-                    include: {
-                      event_doc_status: true,
-                      group: true,
-                      user_type: true,
-                    },
-                    where: {
-                      user_type: {
-                        id: 3,
-                      },
-                      event_doc_master_id: 309,
-                    },
+          where: {
+            event_runnumber_emer_id: Number(id),
+            event_doc_master_id: 309,
+            ref_document: null,
+          },
+          include: {
+            event_runnumber_emer: {
+              include: {
+                event_status: true,
+                event_document_emer: {
+                  include: {
+                    event_doc_status: true,
+                    group: true,
+                    user_type: true,
                   },
-                },
-              },
-              event_doc_master: true,
-              event_doc_status: true,
-              event_document_emer_cc_email: true,
-              event_document_emer_email_group_for_event: {
-                include: {
-                  edit_email_group_for_event: true,
-                },
-              },
-              group: true,
-              user_type: true,
-              create_by_account: {
-                select: {
-                  id: true,
-                  email: true,
-                  first_name: true,
-                  last_name: true,
-                  signature_base_64: true,
-                },
-              },
-              update_by_account: {
-                select: {
-                  id: true,
-                  email: true,
-                  first_name: true,
-                  last_name: true,
-                  signature_base_64: true,
-                },
-              },
-              event_document_emer_file: {
-                include: {
-                  create_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
+                  where: {
+                    user_type: {
+                      id: 3,
                     },
+                    event_doc_master_id: 309,
                   },
-                  update_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                    },
-                  },
-                },
-                orderBy: { id: 'desc' },
-              },
-              event_document_emer_file_pdf: {
-                include: {
-                  create_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                    },
-                  },
-                  update_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                    },
-                  },
-                },
-              },
-              event_document_emer_action: {
-                include: {
-                  event_doc_master: true,
-                  event_doc_status: true,
-                  group: true,
-                  user_type: true,
-                  create_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                      signature: true,
-                      signature_base_64: true,
-                    },
-                  },
-                  update_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                      signature: true,
-                      signature_base_64: true,
-                    },
-                  },
-                },
-                orderBy: {
-                  id: 'desc',
                 },
               },
             },
-          });
+            event_doc_master: true,
+            event_doc_status: true,
+            event_document_emer_cc_email: true,
+            event_document_emer_email_group_for_event: {
+              include: {
+                edit_email_group_for_event: true,
+              },
+            },
+            group: true,
+            user_type: true,
+            create_by_account: {
+              select: {
+                id: true,
+                email: true,
+                first_name: true,
+                last_name: true,
+                signature_base_64: true,
+              },
+            },
+            update_by_account: {
+              select: {
+                id: true,
+                email: true,
+                first_name: true,
+                last_name: true,
+                signature_base_64: true,
+              },
+            },
+            event_document_emer_file: {
+              include: {
+                create_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                  },
+                },
+                update_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                  },
+                },
+              },
+              orderBy: { id: 'desc' },
+            },
+            event_document_emer_file_pdf: {
+              include: {
+                create_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                  },
+                },
+                update_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                  },
+                },
+              },
+            },
+            event_document_emer_action: {
+              include: {
+                event_doc_master: true,
+                event_doc_status: true,
+                group: true,
+                user_type: true,
+                create_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                    signature: true,
+                    signature_base_64: true,
+                  },
+                },
+                update_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                    signature: true,
+                    signature_base_64: true,
+                  },
+                },
+              },
+              orderBy: {
+                id: 'desc',
+              },
+            },
+          },
+        });
     console.log('result : ', result);
     return result;
   }
@@ -12253,14 +12263,14 @@ export class EventService {
       where: {
         ...(tso
           ? {
-              event_document_emer: {
-                event_runnumber_emer_id: Number(id),
-                event_doc_master_id: 309,
-              },
-            }
+            event_document_emer: {
+              event_runnumber_emer_id: Number(id),
+              event_doc_master_id: 309,
+            },
+          }
           : {
-              event_document_emer_id: Number(id),
-            }),
+            event_document_emer_id: Number(id),
+          }),
       },
       include: {
         group: true,
@@ -12288,7 +12298,7 @@ export class EventService {
 
       return {
         ...nE,
-        row: temp ? JSON.parse(temp) : null,
+        row: this.safeParseJSON(temp),
       };
     });
     return nresData;
@@ -12520,22 +12530,23 @@ export class EventService {
     });
 
     // https://app.clickup.com/t/86eum0p1d
-      const roleMenuAllocationManagementNoticeEmail =
-    await this.prisma.account.findMany({
-      where: {
-        id: {
-          not: 99999,
-        },
-        account_manage: {
-          some: {
-            account_role: {
-              some: {
-                role: {
-                  user_type_id: 2,
-                  menus_config: {
-                    some: {
-                      menus_id: 106,
-                      f_noti_email: 1,
+    const roleMenuAllocationManagementNoticeEmail =
+      await this.prisma.account.findMany({
+        where: {
+          id: {
+            not: 99999,
+          },
+          account_manage: {
+            some: {
+              account_role: {
+                some: {
+                  role: {
+                    user_type_id: 2,
+                    menus_config: {
+                      some: {
+                        menus_id: 106,
+                        f_noti_email: 1,
+                      },
                     },
                   },
                 },
@@ -12543,36 +12554,35 @@ export class EventService {
             },
           },
         },
-      },
-      select: {
-        id: true,
-        email: true,
-        first_name: true,
-        last_name: true,
-        telephone: true,
-        account_manage: {
-          include: {
-            account_role: {
-              include: {
-                role: true,
+        select: {
+          id: true,
+          email: true,
+          first_name: true,
+          last_name: true,
+          telephone: true,
+          account_manage: {
+            include: {
+              account_role: {
+                include: {
+                  role: true,
+                },
               },
             },
           },
         },
-      },
-      orderBy: {
-        id: 'asc',
-      },
-    });
+        orderBy: {
+          id: 'asc',
+        },
+      });
     // console.log('event_doc_status_id : ', event_doc_status_id);
     // console.log('shipperCreate? : ', shipperCreate);
     // console.log('shipperCreate?.email : ', shipperCreate?.email);
     const shipperEmailArr = event_doc_status_id && shipperCreate?.email && event_doc_status_id !== 5 ? [
-      ...(roleMenuAllocationManagementNoticeEmail?.map((e:any) => e?.email)),
+      ...(roleMenuAllocationManagementNoticeEmail?.map((e: any) => e?.email)),
       docId?.group?.email ?? null,
       shipperCreate?.email,
     ] : [
-      ...(roleMenuAllocationManagementNoticeEmail?.map((e:any) => e?.email)),
+      ...(roleMenuAllocationManagementNoticeEmail?.map((e: any) => e?.email)),
       docId?.group?.email ?? null,
     ]
       ?.filter((f: any) => f !== null)
@@ -12630,15 +12640,15 @@ export class EventService {
       where: {
         ...(shipperIds
           ? {
-              id: shipperIds,
-            }
+            id: shipperIds,
+          }
           : {
-              account_manage: {
-                some: {
-                  account_id: Number(userId),
-                },
+            account_manage: {
+              some: {
+                account_id: Number(userId),
               },
-            }),
+            },
+          }),
       },
       select: {
         id: true,
@@ -12679,14 +12689,14 @@ export class EventService {
       console.log('toAction : ', toAction);
       const toFullname =
         toAction?.event_doc_status_id !== 1 &&
-        toAction?.event_doc_status_id !== 2 &&
-        toAction?.create_by_account?.first_name &&
-        toAction?.create_by_account?.last_name
+          toAction?.event_doc_status_id !== 2 &&
+          toAction?.create_by_account?.first_name &&
+          toAction?.create_by_account?.last_name
           ? `${toAction?.create_by_account?.first_name} ${toAction?.create_by_account?.last_name}`
           : '';
 
       const toCompany =
-        (toAction?.group?.company_name && toAction?.group?.company_name) ||
+        (toAction?.group?.company_name) ||
         '';
       const toDate = dayjs(toAction?.create_date).locale('th');
       const toSignature =
@@ -12698,7 +12708,7 @@ export class EventService {
       // ----
       const fromFullname =
         rdoc1Find?.create_by_account?.first_name &&
-        rdoc1Find?.create_by_account?.last_name
+          rdoc1Find?.create_by_account?.last_name
           ? `${rdoc1Find?.create_by_account?.first_name} ${rdoc1Find?.create_by_account?.last_name}`
           : '';
       const fromCompany = 'บริษัท ปตท.จำกัด (มหาชน)';
@@ -13005,7 +13015,7 @@ export class EventService {
                               'เนื่องด้วยในวันที่/เวลา:  ',
                               {
                                 text:
-                                input_date_time_of_the_incident ? input_date_time_of_the_incident : '____________',
+                                  input_date_time_of_the_incident ? input_date_time_of_the_incident : '____________',
                                 decoration: input_date_time_of_the_incident && 'underline',
                               },
                               ' ได้เกิดเหตุการณ์ไม่สมดุลอย่างรุนแรง / ภาวะฉุกเฉิน ซึ่งมีรายละเอียดดังนี้ ',
@@ -13028,7 +13038,7 @@ export class EventService {
                             text: [
                               {
                                 text:
-                                input_incident ? input_incident : '____________',
+                                  input_incident ? input_incident : '____________',
                                 decoration: input_incident && 'underline',
                               },
                             ],
@@ -13047,10 +13057,10 @@ export class EventService {
                           },
                           {
                             // text: `${input_detail_incident}`,
-                             text: [
+                            text: [
                               {
                                 text:
-                                input_detail_incident ? input_detail_incident : '____________',
+                                  input_detail_incident ? input_detail_incident : '____________',
                                 decoration: input_detail_incident && 'underline',
                               },
                             ],
@@ -13091,7 +13101,7 @@ export class EventService {
                           },
                           {
                             // text: `${input_note}`,
-                             text: [
+                            text: [
                               {
                                 text: input_note ? input_note : '____________',
                                 decoration: input_note && 'underline',
@@ -13142,7 +13152,7 @@ export class EventService {
                             text: [
                               {
                                 text:
-                                input_shipper_operation ? input_shipper_operation : '____________',
+                                  input_shipper_operation ? input_shipper_operation : '____________',
                                 decoration: input_shipper_operation && 'underline',
                               },
                             ],
@@ -13160,10 +13170,10 @@ export class EventService {
                           },
                           {
                             // text: `${input_shipper_note}`,
-                             text: [
+                            text: [
                               {
                                 text:
-                                input_shipper_note ? input_shipper_note : '____________',
+                                  input_shipper_note ? input_shipper_note : '____________',
                                 decoration: input_shipper_note && 'underline',
                               },
                             ],
@@ -13196,21 +13206,21 @@ export class EventService {
                       // https://app.clickup.com/t/86eug8dw2
                       fromSignature
                         ? {
-                            columns: [
-                              { text: 'แจ้งโดย ', width: 'auto', alignment: 'right' },
-                              {
-                                image: fromSignature, // base64 หรือ path
-                                width: 50,
-                                alignment: 'center',
-                              },
-                              { text: '', width: 'auto', alignment: 'left' },
-                            ],
-                            columnGap: 15, // ระยะห่างระหว่างวงเล็บกับภาพ
-                            margin: [0, 2, 0, 5], // ปรับระยะรอบภาพ
-                          }
+                          columns: [
+                            { text: 'แจ้งโดย ', width: 'auto', alignment: 'right' },
+                            {
+                              image: fromSignature, // base64 หรือ path
+                              width: 50,
+                              alignment: 'center',
+                            },
+                            { text: '', width: 'auto', alignment: 'left' },
+                          ],
+                          columnGap: 15, // ระยะห่างระหว่างวงเล็บกับภาพ
+                          margin: [0, 2, 0, 5], // ปรับระยะรอบภาพ
+                        }
                         : { text: `แจ้งโดย` },
                       { text: fromFullname ? `( ${fromFullname} )` : `(                                   )` },
-                      
+
                       // { text: `แจ้งโดย ${fromFullname}` },
                       // fromSignature
                       //   ? {
@@ -13238,18 +13248,18 @@ export class EventService {
                     stack: [
                       toSignature
                         ? {
-                            columns: [
-                              { text: 'รับทราบโดย ', width: 'auto', alignment: 'right' },
-                              {
-                                image: toSignature, // base64 หรือ path
-                                width: 50,
-                                alignment: 'center',
-                              },
-                              { text: '', width: 'auto', alignment: 'left' },
-                            ],
-                            columnGap: 5, // ระยะห่างระหว่างวงเล็บกับภาพ
-                            margin: [0, 2, 0, 5], // ปรับระยะรอบภาพ
-                          }
+                          columns: [
+                            { text: 'รับทราบโดย ', width: 'auto', alignment: 'right' },
+                            {
+                              image: toSignature, // base64 หรือ path
+                              width: 50,
+                              alignment: 'center',
+                            },
+                            { text: '', width: 'auto', alignment: 'left' },
+                          ],
+                          columnGap: 5, // ระยะห่างระหว่างวงเล็บกับภาพ
+                          margin: [0, 2, 0, 5], // ปรับระยะรอบภาพ
+                        }
                         : { text: `รับทราบโดย ` },
                       { text: toFullname ? `( ${toFullname} )` : `(                                   )` },
                       // { text: `รับทราบโดย ${toFullname}` },
@@ -13387,14 +13397,14 @@ export class EventService {
         console.log('toAction : ', toAction);
         const toFullname =
           toAction?.event_doc_status_id !== 1 &&
-          toAction?.event_doc_status_id !== 2 &&
-          toAction?.create_by_account?.first_name &&
-          toAction?.create_by_account?.last_name
+            toAction?.event_doc_status_id !== 2 &&
+            toAction?.create_by_account?.first_name &&
+            toAction?.create_by_account?.last_name
             ? `${toAction?.create_by_account?.first_name} ${toAction?.create_by_account?.last_name}`
             : '';
 
         const toCompany =
-          (toAction?.group?.company_name && toAction?.group?.company_name) ||
+          (toAction?.group?.company_name) ||
           '';
         const toDate = dayjs(toAction?.create_date).locale('th');
         const toSignature =
@@ -13406,7 +13416,7 @@ export class EventService {
         // ----
         const fromFullname =
           rdoc1Find?.create_by_account?.first_name &&
-          rdoc1Find?.create_by_account?.last_name
+            rdoc1Find?.create_by_account?.last_name
             ? `${rdoc1Find?.create_by_account?.first_name} ${rdoc1Find?.create_by_account?.last_name}`
             : '';
         const fromCompany = 'บริษัท ปตท.จำกัด (มหาชน)';
@@ -13501,7 +13511,7 @@ export class EventService {
                   width: 15,
                   image:
                     rdoc1Find?.event_runnumber_emer?.event_doc_emer_type_id ===
-                    1
+                      1
                       ? logoUsed
                       : logoNotUsed, // แทนด้วย base64 string //event_doc_status
                   verticalAlignment: 'middle',
@@ -13523,7 +13533,7 @@ export class EventService {
                   width: 15,
                   image:
                     rdoc1Find?.event_runnumber_emer?.event_doc_emer_type_id ===
-                    2
+                      2
                       ? logoUsed
                       : logoNotUsed, // แทนด้วย base64 string //event_doc_status
                   verticalAlignment: 'middle',
@@ -13695,219 +13705,219 @@ export class EventService {
             },
 
             // ======== กรอบ "ส่วนของผู้ให้บริการ" =========
-          {
-            table: {
-              widths: ['*'],
-              body: [
-                [
-                  {
-                    stack: [
-                      {
-                        text: 'ส่วนของผู้ให้บริการ',
-                        bold: true,
-                        decoration: 'underline',
-                        margin: [0, 0, 0, 5],
-                      },
-                      {
-                        text: [
-                          { text: `space`, opacity: 0 },
-                          {
-                            // text: `เนื่องด้วยในวันที่/เวลา: ${input_date_time_of_the_incident} ได้เกิดเหตุการณ์ไม่สมดุลอย่างรุนแรง / ภาวะฉุกเฉิน ซึ่งมีรายละเอียดดังนี้`,
-                            text: [
-                              'เนื่องด้วยในวันที่/เวลา:  ',
-                              {
-                                text:
-                                input_date_time_of_the_incident ? input_date_time_of_the_incident : '____________',
-                                decoration: input_date_time_of_the_incident && 'underline',
-                              },
-                              ' ได้เกิดเหตุการณ์ไม่สมดุลอย่างรุนแรง / ภาวะฉุกเฉิน ซึ่งมีรายละเอียดดังนี้ ',
-                            ],
-                          },
-                        ],
-                        margin: [0, 0, 0, 5],
-                        alignment: 'justify',
-                      },
-                      {
-                        text: [
-                          // { text: `space`, opacity: 0 },
-                          {
-                            text: 'สถานที่เกิดเหตุ: ',
-                            bold: true,
-                            // margin: [0, 0, 0, 5],
-                          },
-                          {
-                            // text: `${input_incident}`,
-                            text: [
-                              {
-                                text:
-                                input_incident ? input_incident : '____________',
-                                decoration: input_incident && 'underline',
-                              },
-                            ],
-                          },
-                        ],
-                        margin: [0, 0, 0, 5],
-                        alignment: 'justify',
-                      },
-                      {
-                        text: [
-                          // { text: `space`, opacity: 0 },
-                          {
-                            text: 'รายละเอียดของเหตุการณ์และผลกระทบต่อระบบส่งก๊าซ: ',
-                            bold: true,
-                            // margin: [0, 0, 0, 5],
-                          },
-                          {
-                            // text: `${input_detail_incident}`,
-                             text: [
-                              {
-                                text:
-                                input_detail_incident ? input_detail_incident : '____________',
-                                decoration: input_detail_incident && 'underline',
-                              },
-                            ],
-                          },
-                        ],
-                        margin: [0, 0, 0, 5],
-                        alignment: 'justify',
-                      },
-                      {
-                        text: [
-                          // { text: `space`, opacity: 0 },
-                          {
-                            text: 'โดยคาดว่าจะแก้ไขปัญหาแล้วเสร็จในวันที่/เวลา: ',
-                            bold: true,
-                            // margin: [0, 0, 0, 5],
-                          },
-                          {
-                            // text: `${input_expected_day_time}`,
-                            text: [
-                              {
-                                text: input_expected_day_time ? input_expected_day_time : '____________',
-                                decoration: input_expected_day_time && 'underline',
-                              },
-                            ],
-                          },
-                        ],
-                        margin: [0, 0, 0, 5],
-                        alignment: 'justify',
-                      },
-                      {
-                        text: [
-                          {
-                            text: `หมายเหตุ:`,
-                            bold: true,
-                            decoration: 'underline',
-                            fontSize: 10,
-                            // font
-                          },
-                          {
-                            // text: `${input_note}`,
-                             text: [
-                              {
-                                text: input_note ? input_note : '____________',
-                                decoration: input_note && 'underline',
-                                fontSize: 10,
-                              },
-                            ],
-                          },
-                        ],
-                        margin: [0, 0, 0, 5],
-                        alignment: 'justify',
-                      },
-                    ],
-                    margin: [5, 5, 5, 5],
-                  },
+            {
+              table: {
+                widths: ['*'],
+                body: [
+                  [
+                    {
+                      stack: [
+                        {
+                          text: 'ส่วนของผู้ให้บริการ',
+                          bold: true,
+                          decoration: 'underline',
+                          margin: [0, 0, 0, 5],
+                        },
+                        {
+                          text: [
+                            { text: `space`, opacity: 0 },
+                            {
+                              // text: `เนื่องด้วยในวันที่/เวลา: ${input_date_time_of_the_incident} ได้เกิดเหตุการณ์ไม่สมดุลอย่างรุนแรง / ภาวะฉุกเฉิน ซึ่งมีรายละเอียดดังนี้`,
+                              text: [
+                                'เนื่องด้วยในวันที่/เวลา:  ',
+                                {
+                                  text:
+                                    input_date_time_of_the_incident ? input_date_time_of_the_incident : '____________',
+                                  decoration: input_date_time_of_the_incident && 'underline',
+                                },
+                                ' ได้เกิดเหตุการณ์ไม่สมดุลอย่างรุนแรง / ภาวะฉุกเฉิน ซึ่งมีรายละเอียดดังนี้ ',
+                              ],
+                            },
+                          ],
+                          margin: [0, 0, 0, 5],
+                          alignment: 'justify',
+                        },
+                        {
+                          text: [
+                            // { text: `space`, opacity: 0 },
+                            {
+                              text: 'สถานที่เกิดเหตุ: ',
+                              bold: true,
+                              // margin: [0, 0, 0, 5],
+                            },
+                            {
+                              // text: `${input_incident}`,
+                              text: [
+                                {
+                                  text:
+                                    input_incident ? input_incident : '____________',
+                                  decoration: input_incident && 'underline',
+                                },
+                              ],
+                            },
+                          ],
+                          margin: [0, 0, 0, 5],
+                          alignment: 'justify',
+                        },
+                        {
+                          text: [
+                            // { text: `space`, opacity: 0 },
+                            {
+                              text: 'รายละเอียดของเหตุการณ์และผลกระทบต่อระบบส่งก๊าซ: ',
+                              bold: true,
+                              // margin: [0, 0, 0, 5],
+                            },
+                            {
+                              // text: `${input_detail_incident}`,
+                              text: [
+                                {
+                                  text:
+                                    input_detail_incident ? input_detail_incident : '____________',
+                                  decoration: input_detail_incident && 'underline',
+                                },
+                              ],
+                            },
+                          ],
+                          margin: [0, 0, 0, 5],
+                          alignment: 'justify',
+                        },
+                        {
+                          text: [
+                            // { text: `space`, opacity: 0 },
+                            {
+                              text: 'โดยคาดว่าจะแก้ไขปัญหาแล้วเสร็จในวันที่/เวลา: ',
+                              bold: true,
+                              // margin: [0, 0, 0, 5],
+                            },
+                            {
+                              // text: `${input_expected_day_time}`,
+                              text: [
+                                {
+                                  text: input_expected_day_time ? input_expected_day_time : '____________',
+                                  decoration: input_expected_day_time && 'underline',
+                                },
+                              ],
+                            },
+                          ],
+                          margin: [0, 0, 0, 5],
+                          alignment: 'justify',
+                        },
+                        {
+                          text: [
+                            {
+                              text: `หมายเหตุ:`,
+                              bold: true,
+                              decoration: 'underline',
+                              fontSize: 10,
+                              // font
+                            },
+                            {
+                              // text: `${input_note}`,
+                              text: [
+                                {
+                                  text: input_note ? input_note : '____________',
+                                  decoration: input_note && 'underline',
+                                  fontSize: 10,
+                                },
+                              ],
+                            },
+                          ],
+                          margin: [0, 0, 0, 5],
+                          alignment: 'justify',
+                        },
+                      ],
+                      margin: [5, 5, 5, 5],
+                    },
+                  ],
                 ],
-              ],
+              },
+              layout: {
+                hLineWidth: () => 0.5,
+                vLineWidth: () => 0.5,
+              },
+              margin: [0, 0, 0, 0],
             },
-            layout: {
-              hLineWidth: () => 0.5,
-              vLineWidth: () => 0.5,
-            },
-            margin: [0, 0, 0, 0],
-          },
 
-          // ======== กรอบ "ส่วนของผู้ใช้บริการ" =========
-          {
-            table: {
-              widths: ['*'],
-              body: [
-                [
-                  {
-                    stack: [
-                      {
-                        text: 'ส่วนของผู้ใช้บริการ / คู่สัญญาของผู้ใช้บริการ',
-                        bold: true,
-                        decoration: 'underline',
-                        margin: [0, 0, 0, 5],
-                      },
-                      {
-                        text: [
-                          { text: `space`, opacity: 0 },
-                          {
-                            text: `การดำเนินการ: `,
-                            bold: true,
-                          },
-                          {
-                            // text: `${input_shipper_operation}`,
-                            text: [
-                              {
-                                text:
-                                input_shipper_operation ? input_shipper_operation : '____________',
-                                decoration: input_shipper_operation && 'underline',
-                              },
-                            ],
-                          },
-                        ],
-                        margin: [0, 0, 0, 5],
-                        alignment: 'justify',
-                      },
-                      {
-                        text: [
-                          { text: `space`, opacity: 0 },
-                          {
-                            text: `หมายเหตุ: `,
-                            bold: true,
-                          },
-                          {
-                            // text: `${input_shipper_note}`,
-                             text: [
-                              {
-                                text:
-                                input_shipper_note ? input_shipper_note : '____________',
-                                decoration: input_shipper_note && 'underline',
-                              },
-                            ],
-                          },
-                        ],
-                        margin: [0, 0, 0, 5],
-                        alignment: 'justify',
-                      },
-                    ],
-                    margin: [5, 5, 5, 5],
-                  },
+            // ======== กรอบ "ส่วนของผู้ใช้บริการ" =========
+            {
+              table: {
+                widths: ['*'],
+                body: [
+                  [
+                    {
+                      stack: [
+                        {
+                          text: 'ส่วนของผู้ใช้บริการ / คู่สัญญาของผู้ใช้บริการ',
+                          bold: true,
+                          decoration: 'underline',
+                          margin: [0, 0, 0, 5],
+                        },
+                        {
+                          text: [
+                            { text: `space`, opacity: 0 },
+                            {
+                              text: `การดำเนินการ: `,
+                              bold: true,
+                            },
+                            {
+                              // text: `${input_shipper_operation}`,
+                              text: [
+                                {
+                                  text:
+                                    input_shipper_operation ? input_shipper_operation : '____________',
+                                  decoration: input_shipper_operation && 'underline',
+                                },
+                              ],
+                            },
+                          ],
+                          margin: [0, 0, 0, 5],
+                          alignment: 'justify',
+                        },
+                        {
+                          text: [
+                            { text: `space`, opacity: 0 },
+                            {
+                              text: `หมายเหตุ: `,
+                              bold: true,
+                            },
+                            {
+                              // text: `${input_shipper_note}`,
+                              text: [
+                                {
+                                  text:
+                                    input_shipper_note ? input_shipper_note : '____________',
+                                  decoration: input_shipper_note && 'underline',
+                                },
+                              ],
+                            },
+                          ],
+                          margin: [0, 0, 0, 5],
+                          alignment: 'justify',
+                        },
+                      ],
+                      margin: [5, 5, 5, 5],
+                    },
+                  ],
                 ],
-              ],
+              },
+              layout: {
+                hLineWidth: () => 0.5,
+                vLineWidth: () => 0.5,
+              },
+              margin: [0, 0, 0, 0],
             },
-            layout: {
-              hLineWidth: () => 0.5,
-              vLineWidth: () => 0.5,
-            },
-            margin: [0, 0, 0, 0],
-          },
 
             // ======== กรอบช่องเซ็นชื่อ =========
-          {
-            table: {
-              widths: ['*', '*'],
-              body: [
-                [
-                  {
-                    stack: [
-                      // https://app.clickup.com/t/86eug8dw2
-                      fromSignature
-                        ? {
+            {
+              table: {
+                widths: ['*', '*'],
+                body: [
+                  [
+                    {
+                      stack: [
+                        // https://app.clickup.com/t/86eug8dw2
+                        fromSignature
+                          ? {
                             columns: [
                               { text: 'แจ้งโดย ', width: 'auto', alignment: 'right' },
                               {
@@ -13920,36 +13930,36 @@ export class EventService {
                             columnGap: 15, // ระยะห่างระหว่างวงเล็บกับภาพ
                             margin: [0, 2, 0, 5], // ปรับระยะรอบภาพ
                           }
-                        : { text: `แจ้งโดย` },
-                      { text: fromFullname ? `( ${fromFullname} )` : `(                                   )` },
-                      
-                      // { text: `แจ้งโดย ${fromFullname}` },
-                      // fromSignature
-                      //   ? {
-                      //       columns: [
-                      //         { text: '(', width: 'auto', alignment: 'right' },
-                      //         {
-                      //           image: fromSignature, // base64 หรือ path
-                      //           width: 50,
-                      //           alignment: 'center',
-                      //         },
-                      //         { text: ')', width: 'auto', alignment: 'left' },
-                      //       ],
-                      //       columnGap: 15, // ระยะห่างระหว่างวงเล็บกับภาพ
-                      //       margin: [0, 2, 0, 5], // ปรับระยะรอบภาพ
-                      //     }
-                      //   : { text: `(                                   )` },
-                      { text: `หน่วยงาน ${fromCompany} (ผู้ให้บริการ)` },
-                      {
-                        text: `เวลา : ${fromDate.format('HH:mm')} น. วันที่/เดือน/ปี: ${fromDate.format('DD')} / ${fromDate.format('MM')} / ${fromDate.format('BB')}`,
-                      },
-                    ],
-                    margin: [5, 5, 5, 5],
-                  },
-                  {
-                    stack: [
-                      toSignature
-                        ? {
+                          : { text: `แจ้งโดย` },
+                        { text: fromFullname ? `( ${fromFullname} )` : `(                                   )` },
+
+                        // { text: `แจ้งโดย ${fromFullname}` },
+                        // fromSignature
+                        //   ? {
+                        //       columns: [
+                        //         { text: '(', width: 'auto', alignment: 'right' },
+                        //         {
+                        //           image: fromSignature, // base64 หรือ path
+                        //           width: 50,
+                        //           alignment: 'center',
+                        //         },
+                        //         { text: ')', width: 'auto', alignment: 'left' },
+                        //       ],
+                        //       columnGap: 15, // ระยะห่างระหว่างวงเล็บกับภาพ
+                        //       margin: [0, 2, 0, 5], // ปรับระยะรอบภาพ
+                        //     }
+                        //   : { text: `(                                   )` },
+                        { text: `หน่วยงาน ${fromCompany} (ผู้ให้บริการ)` },
+                        {
+                          text: `เวลา : ${fromDate.format('HH:mm')} น. วันที่/เดือน/ปี: ${fromDate.format('DD')} / ${fromDate.format('MM')} / ${fromDate.format('BB')}`,
+                        },
+                      ],
+                      margin: [5, 5, 5, 5],
+                    },
+                    {
+                      stack: [
+                        toSignature
+                          ? {
                             columns: [
                               { text: 'รับทราบโดย ', width: 'auto', alignment: 'right' },
                               {
@@ -13962,40 +13972,40 @@ export class EventService {
                             columnGap: 5, // ระยะห่างระหว่างวงเล็บกับภาพ
                             margin: [0, 2, 0, 5], // ปรับระยะรอบภาพ
                           }
-                        : { text: `รับทราบโดย ` },
-                      { text: toFullname ? `( ${toFullname} )` : `(                                   )` },
-                      // { text: `รับทราบโดย ${toFullname}` },
-                      // toSignature
-                      //   ? {
-                      //       columns: [
-                      //         { text: '(', width: 'auto', alignment: 'right' },
-                      //         {
-                      //           image: toSignature, // base64 หรือ path
-                      //           width: 50,
-                      //           alignment: 'center',
-                      //         },
-                      //         { text: ')', width: 'auto', alignment: 'left' },
-                      //       ],
-                      //       columnGap: 5, // ระยะห่างระหว่างวงเล็บกับภาพ
-                      //       margin: [0, 2, 0, 5], // ปรับระยะรอบภาพ
-                      //     }
-                      //   : { text: `(                                   )` },
-                      { text: `หน่วยงาน ${toCompany} (ผู้ใช้บริการ)` },
-                      {
-                        text: `เวลา : ${toDate.format('HH:mm')} น. วันที่/เดือน/ปี: ${toDate.format('DD')} / ${toDate.format('MM')} / ${toDate.format('BB')}`,
-                      },
-                    ],
-                    margin: [5, 5, 5, 5],
-                  },
+                          : { text: `รับทราบโดย ` },
+                        { text: toFullname ? `( ${toFullname} )` : `(                                   )` },
+                        // { text: `รับทราบโดย ${toFullname}` },
+                        // toSignature
+                        //   ? {
+                        //       columns: [
+                        //         { text: '(', width: 'auto', alignment: 'right' },
+                        //         {
+                        //           image: toSignature, // base64 หรือ path
+                        //           width: 50,
+                        //           alignment: 'center',
+                        //         },
+                        //         { text: ')', width: 'auto', alignment: 'left' },
+                        //       ],
+                        //       columnGap: 5, // ระยะห่างระหว่างวงเล็บกับภาพ
+                        //       margin: [0, 2, 0, 5], // ปรับระยะรอบภาพ
+                        //     }
+                        //   : { text: `(                                   )` },
+                        { text: `หน่วยงาน ${toCompany} (ผู้ใช้บริการ)` },
+                        {
+                          text: `เวลา : ${toDate.format('HH:mm')} น. วันที่/เดือน/ปี: ${toDate.format('DD')} / ${toDate.format('MM')} / ${toDate.format('BB')}`,
+                        },
+                      ],
+                      margin: [5, 5, 5, 5],
+                    },
+                  ],
                 ],
-              ],
+              },
+              layout: {
+                hLineWidth: () => 0.5,
+                vLineWidth: () => 0.5,
+              },
+              margin: [0, 0, 0, 0],
             },
-            layout: {
-              hLineWidth: () => 0.5,
-              vLineWidth: () => 0.5,
-            },
-            margin: [0, 0, 0, 0],
-          },
 
             // ======== Footer ========
             // {
@@ -14350,79 +14360,79 @@ export class EventService {
         event_date: getTodayNowAdd7(event_date).toDate(),
         ...(generate
           ? {
-              event_runnumber_emer_id: createEventRunnumber?.id,
-              event_doc_status_id: generated ? 6 : 2,
-              group_id: groupId,
-              user_type_id: userTypeId,
-              event_doc_master_id: 4,
-              ...(doc_4_input_order_ir_id && {
-                doc_4_input_order_ir_id: doc_4_input_order_ir_id ?? null,
-              }),
-              ...(doc_4_input_order_io_id && {
-                doc_4_input_order_io_id: doc_4_input_order_io_id ?? null,
-              }),
-              ...(doc_4_input_order_other_id && {
-                doc_4_input_order_other_id: doc_4_input_order_other_id ?? null,
-              }),
-              update_date: getTodayNowAdd7().toDate(),
-              update_date_num: getTodayNowAdd7().unix(),
-              update_by: Number(userId),
-            }
+            event_runnumber_emer_id: createEventRunnumber?.id,
+            event_doc_status_id: generated ? 6 : 2,
+            group_id: groupId,
+            user_type_id: userTypeId,
+            event_doc_master_id: 4,
+            ...(doc_4_input_order_ir_id && {
+              doc_4_input_order_ir_id: doc_4_input_order_ir_id ?? null,
+            }),
+            ...(doc_4_input_order_io_id && {
+              doc_4_input_order_io_id: doc_4_input_order_io_id ?? null,
+            }),
+            ...(doc_4_input_order_other_id && {
+              doc_4_input_order_other_id: doc_4_input_order_other_id ?? null,
+            }),
+            update_date: getTodayNowAdd7().toDate(),
+            update_date_num: getTodayNowAdd7().unix(),
+            update_by: Number(userId),
+          }
           : {
-              event_runnumber_emer: {
-                connect: {
-                  id: createEventRunnumber?.id,
-                },
+            event_runnumber_emer: {
+              connect: {
+                id: createEventRunnumber?.id,
               },
-              event_doc_status: {
-                connect: {
-                  id: generated ? 6 : 2,
-                },
+            },
+            event_doc_status: {
+              connect: {
+                id: generated ? 6 : 2,
               },
-              group: {
-                connect: {
-                  id: groupId,
-                },
+            },
+            group: {
+              connect: {
+                id: groupId,
               },
-              user_type: {
-                connect: {
-                  id: userTypeId,
-                },
+            },
+            user_type: {
+              connect: {
+                id: userTypeId,
               },
-              event_doc_master: {
-                connect: {
-                  id: 4,
-                },
+            },
+            event_doc_master: {
+              connect: {
+                id: 4,
               },
-              ...(doc_4_input_order_ir_id && {
-                doc_4_input_order_ir: {
-                  connect: {
-                    id: doc_4_input_order_ir_id ?? null,
-                  },
-                },
-              }),
-              ...(doc_4_input_order_io_id && {
-                doc_4_input_order_io: {
-                  connect: {
-                    id: doc_4_input_order_io_id ?? null,
-                  },
-                },
-              }),
-              ...(doc_4_input_order_other_id && {
-                doc_4_input_order_other: {
-                  connect: {
-                    id: doc_4_input_order_other_id ?? null,
-                  },
-                },
-              }),
-              create_date: getTodayNowAdd7().toDate(),
-              create_date_num: getTodayNowAdd7().unix(),
-              create_by_account: {
+            },
+            ...(doc_4_input_order_ir_id && {
+              doc_4_input_order_ir: {
                 connect: {
-                  id: Number(userId),
+                  id: doc_4_input_order_ir_id ?? null,
                 },
               },
             }),
+            ...(doc_4_input_order_io_id && {
+              doc_4_input_order_io: {
+                connect: {
+                  id: doc_4_input_order_io_id ?? null,
+                },
+              },
+            }),
+            ...(doc_4_input_order_other_id && {
+              doc_4_input_order_other: {
+                connect: {
+                  id: doc_4_input_order_other_id ?? null,
+                },
+              },
+            }),
+            create_date: getTodayNowAdd7().toDate(),
+            create_date_num: getTodayNowAdd7().unix(),
+            create_by_account: {
+              connect: {
+                id: Number(userId),
+              },
+            },
+          }),
         version_text: `V.${generate ? version - 1 : version}`,
         seq: generate ? version - 1 : version,
 
@@ -14451,57 +14461,57 @@ export class EventService {
 
       const createEventDocument = generate
         ? await prisma.event_document_emer.findFirst({
-            where: {
-              event_runnumber_emer_id: Number(ref_document),
-              event_doc_master_id: 4,
-              ref_document: null,
-            },
-            include: {
-              event_doc_status: true,
-              group: true,
-              user_type: true,
-              create_by_account: {
-                select: {
-                  id: true,
-                  email: true,
-                  first_name: true,
-                  last_name: true,
-                },
-              },
-              update_by_account: {
-                select: {
-                  id: true,
-                  email: true,
-                  first_name: true,
-                  last_name: true,
-                },
+          where: {
+            event_runnumber_emer_id: Number(ref_document),
+            event_doc_master_id: 4,
+            ref_document: null,
+          },
+          include: {
+            event_doc_status: true,
+            group: true,
+            user_type: true,
+            create_by_account: {
+              select: {
+                id: true,
+                email: true,
+                first_name: true,
+                last_name: true,
               },
             },
-          })
+            update_by_account: {
+              select: {
+                id: true,
+                email: true,
+                first_name: true,
+                last_name: true,
+              },
+            },
+          },
+        })
         : await prisma.event_document_emer.create({
-            data: tsoCreate,
-            include: {
-              event_doc_status: true,
-              group: true,
-              user_type: true,
-              create_by_account: {
-                select: {
-                  id: true,
-                  email: true,
-                  first_name: true,
-                  last_name: true,
-                },
-              },
-              update_by_account: {
-                select: {
-                  id: true,
-                  email: true,
-                  first_name: true,
-                  last_name: true,
-                },
+          data: tsoCreate,
+          include: {
+            event_doc_status: true,
+            group: true,
+            user_type: true,
+            create_by_account: {
+              select: {
+                id: true,
+                email: true,
+                first_name: true,
+                last_name: true,
               },
             },
-          });
+            update_by_account: {
+              select: {
+                id: true,
+                email: true,
+                first_name: true,
+                last_name: true,
+              },
+            },
+          },
+        });
 
       if (generate) {
         await prisma.event_document_emer_file.deleteMany({
@@ -14805,8 +14815,26 @@ export class EventService {
 
     const group = shipperIds
       ? await this.prisma.group.findFirst({
+        where: {
+          id: shipperIds,
+        },
+        select: {
+          id: true,
+          user_type: {
+            select: {
+              id: true,
+            },
+          },
+        },
+      })
+      : userId
+        ? await this.prisma.group.findFirst({
           where: {
-            id: shipperIds,
+            account_manage: {
+              some: {
+                account_id: Number(userId),
+              },
+            },
           },
           select: {
             id: true,
@@ -14817,24 +14845,6 @@ export class EventService {
             },
           },
         })
-      : userId
-        ? await this.prisma.group.findFirst({
-            where: {
-              account_manage: {
-                some: {
-                  account_id: Number(userId),
-                },
-              },
-            },
-            select: {
-              id: true,
-              user_type: {
-                select: {
-                  id: true,
-                },
-              },
-            },
-          })
         : groupObj;
     console.log('group : ', group);
     const userTypeId = group?.user_type?.id;
@@ -14845,249 +14855,249 @@ export class EventService {
     const result =
       userTypeId === 3
         ? await this.prisma.event_document_emer.findMany({
-            where: {
-              event_runnumber_emer_id: Number(id),
-              event_doc_master_id: 4,
-              ref_document: {
-                not: null,
-              },
-              group_id: Number(groupId),
+          where: {
+            event_runnumber_emer_id: Number(id),
+            event_doc_master_id: 4,
+            ref_document: {
+              not: null,
             },
-            include: {
-              event_runnumber_emer: {
-                include: {
-                  event_status: true,
-                },
+            group_id: Number(groupId),
+          },
+          include: {
+            event_runnumber_emer: {
+              include: {
+                event_status: true,
               },
-              event_doc_master: true,
-              event_doc_status: true,
-              group: true,
-              user_type: true,
-              create_by_account: {
-                select: {
-                  id: true,
-                  email: true,
-                  first_name: true,
-                  last_name: true,
-                  signature_base_64: true,
-                },
+            },
+            event_doc_master: true,
+            event_doc_status: true,
+            group: true,
+            user_type: true,
+            create_by_account: {
+              select: {
+                id: true,
+                email: true,
+                first_name: true,
+                last_name: true,
+                signature_base_64: true,
               },
-              update_by_account: {
-                select: {
-                  id: true,
-                  email: true,
-                  first_name: true,
-                  last_name: true,
-                  signature_base_64: true,
-                },
+            },
+            update_by_account: {
+              select: {
+                id: true,
+                email: true,
+                first_name: true,
+                last_name: true,
+                signature_base_64: true,
               },
-              event_document_emer_file: {
-                include: {
-                  create_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                    },
-                  },
-                  update_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                    },
+            },
+            event_document_emer_file: {
+              include: {
+                create_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
                   },
                 },
-                orderBy: { id: 'desc' },
-              },
-              event_document_emer_file_pdf: {
-                include: {
-                  create_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                    },
-                  },
-                  update_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                    },
+                update_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
                   },
                 },
               },
-              event_document_emer_action: {
-                include: {
-                  event_doc_master: true,
-                  event_doc_status: true,
-                  group: true,
-                  user_type: true,
-                  create_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                      signature: true,
-                      signature_base_64: true,
-                    },
-                  },
-                  update_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                      signature: true,
-                      signature_base_64: true,
-                    },
+              orderBy: { id: 'desc' },
+            },
+            event_document_emer_file_pdf: {
+              include: {
+                create_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
                   },
                 },
-                orderBy: {
-                  id: 'desc',
+                update_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                  },
                 },
               },
             },
-            orderBy: {
-              id: 'desc',
+            event_document_emer_action: {
+              include: {
+                event_doc_master: true,
+                event_doc_status: true,
+                group: true,
+                user_type: true,
+                create_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                    signature: true,
+                    signature_base_64: true,
+                  },
+                },
+                update_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                    signature: true,
+                    signature_base_64: true,
+                  },
+                },
+              },
+              orderBy: {
+                id: 'desc',
+              },
             },
-          })
+          },
+          orderBy: {
+            id: 'desc',
+          },
+        })
         : await this.prisma.event_document_emer.findMany({
-            where: {
-              event_runnumber_emer_id: Number(id),
-              event_doc_master_id: 4,
-              ref_document: null,
-            },
-            include: {
-              event_runnumber_emer: {
-                include: {
-                  event_status: true,
-                  event_document_emer: {
-                    include: {
-                      event_doc_status: true,
-                      group: true,
-                      user_type: true,
-                    },
-                    where: {
-                      user_type: {
-                        id: 3,
-                      },
-                      event_doc_master_id: 4,
-                    },
+          where: {
+            event_runnumber_emer_id: Number(id),
+            event_doc_master_id: 4,
+            ref_document: null,
+          },
+          include: {
+            event_runnumber_emer: {
+              include: {
+                event_status: true,
+                event_document_emer: {
+                  include: {
+                    event_doc_status: true,
+                    group: true,
+                    user_type: true,
                   },
-                },
-              },
-              event_doc_master: true,
-              event_doc_status: true,
-              event_document_emer_cc_email: true,
-              event_document_emer_email_group_for_event: {
-                include: {
-                  edit_email_group_for_event: true,
-                },
-              },
-              group: true,
-              user_type: true,
-              create_by_account: {
-                select: {
-                  id: true,
-                  email: true,
-                  first_name: true,
-                  last_name: true,
-                  signature_base_64: true,
-                },
-              },
-              update_by_account: {
-                select: {
-                  id: true,
-                  email: true,
-                  first_name: true,
-                  last_name: true,
-                  signature_base_64: true,
-                },
-              },
-              event_document_emer_file: {
-                include: {
-                  create_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
+                  where: {
+                    user_type: {
+                      id: 3,
                     },
+                    event_doc_master_id: 4,
                   },
-                  update_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                    },
-                  },
-                },
-                orderBy: { id: 'desc' },
-              },
-              event_document_emer_file_pdf: {
-                include: {
-                  create_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                    },
-                  },
-                  update_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                    },
-                  },
-                },
-              },
-              event_document_emer_action: {
-                include: {
-                  event_doc_master: true,
-                  event_doc_status: true,
-                  group: true,
-                  user_type: true,
-                  create_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                      signature: true,
-                      signature_base_64: true,
-                    },
-                  },
-                  update_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                      signature: true,
-                      signature_base_64: true,
-                    },
-                  },
-                },
-                orderBy: {
-                  id: 'desc',
                 },
               },
             },
-            orderBy: {
-              id: 'desc',
+            event_doc_master: true,
+            event_doc_status: true,
+            event_document_emer_cc_email: true,
+            event_document_emer_email_group_for_event: {
+              include: {
+                edit_email_group_for_event: true,
+              },
             },
-          });
+            group: true,
+            user_type: true,
+            create_by_account: {
+              select: {
+                id: true,
+                email: true,
+                first_name: true,
+                last_name: true,
+                signature_base_64: true,
+              },
+            },
+            update_by_account: {
+              select: {
+                id: true,
+                email: true,
+                first_name: true,
+                last_name: true,
+                signature_base_64: true,
+              },
+            },
+            event_document_emer_file: {
+              include: {
+                create_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                  },
+                },
+                update_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                  },
+                },
+              },
+              orderBy: { id: 'desc' },
+            },
+            event_document_emer_file_pdf: {
+              include: {
+                create_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                  },
+                },
+                update_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                  },
+                },
+              },
+            },
+            event_document_emer_action: {
+              include: {
+                event_doc_master: true,
+                event_doc_status: true,
+                group: true,
+                user_type: true,
+                create_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                    signature: true,
+                    signature_base_64: true,
+                  },
+                },
+                update_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                    signature: true,
+                    signature_base_64: true,
+                  },
+                },
+              },
+              orderBy: {
+                id: 'desc',
+              },
+            },
+          },
+          orderBy: {
+            id: 'desc',
+          },
+        });
     console.log('result : ', result);
     return result;
   }
@@ -15098,8 +15108,26 @@ export class EventService {
 
     const group = shipperIds
       ? await this.prisma.group.findFirst({
+        where: {
+          id: shipperIds,
+        },
+        select: {
+          id: true,
+          user_type: {
+            select: {
+              id: true,
+            },
+          },
+        },
+      })
+      : userId
+        ? await this.prisma.group.findFirst({
           where: {
-            id: shipperIds,
+            account_manage: {
+              some: {
+                account_id: Number(userId),
+              },
+            },
           },
           select: {
             id: true,
@@ -15110,24 +15138,6 @@ export class EventService {
             },
           },
         })
-      : userId
-        ? await this.prisma.group.findFirst({
-            where: {
-              account_manage: {
-                some: {
-                  account_id: Number(userId),
-                },
-              },
-            },
-            select: {
-              id: true,
-              user_type: {
-                select: {
-                  id: true,
-                },
-              },
-            },
-          })
         : groupObj;
     console.log('group : ', group);
     const userTypeId = group?.user_type?.id;
@@ -15138,237 +15148,237 @@ export class EventService {
     const result =
       userTypeId === 3
         ? await this.prisma.event_document_emer.findFirst({
-            where: {
-              id: Number(id),
+          where: {
+            id: Number(id),
+          },
+          include: {
+            event_runnumber_emer: {
+              include: {
+                event_status: true,
+              },
             },
-            include: {
-              event_runnumber_emer: {
-                include: {
-                  event_status: true,
-                },
+            event_doc_master: true,
+            event_doc_status: true,
+            group: true,
+            user_type: true,
+            create_by_account: {
+              select: {
+                id: true,
+                email: true,
+                first_name: true,
+                last_name: true,
+                signature_base_64: true,
               },
-              event_doc_master: true,
-              event_doc_status: true,
-              group: true,
-              user_type: true,
-              create_by_account: {
-                select: {
-                  id: true,
-                  email: true,
-                  first_name: true,
-                  last_name: true,
-                  signature_base_64: true,
-                },
+            },
+            update_by_account: {
+              select: {
+                id: true,
+                email: true,
+                first_name: true,
+                last_name: true,
+                signature_base_64: true,
               },
-              update_by_account: {
-                select: {
-                  id: true,
-                  email: true,
-                  first_name: true,
-                  last_name: true,
-                  signature_base_64: true,
-                },
-              },
-              event_document_emer_file: {
-                include: {
-                  create_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                    },
-                  },
-                  update_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                    },
+            },
+            event_document_emer_file: {
+              include: {
+                create_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
                   },
                 },
-                orderBy: { id: 'desc' },
-              },
-              event_document_emer_file_pdf: {
-                include: {
-                  create_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                    },
-                  },
-                  update_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                    },
+                update_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
                   },
                 },
               },
-              event_document_emer_action: {
-                include: {
-                  event_doc_master: true,
-                  event_doc_status: true,
-                  group: true,
-                  user_type: true,
-                  create_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                      signature: true,
-                      signature_base_64: true,
-                    },
-                  },
-                  update_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                      signature: true,
-                      signature_base_64: true,
-                    },
+              orderBy: { id: 'desc' },
+            },
+            event_document_emer_file_pdf: {
+              include: {
+                create_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
                   },
                 },
-                orderBy: {
-                  id: 'desc',
+                update_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                  },
                 },
               },
             },
-          })
+            event_document_emer_action: {
+              include: {
+                event_doc_master: true,
+                event_doc_status: true,
+                group: true,
+                user_type: true,
+                create_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                    signature: true,
+                    signature_base_64: true,
+                  },
+                },
+                update_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                    signature: true,
+                    signature_base_64: true,
+                  },
+                },
+              },
+              orderBy: {
+                id: 'desc',
+              },
+            },
+          },
+        })
         : await this.prisma.event_document_emer.findFirst({
-            where: {
-              id: Number(id),
-            },
-            include: {
-              event_runnumber_emer: {
-                include: {
-                  event_status: true,
-                  event_document_emer: {
-                    include: {
-                      event_doc_status: true,
-                      group: true,
-                      user_type: true,
-                    },
-                    where: {
-                      user_type: {
-                        id: 3,
-                      },
-                      event_doc_master_id: 4,
-                      ref_document: Number(id),
-                    },
+          where: {
+            id: Number(id),
+          },
+          include: {
+            event_runnumber_emer: {
+              include: {
+                event_status: true,
+                event_document_emer: {
+                  include: {
+                    event_doc_status: true,
+                    group: true,
+                    user_type: true,
                   },
-                },
-              },
-              event_doc_master: true,
-              event_doc_status: true,
-              event_document_emer_cc_email: true,
-              event_document_emer_email_group_for_event: {
-                include: {
-                  edit_email_group_for_event: true,
-                },
-              },
-              group: true,
-              user_type: true,
-              create_by_account: {
-                select: {
-                  id: true,
-                  email: true,
-                  first_name: true,
-                  last_name: true,
-                  signature_base_64: true,
-                },
-              },
-              update_by_account: {
-                select: {
-                  id: true,
-                  email: true,
-                  first_name: true,
-                  last_name: true,
-                  signature_base_64: true,
-                },
-              },
-              event_document_emer_file: {
-                include: {
-                  create_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
+                  where: {
+                    user_type: {
+                      id: 3,
                     },
+                    event_doc_master_id: 4,
+                    ref_document: Number(id),
                   },
-                  update_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                    },
-                  },
-                },
-                orderBy: { id: 'desc' },
-              },
-              event_document_emer_file_pdf: {
-                include: {
-                  create_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                    },
-                  },
-                  update_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                    },
-                  },
-                },
-              },
-              event_document_emer_action: {
-                include: {
-                  event_doc_master: true,
-                  event_doc_status: true,
-                  group: true,
-                  user_type: true,
-                  create_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                      signature: true,
-                      signature_base_64: true,
-                    },
-                  },
-                  update_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                      signature: true,
-                      signature_base_64: true,
-                    },
-                  },
-                },
-                orderBy: {
-                  id: 'desc',
                 },
               },
             },
-          });
+            event_doc_master: true,
+            event_doc_status: true,
+            event_document_emer_cc_email: true,
+            event_document_emer_email_group_for_event: {
+              include: {
+                edit_email_group_for_event: true,
+              },
+            },
+            group: true,
+            user_type: true,
+            create_by_account: {
+              select: {
+                id: true,
+                email: true,
+                first_name: true,
+                last_name: true,
+                signature_base_64: true,
+              },
+            },
+            update_by_account: {
+              select: {
+                id: true,
+                email: true,
+                first_name: true,
+                last_name: true,
+                signature_base_64: true,
+              },
+            },
+            event_document_emer_file: {
+              include: {
+                create_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                  },
+                },
+                update_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                  },
+                },
+              },
+              orderBy: { id: 'desc' },
+            },
+            event_document_emer_file_pdf: {
+              include: {
+                create_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                  },
+                },
+                update_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                  },
+                },
+              },
+            },
+            event_document_emer_action: {
+              include: {
+                event_doc_master: true,
+                event_doc_status: true,
+                group: true,
+                user_type: true,
+                create_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                    signature: true,
+                    signature_base_64: true,
+                  },
+                },
+                update_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                    signature: true,
+                    signature_base_64: true,
+                  },
+                },
+              },
+              orderBy: {
+                id: 'desc',
+              },
+            },
+          },
+        });
     console.log('result : ', result);
     return result;
   }
@@ -15655,15 +15665,15 @@ export class EventService {
       where: {
         ...(shipperIds
           ? {
-              id: shipperIds,
-            }
+            id: shipperIds,
+          }
           : {
-              account_manage: {
-                some: {
-                  account_id: Number(userId),
-                },
+            account_manage: {
+              some: {
+                account_id: Number(userId),
               },
-            }),
+            },
+          }),
       },
       select: {
         id: true,
@@ -15699,14 +15709,14 @@ export class EventService {
       console.log('toAction : ', toAction);
       const toFullname =
         toAction?.event_doc_status_id !== 1 &&
-        toAction?.event_doc_status_id !== 2 &&
-        toAction?.create_by_account?.first_name &&
-        toAction?.create_by_account?.last_name
+          toAction?.event_doc_status_id !== 2 &&
+          toAction?.create_by_account?.first_name &&
+          toAction?.create_by_account?.last_name
           ? `${toAction?.create_by_account?.first_name} ${toAction?.create_by_account?.last_name}`
           : '';
 
       const toCompany =
-        (toAction?.group?.company_name && toAction?.group?.company_name) ||
+        (toAction?.group?.company_name) ||
         '';
       const toDate = dayjs(toAction?.create_date).locale('th');
       const toSignature =
@@ -15718,7 +15728,7 @@ export class EventService {
       // ----
       const fromFullname =
         rdoc1Find?.create_by_account?.first_name &&
-        rdoc1Find?.create_by_account?.last_name
+          rdoc1Find?.create_by_account?.last_name
           ? `${rdoc1Find?.create_by_account?.first_name} ${rdoc1Find?.create_by_account?.last_name}`
           : '';
       const fromCompany = 'บริษัท ปตท.จำกัด (มหาชน)';
@@ -16271,21 +16281,21 @@ export class EventService {
                       //   : { text: `(                                   )` },
                       fromSignature
                         ? {
-                            columns: [
-                              {
-                                text: 'แจ้งโดย ', // https://app.clickup.com/t/86eum0p2v
-                                width: 'auto',
-                                alignment: 'right',
-                              },
-                              {
-                                image: fromSignature, // base64 หรือ path
-                                width: 50,
-                                alignment: 'center',
-                              },
-                            ],
-                            columnGap: 15, // ระยะห่างระหว่างวงเล็บกับภาพ
-                            margin: [0, 2, 0, 5], // ปรับระยะรอบภาพ
-                          }
+                          columns: [
+                            {
+                              text: 'แจ้งโดย ', // https://app.clickup.com/t/86eum0p2v
+                              width: 'auto',
+                              alignment: 'right',
+                            },
+                            {
+                              image: fromSignature, // base64 หรือ path
+                              width: 50,
+                              alignment: 'center',
+                            },
+                          ],
+                          columnGap: 15, // ระยะห่างระหว่างวงเล็บกับภาพ
+                          margin: [0, 2, 0, 5], // ปรับระยะรอบภาพ
+                        }
                         : { text: `แจ้งโดย ` },
                       { text: fromFullname ? `( ${fromFullname} )` : `(                                   )` },
                       { text: `หน่วยงาน ${fromCompany} (ผู้ให้บริการ)` },
@@ -16301,23 +16311,23 @@ export class EventService {
                       // rdoc1Find?.event_doc_status?.id === 5 && toSignature
                       rdoc1Find?.event_doc_status?.id === 5 && toSignature
                         ? {
-                            columns: [
-                              {
-                                text: 'รับทราบโดย',
-                                width: 'auto',
-                                alignment: 'right',
-                              },
-                              // { text: 'รับทราบโดย', width: 'auto', alignment: 'right' },
-                              {
-                                image: toSignature, // base64 หรือ path
-                                width: 50,
-                                alignment: 'center',
-                              },
-                              // { text: ')', width: 'auto', alignment: 'left' },
-                            ],
-                            columnGap: 5, // ระยะห่างระหว่างวงเล็บกับภาพ
-                            margin: [0, 2, 0, 5], // ปรับระยะรอบภาพ
-                          }
+                          columns: [
+                            {
+                              text: 'รับทราบโดย',
+                              width: 'auto',
+                              alignment: 'right',
+                            },
+                            // { text: 'รับทราบโดย', width: 'auto', alignment: 'right' },
+                            {
+                              image: toSignature, // base64 หรือ path
+                              width: 50,
+                              alignment: 'center',
+                            },
+                            // { text: ')', width: 'auto', alignment: 'left' },
+                          ],
+                          columnGap: 5, // ระยะห่างระหว่างวงเล็บกับภาพ
+                          margin: [0, 2, 0, 5], // ปรับระยะรอบภาพ
+                        }
                         : { text: `รับทราบโดย` },
                       {
                         text:
@@ -16508,14 +16518,14 @@ export class EventService {
         console.log('toAction : ', toAction);
         const toFullname =
           toAction?.event_doc_status_id !== 1 &&
-          toAction?.event_doc_status_id !== 2 &&
-          toAction?.create_by_account?.first_name &&
-          toAction?.create_by_account?.last_name
+            toAction?.event_doc_status_id !== 2 &&
+            toAction?.create_by_account?.first_name &&
+            toAction?.create_by_account?.last_name
             ? `${toAction?.create_by_account?.first_name} ${toAction?.create_by_account?.last_name}`
             : '';
 
         const toCompany =
-          (toAction?.group?.company_name && toAction?.group?.company_name) ||
+          (toAction?.group?.company_name) ||
           '';
         const toDate = dayjs(toAction?.create_date).locale('th');
         const toSignature =
@@ -16527,7 +16537,7 @@ export class EventService {
         // ----
         const fromFullname =
           rdoc1Find?.create_by_account?.first_name &&
-          rdoc1Find?.create_by_account?.last_name
+            rdoc1Find?.create_by_account?.last_name
             ? `${rdoc1Find?.create_by_account?.first_name} ${rdoc1Find?.create_by_account?.last_name}`
             : '';
         const fromCompany = 'บริษัท ปตท.จำกัด (มหาชน)';
@@ -16631,7 +16641,7 @@ export class EventService {
                   width: 15,
                   image:
                     rdoc1Find?.event_runnumber_emer?.event_doc_emer_type_id ===
-                    1
+                      1
                       ? logoUsed
                       : logoNotUsed, // แทนด้วย base64 string //event_doc_status
                   verticalAlignment: 'middle',
@@ -16653,7 +16663,7 @@ export class EventService {
                   width: 15,
                   image:
                     rdoc1Find?.event_runnumber_emer?.event_doc_emer_type_id ===
-                    2
+                      2
                       ? logoUsed
                       : logoNotUsed, // แทนด้วย base64 string //event_doc_status
                   verticalAlignment: 'middle',
@@ -17094,22 +17104,22 @@ export class EventService {
                         //   : { text: `(                                   )` },
                         fromSignature
                           ? {
-                              columns: [
-                                {
-                                  // text: 'รับทราบโดย',
-                                  text: 'แจ้งโดย', // https://app.clickup.com/t/86eum0p2v
-                                  width: 'auto',
-                                  alignment: 'right',
-                                },
-                                {
-                                  image: fromSignature, // base64 หรือ path
-                                  width: 50,
-                                  alignment: 'center',
-                                },
-                              ],
-                              columnGap: 15, // ระยะห่างระหว่างวงเล็บกับภาพ
-                              margin: [0, 2, 0, 5], // ปรับระยะรอบภาพ
-                            }
+                            columns: [
+                              {
+                                // text: 'รับทราบโดย',
+                                text: 'แจ้งโดย', // https://app.clickup.com/t/86eum0p2v
+                                width: 'auto',
+                                alignment: 'right',
+                              },
+                              {
+                                image: fromSignature, // base64 หรือ path
+                                width: 50,
+                                alignment: 'center',
+                              },
+                            ],
+                            columnGap: 15, // ระยะห่างระหว่างวงเล็บกับภาพ
+                            margin: [0, 2, 0, 5], // ปรับระยะรอบภาพ
+                          }
                           : { text: `แจ้งโดย` },
                         { text: fromFullname ? `(${fromFullname})` : `(                                   )` },
                         { text: `หน่วยงาน ${fromCompany} (ผู้ให้บริการ)` },
@@ -17125,23 +17135,23 @@ export class EventService {
                         // rdoc1Find?.event_doc_status?.id === 5 && toSignature
                         rdoc1Find?.event_doc_status?.id === 5 && toSignature
                           ? {
-                              columns: [
-                                {
-                                  text: 'รับทราบโดย',
-                                  width: 'auto',
-                                  alignment: 'right',
-                                },
-                                // { text: 'รับทราบโดย', width: 'auto', alignment: 'right' },
-                                {
-                                  image: toSignature, // base64 หรือ path
-                                  width: 50,
-                                  alignment: 'center',
-                                },
-                                // { text: ')', width: 'auto', alignment: 'left' },
-                              ],
-                              columnGap: 5, // ระยะห่างระหว่างวงเล็บกับภาพ
-                              margin: [0, 2, 0, 5], // ปรับระยะรอบภาพ
-                            }
+                            columns: [
+                              {
+                                text: 'รับทราบโดย',
+                                width: 'auto',
+                                alignment: 'right',
+                              },
+                              // { text: 'รับทราบโดย', width: 'auto', alignment: 'right' },
+                              {
+                                image: toSignature, // base64 หรือ path
+                                width: 50,
+                                alignment: 'center',
+                              },
+                              // { text: ')', width: 'auto', alignment: 'left' },
+                            ],
+                            columnGap: 5, // ระยะห่างระหว่างวงเล็บกับภาพ
+                            margin: [0, 2, 0, 5], // ปรับระยะรอบภาพ
+                          }
                           : { text: `รับทราบโดย` },
                         {
                           text:
@@ -17383,12 +17393,12 @@ export class EventService {
               },
               orderBy: { id: 'desc' },
             },
-            event_document_emer_cc_email:true,
+            event_document_emer_cc_email: true,
             event_document_emer_email_group_for_event: {
-                include: {
-                  edit_email_group_for_event: true,
-                },
+              include: {
+                edit_email_group_for_event: true,
               },
+            },
           },
         },
       },
@@ -18284,8 +18294,26 @@ export class EventService {
 
     const group = shipperIds
       ? await this.prisma.group.findFirst({
+        where: {
+          id: shipperIds,
+        },
+        select: {
+          id: true,
+          user_type: {
+            select: {
+              id: true,
+            },
+          },
+        },
+      })
+      : userId
+        ? await this.prisma.group.findFirst({
           where: {
-            id: shipperIds,
+            account_manage: {
+              some: {
+                account_id: Number(userId),
+              },
+            },
           },
           select: {
             id: true,
@@ -18296,24 +18324,6 @@ export class EventService {
             },
           },
         })
-      : userId
-        ? await this.prisma.group.findFirst({
-            where: {
-              account_manage: {
-                some: {
-                  account_id: Number(userId),
-                },
-              },
-            },
-            select: {
-              id: true,
-              user_type: {
-                select: {
-                  id: true,
-                },
-              },
-            },
-          })
         : groupObj;
     console.log('group : ', group);
     const userTypeId = group?.user_type?.id;
@@ -18324,243 +18334,243 @@ export class EventService {
     const result =
       userTypeId === 3
         ? await this.prisma.event_document_emer.findFirst({
-            where: {
-              event_runnumber_emer_id: Number(id),
-              event_doc_master_id: 5,
-              ref_document: {
-                not: null,
-              },
-              group_id: Number(groupId),
+          where: {
+            event_runnumber_emer_id: Number(id),
+            event_doc_master_id: 5,
+            ref_document: {
+              not: null,
             },
-            include: {
-              event_runnumber_emer: {
-                include: {
-                  event_status: true,
-                },
+            group_id: Number(groupId),
+          },
+          include: {
+            event_runnumber_emer: {
+              include: {
+                event_status: true,
               },
-              event_doc_master: true,
-              event_doc_status: true,
-              group: true,
-              user_type: true,
-              create_by_account: {
-                select: {
-                  id: true,
-                  email: true,
-                  first_name: true,
-                  last_name: true,
-                  signature_base_64: true,
-                },
+            },
+            event_doc_master: true,
+            event_doc_status: true,
+            group: true,
+            user_type: true,
+            create_by_account: {
+              select: {
+                id: true,
+                email: true,
+                first_name: true,
+                last_name: true,
+                signature_base_64: true,
               },
-              update_by_account: {
-                select: {
-                  id: true,
-                  email: true,
-                  first_name: true,
-                  last_name: true,
-                  signature_base_64: true,
-                },
+            },
+            update_by_account: {
+              select: {
+                id: true,
+                email: true,
+                first_name: true,
+                last_name: true,
+                signature_base_64: true,
               },
-              event_document_emer_file: {
-                include: {
-                  create_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                    },
-                  },
-                  update_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                    },
+            },
+            event_document_emer_file: {
+              include: {
+                create_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
                   },
                 },
-                orderBy: { id: 'desc' },
-              },
-              event_document_emer_file_pdf: {
-                include: {
-                  create_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                    },
-                  },
-                  update_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                    },
+                update_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
                   },
                 },
               },
-              event_document_emer_action: {
-                include: {
-                  event_doc_master: true,
-                  event_doc_status: true,
-                  group: true,
-                  user_type: true,
-                  create_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                      signature: true,
-                      signature_base_64: true,
-                    },
-                  },
-                  update_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                      signature: true,
-                      signature_base_64: true,
-                    },
+              orderBy: { id: 'desc' },
+            },
+            event_document_emer_file_pdf: {
+              include: {
+                create_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
                   },
                 },
-                orderBy: {
-                  id: 'desc',
+                update_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                  },
                 },
               },
             },
-          })
+            event_document_emer_action: {
+              include: {
+                event_doc_master: true,
+                event_doc_status: true,
+                group: true,
+                user_type: true,
+                create_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                    signature: true,
+                    signature_base_64: true,
+                  },
+                },
+                update_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                    signature: true,
+                    signature_base_64: true,
+                  },
+                },
+              },
+              orderBy: {
+                id: 'desc',
+              },
+            },
+          },
+        })
         : await this.prisma.event_document_emer.findFirst({
-            where: {
-              event_runnumber_emer_id: Number(id),
-              event_doc_master_id: 5,
-              ref_document: null,
-            },
-            include: {
-              event_runnumber_emer: {
-                include: {
-                  event_status: true,
-                  event_document_emer: {
-                    include: {
-                      event_doc_status: true,
-                      group: true,
-                      user_type: true,
-                    },
-                    where: {
-                      user_type: {
-                        id: 3,
-                      },
-                      event_doc_master_id: 5,
-                    },
+          where: {
+            event_runnumber_emer_id: Number(id),
+            event_doc_master_id: 5,
+            ref_document: null,
+          },
+          include: {
+            event_runnumber_emer: {
+              include: {
+                event_status: true,
+                event_document_emer: {
+                  include: {
+                    event_doc_status: true,
+                    group: true,
+                    user_type: true,
                   },
-                },
-              },
-              event_doc_master: true,
-              event_doc_status: true,
-              event_document_emer_cc_email: true,
-              event_document_emer_email_group_for_event: {
-                include: {
-                  edit_email_group_for_event: true,
-                },
-              },
-              group: true,
-              user_type: true,
-              create_by_account: {
-                select: {
-                  id: true,
-                  email: true,
-                  first_name: true,
-                  last_name: true,
-                  signature_base_64: true,
-                },
-              },
-              update_by_account: {
-                select: {
-                  id: true,
-                  email: true,
-                  first_name: true,
-                  last_name: true,
-                  signature_base_64: true,
-                },
-              },
-              event_document_emer_file: {
-                include: {
-                  create_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
+                  where: {
+                    user_type: {
+                      id: 3,
                     },
+                    event_doc_master_id: 5,
                   },
-                  update_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                    },
-                  },
-                },
-                orderBy: { id: 'desc' },
-              },
-              event_document_emer_file_pdf: {
-                include: {
-                  create_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                    },
-                  },
-                  update_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                    },
-                  },
-                },
-              },
-              event_document_emer_action: {
-                include: {
-                  event_doc_master: true,
-                  event_doc_status: true,
-                  group: true,
-                  user_type: true,
-                  create_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                      signature: true,
-                      signature_base_64: true,
-                    },
-                  },
-                  update_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                      signature: true,
-                      signature_base_64: true,
-                    },
-                  },
-                },
-                orderBy: {
-                  id: 'desc',
                 },
               },
             },
-          });
+            event_doc_master: true,
+            event_doc_status: true,
+            event_document_emer_cc_email: true,
+            event_document_emer_email_group_for_event: {
+              include: {
+                edit_email_group_for_event: true,
+              },
+            },
+            group: true,
+            user_type: true,
+            create_by_account: {
+              select: {
+                id: true,
+                email: true,
+                first_name: true,
+                last_name: true,
+                signature_base_64: true,
+              },
+            },
+            update_by_account: {
+              select: {
+                id: true,
+                email: true,
+                first_name: true,
+                last_name: true,
+                signature_base_64: true,
+              },
+            },
+            event_document_emer_file: {
+              include: {
+                create_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                  },
+                },
+                update_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                  },
+                },
+              },
+              orderBy: { id: 'desc' },
+            },
+            event_document_emer_file_pdf: {
+              include: {
+                create_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                  },
+                },
+                update_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                  },
+                },
+              },
+            },
+            event_document_emer_action: {
+              include: {
+                event_doc_master: true,
+                event_doc_status: true,
+                group: true,
+                user_type: true,
+                create_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                    signature: true,
+                    signature_base_64: true,
+                  },
+                },
+                update_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                    signature: true,
+                    signature_base_64: true,
+                  },
+                },
+              },
+              orderBy: {
+                id: 'desc',
+              },
+            },
+          },
+        });
     console.log('result : ', result);
     return result;
   }
@@ -18570,14 +18580,14 @@ export class EventService {
       where: {
         ...(tso
           ? {
-              event_document_emer: {
-                event_runnumber_emer_id: Number(id),
-                event_doc_master_id: 5,
-              },
-            }
+            event_document_emer: {
+              event_runnumber_emer_id: Number(id),
+              event_doc_master_id: 5,
+            },
+          }
           : {
-              event_document_emer_id: Number(id),
-            }),
+            event_document_emer_id: Number(id),
+          }),
       },
       include: {
         group: true,
@@ -18605,7 +18615,7 @@ export class EventService {
 
       return {
         ...nE,
-        row: temp ? JSON.parse(temp) : null,
+        row: this.safeParseJSON(temp),
       };
     });
     return nresData;
@@ -18887,15 +18897,15 @@ export class EventService {
       where: {
         ...(shipperIds
           ? {
-              id: shipperIds,
-            }
+            id: shipperIds,
+          }
           : {
-              account_manage: {
-                some: {
-                  account_id: Number(userId),
-                },
+            account_manage: {
+              some: {
+                account_id: Number(userId),
               },
-            }),
+            },
+          }),
       },
       select: {
         id: true,
@@ -18936,14 +18946,14 @@ export class EventService {
       console.log('toAction : ', toAction);
       const toFullname =
         toAction?.event_doc_status_id !== 1 &&
-        toAction?.event_doc_status_id !== 2 &&
-        toAction?.create_by_account?.first_name &&
-        toAction?.create_by_account?.last_name
+          toAction?.event_doc_status_id !== 2 &&
+          toAction?.create_by_account?.first_name &&
+          toAction?.create_by_account?.last_name
           ? `${toAction?.create_by_account?.first_name} ${toAction?.create_by_account?.last_name}`
           : '';
 
       const toCompany =
-        (toAction?.group?.company_name && toAction?.group?.company_name) ||
+        (toAction?.group?.company_name) ||
         '';
       const toDate = dayjs(toAction?.create_date).locale('th');
       const toSignature =
@@ -18955,7 +18965,7 @@ export class EventService {
       // ----
       const fromFullname =
         rdoc1Find?.create_by_account?.first_name &&
-        rdoc1Find?.create_by_account?.last_name
+          rdoc1Find?.create_by_account?.last_name
           ? `${rdoc1Find?.create_by_account?.first_name} ${rdoc1Find?.create_by_account?.last_name}`
           : '';
       const fromCompany = 'บริษัท ปตท.จำกัด (มหาชน)';
@@ -19300,21 +19310,21 @@ export class EventService {
                       //   : { text: `(                                   )` },
                       fromSignature
                         ? {
-                            columns: [
-                              {
-                                text: 'แจ้งโดย ',
-                                width: 'auto',
-                                alignment: 'right',
-                              },
-                              {
-                                image: fromSignature, // base64 หรือ path
-                                width: 50,
-                                alignment: 'center',
-                              },
-                            ],
-                            columnGap: 15, // ระยะห่างระหว่างวงเล็บกับภาพ
-                            margin: [0, 2, 0, 5], // ปรับระยะรอบภาพ
-                          }
+                          columns: [
+                            {
+                              text: 'แจ้งโดย ',
+                              width: 'auto',
+                              alignment: 'right',
+                            },
+                            {
+                              image: fromSignature, // base64 หรือ path
+                              width: 50,
+                              alignment: 'center',
+                            },
+                          ],
+                          columnGap: 15, // ระยะห่างระหว่างวงเล็บกับภาพ
+                          margin: [0, 2, 0, 5], // ปรับระยะรอบภาพ
+                        }
                         : { text: `แจ้งโดย ` },
                       { text: fromFullname ? `( ${fromFullname} )` : `(                                   )` },
                       { text: `หน่วยงาน ${fromCompany} (ผู้ให้บริการ)` },
@@ -19330,23 +19340,23 @@ export class EventService {
                       // rdoc1Find?.event_doc_status?.id === 5 && toSignature
                       rdoc1Find?.event_doc_status?.id === 5 && toSignature
                         ? {
-                            columns: [
-                              {
-                                text: 'รับทราบโดย',
-                                width: 'auto',
-                                alignment: 'right',
-                              },
-                              // { text: 'รับทราบโดย', width: 'auto', alignment: 'right' },
-                              {
-                                image: toSignature, // base64 หรือ path
-                                width: 50,
-                                alignment: 'center',
-                              },
-                              // { text: ')', width: 'auto', alignment: 'left' },
-                            ],
-                            columnGap: 5, // ระยะห่างระหว่างวงเล็บกับภาพ
-                            margin: [0, 2, 0, 5], // ปรับระยะรอบภาพ
-                          }
+                          columns: [
+                            {
+                              text: 'รับทราบโดย',
+                              width: 'auto',
+                              alignment: 'right',
+                            },
+                            // { text: 'รับทราบโดย', width: 'auto', alignment: 'right' },
+                            {
+                              image: toSignature, // base64 หรือ path
+                              width: 50,
+                              alignment: 'center',
+                            },
+                            // { text: ')', width: 'auto', alignment: 'left' },
+                          ],
+                          columnGap: 5, // ระยะห่างระหว่างวงเล็บกับภาพ
+                          margin: [0, 2, 0, 5], // ปรับระยะรอบภาพ
+                        }
                         : { text: `รับทราบโดย` },
                       {
                         text:
@@ -19480,14 +19490,14 @@ export class EventService {
         console.log('toAction : ', toAction);
         const toFullname =
           toAction?.event_doc_status_id !== 1 &&
-          toAction?.event_doc_status_id !== 2 &&
-          toAction?.create_by_account?.first_name &&
-          toAction?.create_by_account?.last_name
+            toAction?.event_doc_status_id !== 2 &&
+            toAction?.create_by_account?.first_name &&
+            toAction?.create_by_account?.last_name
             ? `${toAction?.create_by_account?.first_name} ${toAction?.create_by_account?.last_name}`
             : '';
 
         const toCompany =
-          (toAction?.group?.company_name && toAction?.group?.company_name) ||
+          (toAction?.group?.company_name) ||
           '';
         const toDate = dayjs(toAction?.create_date).locale('th');
         const toSignature =
@@ -19499,7 +19509,7 @@ export class EventService {
         // ----
         const fromFullname =
           rdoc1Find?.create_by_account?.first_name &&
-          rdoc1Find?.create_by_account?.last_name
+            rdoc1Find?.create_by_account?.last_name
             ? `${rdoc1Find?.create_by_account?.first_name} ${rdoc1Find?.create_by_account?.last_name}`
             : '';
         const fromCompany = 'บริษัท ปตท.จำกัด (มหาชน)';
@@ -19846,21 +19856,21 @@ export class EventService {
                         //   : { text: `(                                   )` },
                         fromSignature
                           ? {
-                              columns: [
-                                {
-                                  text: 'แจ้งโดย ', // https://app.clickup.com/t/86eum0nzh
-                                  width: 'auto',
-                                  alignment: 'right',
-                                },
-                                {
-                                  image: fromSignature, // base64 หรือ path
-                                  width: 50,
-                                  alignment: 'center',
-                                },
-                              ],
-                              columnGap: 15, // ระยะห่างระหว่างวงเล็บกับภาพ
-                              margin: [0, 2, 0, 5], // ปรับระยะรอบภาพ
-                            }
+                            columns: [
+                              {
+                                text: 'แจ้งโดย ', // https://app.clickup.com/t/86eum0nzh
+                                width: 'auto',
+                                alignment: 'right',
+                              },
+                              {
+                                image: fromSignature, // base64 หรือ path
+                                width: 50,
+                                alignment: 'center',
+                              },
+                            ],
+                            columnGap: 15, // ระยะห่างระหว่างวงเล็บกับภาพ
+                            margin: [0, 2, 0, 5], // ปรับระยะรอบภาพ
+                          }
                           : { text: `แจ้งโดย ` },
                         { text: fromFullname ? `( ${fromFullname} )` : `(                                   )` },
                         { text: `หน่วยงาน ${fromCompany} (ผู้ให้บริการ)` },
@@ -19876,23 +19886,23 @@ export class EventService {
                         // rdoc1Find?.event_doc_status?.id === 5 && toSignature
                         rdoc1Find?.event_doc_status?.id === 5 && toSignature
                           ? {
-                              columns: [
-                                {
-                                  text: 'รับทราบโดย',
-                                  width: 'auto',
-                                  alignment: 'right',
-                                },
-                                // { text: 'รับทราบโดย', width: 'auto', alignment: 'right' },
-                                {
-                                  image: toSignature, // base64 หรือ path
-                                  width: 50,
-                                  alignment: 'center',
-                                },
-                                // { text: ')', width: 'auto', alignment: 'left' },
-                              ],
-                              columnGap: 5, // ระยะห่างระหว่างวงเล็บกับภาพ
-                              margin: [0, 2, 0, 5], // ปรับระยะรอบภาพ
-                            }
+                            columns: [
+                              {
+                                text: 'รับทราบโดย',
+                                width: 'auto',
+                                alignment: 'right',
+                              },
+                              // { text: 'รับทราบโดย', width: 'auto', alignment: 'right' },
+                              {
+                                image: toSignature, // base64 หรือ path
+                                width: 50,
+                                alignment: 'center',
+                              },
+                              // { text: ')', width: 'auto', alignment: 'left' },
+                            ],
+                            columnGap: 5, // ระยะห่างระหว่างวงเล็บกับภาพ
+                            margin: [0, 2, 0, 5], // ปรับระยะรอบภาพ
+                          }
                           : { text: `รับทราบโดย` },
                         {
                           text:
@@ -20144,7 +20154,7 @@ export class EventService {
           zone_text: rJs?.zone_text ?? null,
           area_text: rJs?.area_text ?? null,
           data_temp:
-            (rJs?.data_temp && JSON.parse(rJs?.data_temp)?.[3]) ?? null,
+            (rJs?.data_temp && this.safeParseJSON(rJs?.data_temp)?.[3]) ?? null,
           entry_exit_id: rJs?.entry_exit_id ?? null,
         };
       });
@@ -21257,8 +21267,26 @@ export class EventService {
   async doc6Find(id: any, userId: any, groupObj?: any, shipperIds?: any) {
     const group = shipperIds
       ? await this.prisma.group.findFirst({
+        where: {
+          id: shipperIds,
+        },
+        select: {
+          id: true,
+          user_type: {
+            select: {
+              id: true,
+            },
+          },
+        },
+      })
+      : userId
+        ? await this.prisma.group.findFirst({
           where: {
-            id: shipperIds,
+            account_manage: {
+              some: {
+                account_id: Number(userId),
+              },
+            },
           },
           select: {
             id: true,
@@ -21269,24 +21297,6 @@ export class EventService {
             },
           },
         })
-      : userId
-        ? await this.prisma.group.findFirst({
-            where: {
-              account_manage: {
-                some: {
-                  account_id: Number(userId),
-                },
-              },
-            },
-            select: {
-              id: true,
-              user_type: {
-                select: {
-                  id: true,
-                },
-              },
-            },
-          })
         : groupObj;
 
     const userTypeId = group?.user_type?.id;
@@ -21295,332 +21305,332 @@ export class EventService {
     const result =
       userTypeId === 3
         ? await this.prisma.event_document_emer.findFirst({
-            where: {
-              event_runnumber_emer_id: Number(id),
-              event_doc_master_id: 6,
-              ref_document: {
-                not: null,
-              },
-              group_id: Number(groupId),
+          where: {
+            event_runnumber_emer_id: Number(id),
+            event_doc_master_id: 6,
+            ref_document: {
+              not: null,
             },
-            include: {
-              event_runnumber_emer: {
-                include: {
-                  event_status: true,
-                },
-              },
-              event_doc_master: true,
-              event_doc_status: true,
-              group: true,
-              user_type: true,
-              create_by_account: {
-                select: {
-                  id: true,
-                  email: true,
-                  first_name: true,
-                  last_name: true,
-                  signature_base_64: true,
-                },
-              },
-              update_by_account: {
-                select: {
-                  id: true,
-                  email: true,
-                  first_name: true,
-                  last_name: true,
-                  signature_base_64: true,
-                },
-              },
-              event_document_emer_action: {
-                include: {
-                  event_doc_master: true,
-                  event_doc_status: true,
-                  group: true,
-                  user_type: true,
-                  create_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                      signature: true,
-                      signature_base_64: true,
-                    },
-                  },
-                  update_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                      signature: true,
-                      signature_base_64: true,
-                    },
-                  },
-                },
-                orderBy: {
-                  id: 'desc',
-                },
-              },
-              event_doc_gas_shipper_match: {
-                include: {
-                  event_doc_gas_shipper: {
-                    include: {
-                      event_document_emer: true,
-                      event_doc_gas_shipper_file: {
-                        include: {
-                          create_by_account: {
-                            select: {
-                              id: true,
-                              email: true,
-                              first_name: true,
-                              last_name: true,
-                            },
-                          },
-                          update_by_account: {
-                            select: {
-                              id: true,
-                              email: true,
-                              first_name: true,
-                              last_name: true,
-                            },
-                          },
-                        },
-                      },
-                      nomination_point: true,
-                    },
-                  },
-                  event_document_emer: true,
-                },
-              },
-              event_doc_gas_shipper: {
-                include: {
-                  event_doc_gas_shipper_match: {
-                    include: {
-                      event_doc_gas_shipper: {
-                        include: {
-                          event_document_emer: true,
-                          event_doc_gas_shipper_file: {
-                            include: {
-                              create_by_account: {
-                                select: {
-                                  id: true,
-                                  email: true,
-                                  first_name: true,
-                                  last_name: true,
-                                },
-                              },
-                              update_by_account: {
-                                select: {
-                                  id: true,
-                                  email: true,
-                                  first_name: true,
-                                  last_name: true,
-                                },
-                              },
-                            },
-                          },
-                        },
-                      },
-                    },
-                  },
-                  event_doc_gas_shipper_file: {
-                    include: {
-                      create_by_account: {
-                        select: {
-                          id: true,
-                          email: true,
-                          first_name: true,
-                          last_name: true,
-                        },
-                      },
-                      update_by_account: {
-                        select: {
-                          id: true,
-                          email: true,
-                          first_name: true,
-                          last_name: true,
-                        },
-                      },
-                    },
-                    orderBy: { id: 'desc' },
-                  },
-                  nomination_point: true,
-                },
+            group_id: Number(groupId),
+          },
+          include: {
+            event_runnumber_emer: {
+              include: {
+                event_status: true,
               },
             },
-          })
+            event_doc_master: true,
+            event_doc_status: true,
+            group: true,
+            user_type: true,
+            create_by_account: {
+              select: {
+                id: true,
+                email: true,
+                first_name: true,
+                last_name: true,
+                signature_base_64: true,
+              },
+            },
+            update_by_account: {
+              select: {
+                id: true,
+                email: true,
+                first_name: true,
+                last_name: true,
+                signature_base_64: true,
+              },
+            },
+            event_document_emer_action: {
+              include: {
+                event_doc_master: true,
+                event_doc_status: true,
+                group: true,
+                user_type: true,
+                create_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                    signature: true,
+                    signature_base_64: true,
+                  },
+                },
+                update_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                    signature: true,
+                    signature_base_64: true,
+                  },
+                },
+              },
+              orderBy: {
+                id: 'desc',
+              },
+            },
+            event_doc_gas_shipper_match: {
+              include: {
+                event_doc_gas_shipper: {
+                  include: {
+                    event_document_emer: true,
+                    event_doc_gas_shipper_file: {
+                      include: {
+                        create_by_account: {
+                          select: {
+                            id: true,
+                            email: true,
+                            first_name: true,
+                            last_name: true,
+                          },
+                        },
+                        update_by_account: {
+                          select: {
+                            id: true,
+                            email: true,
+                            first_name: true,
+                            last_name: true,
+                          },
+                        },
+                      },
+                    },
+                    nomination_point: true,
+                  },
+                },
+                event_document_emer: true,
+              },
+            },
+            event_doc_gas_shipper: {
+              include: {
+                event_doc_gas_shipper_match: {
+                  include: {
+                    event_doc_gas_shipper: {
+                      include: {
+                        event_document_emer: true,
+                        event_doc_gas_shipper_file: {
+                          include: {
+                            create_by_account: {
+                              select: {
+                                id: true,
+                                email: true,
+                                first_name: true,
+                                last_name: true,
+                              },
+                            },
+                            update_by_account: {
+                              select: {
+                                id: true,
+                                email: true,
+                                first_name: true,
+                                last_name: true,
+                              },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+                event_doc_gas_shipper_file: {
+                  include: {
+                    create_by_account: {
+                      select: {
+                        id: true,
+                        email: true,
+                        first_name: true,
+                        last_name: true,
+                      },
+                    },
+                    update_by_account: {
+                      select: {
+                        id: true,
+                        email: true,
+                        first_name: true,
+                        last_name: true,
+                      },
+                    },
+                  },
+                  orderBy: { id: 'desc' },
+                },
+                nomination_point: true,
+              },
+            },
+          },
+        })
         : await this.prisma.event_document_emer.findFirst({
-            where: {
-              event_runnumber_emer_id: Number(id),
-              event_doc_master_id: 6,
-              ref_document: null,
-            },
-            include: {
-              event_runnumber_emer: {
-                include: {
-                  event_status: true,
-                  event_document_emer: {
-                    include: {
-                      event_doc_status: true,
-                      group: true,
-                      user_type: true,
-                    },
-                    where: {
-                      user_type: {
-                        id: 3,
-                      },
-                      event_doc_master_id: 6,
-                    },
+          where: {
+            event_runnumber_emer_id: Number(id),
+            event_doc_master_id: 6,
+            ref_document: null,
+          },
+          include: {
+            event_runnumber_emer: {
+              include: {
+                event_status: true,
+                event_document_emer: {
+                  include: {
+                    event_doc_status: true,
+                    group: true,
+                    user_type: true,
                   },
-                },
-              },
-              event_doc_master: true,
-              event_doc_status: true,
-              event_document_emer_cc_email: true,
-              event_document_emer_email_group_for_event: {
-                include: {
-                  edit_email_group_for_event: true,
-                },
-              },
-              group: true,
-              user_type: true,
-              create_by_account: {
-                select: {
-                  id: true,
-                  email: true,
-                  first_name: true,
-                  last_name: true,
-                  signature_base_64: true,
-                },
-              },
-              update_by_account: {
-                select: {
-                  id: true,
-                  email: true,
-                  first_name: true,
-                  last_name: true,
-                  signature_base_64: true,
-                },
-              },
-              event_doc_gas_shipper_match: {
-                include: {
-                  event_doc_gas_shipper: {
-                    include: {
-                      event_document_emer: true,
-                      event_doc_gas_shipper_file: {
-                        include: {
-                          create_by_account: {
-                            select: {
-                              id: true,
-                              email: true,
-                              first_name: true,
-                              last_name: true,
-                            },
-                          },
-                          update_by_account: {
-                            select: {
-                              id: true,
-                              email: true,
-                              first_name: true,
-                              last_name: true,
-                            },
-                          },
-                        },
-                      },
+                  where: {
+                    user_type: {
+                      id: 3,
                     },
+                    event_doc_master_id: 6,
                   },
-                  event_document_emer: true,
-                },
-              },
-              event_doc_gas_shipper: {
-                include: {
-                  event_doc_gas_shipper_match: {
-                    include: {
-                      event_doc_gas_shipper: {
-                        include: {
-                          event_document_emer: true,
-                          event_doc_gas_shipper_file: {
-                            include: {
-                              create_by_account: {
-                                select: {
-                                  id: true,
-                                  email: true,
-                                  first_name: true,
-                                  last_name: true,
-                                },
-                              },
-                              update_by_account: {
-                                select: {
-                                  id: true,
-                                  email: true,
-                                  first_name: true,
-                                  last_name: true,
-                                },
-                              },
-                            },
-                          },
-                        },
-                      },
-                      event_document_emer: true,
-                    },
-                  },
-                  event_doc_gas_shipper_file: {
-                    include: {
-                      create_by_account: {
-                        select: {
-                          id: true,
-                          email: true,
-                          first_name: true,
-                          last_name: true,
-                        },
-                      },
-                      update_by_account: {
-                        select: {
-                          id: true,
-                          email: true,
-                          first_name: true,
-                          last_name: true,
-                        },
-                      },
-                    },
-                    orderBy: { id: 'desc' },
-                  },
-                },
-              },
-              event_document_emer_action: {
-                include: {
-                  event_doc_master: true,
-                  event_doc_status: true,
-                  group: true,
-                  user_type: true,
-                  create_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                      signature: true,
-                      signature_base_64: true,
-                    },
-                  },
-                  update_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                      signature: true,
-                      signature_base_64: true,
-                    },
-                  },
-                },
-                orderBy: {
-                  id: 'desc',
                 },
               },
             },
-          });
+            event_doc_master: true,
+            event_doc_status: true,
+            event_document_emer_cc_email: true,
+            event_document_emer_email_group_for_event: {
+              include: {
+                edit_email_group_for_event: true,
+              },
+            },
+            group: true,
+            user_type: true,
+            create_by_account: {
+              select: {
+                id: true,
+                email: true,
+                first_name: true,
+                last_name: true,
+                signature_base_64: true,
+              },
+            },
+            update_by_account: {
+              select: {
+                id: true,
+                email: true,
+                first_name: true,
+                last_name: true,
+                signature_base_64: true,
+              },
+            },
+            event_doc_gas_shipper_match: {
+              include: {
+                event_doc_gas_shipper: {
+                  include: {
+                    event_document_emer: true,
+                    event_doc_gas_shipper_file: {
+                      include: {
+                        create_by_account: {
+                          select: {
+                            id: true,
+                            email: true,
+                            first_name: true,
+                            last_name: true,
+                          },
+                        },
+                        update_by_account: {
+                          select: {
+                            id: true,
+                            email: true,
+                            first_name: true,
+                            last_name: true,
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+                event_document_emer: true,
+              },
+            },
+            event_doc_gas_shipper: {
+              include: {
+                event_doc_gas_shipper_match: {
+                  include: {
+                    event_doc_gas_shipper: {
+                      include: {
+                        event_document_emer: true,
+                        event_doc_gas_shipper_file: {
+                          include: {
+                            create_by_account: {
+                              select: {
+                                id: true,
+                                email: true,
+                                first_name: true,
+                                last_name: true,
+                              },
+                            },
+                            update_by_account: {
+                              select: {
+                                id: true,
+                                email: true,
+                                first_name: true,
+                                last_name: true,
+                              },
+                            },
+                          },
+                        },
+                      },
+                    },
+                    event_document_emer: true,
+                  },
+                },
+                event_doc_gas_shipper_file: {
+                  include: {
+                    create_by_account: {
+                      select: {
+                        id: true,
+                        email: true,
+                        first_name: true,
+                        last_name: true,
+                      },
+                    },
+                    update_by_account: {
+                      select: {
+                        id: true,
+                        email: true,
+                        first_name: true,
+                        last_name: true,
+                      },
+                    },
+                  },
+                  orderBy: { id: 'desc' },
+                },
+              },
+            },
+            event_document_emer_action: {
+              include: {
+                event_doc_master: true,
+                event_doc_status: true,
+                group: true,
+                user_type: true,
+                create_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                    signature: true,
+                    signature_base_64: true,
+                  },
+                },
+                update_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                    signature: true,
+                    signature_base_64: true,
+                  },
+                },
+              },
+              orderBy: {
+                id: 'desc',
+              },
+            },
+          },
+        });
     console.log('result : ', result);
     return result;
   }
@@ -21630,14 +21640,14 @@ export class EventService {
       where: {
         ...(tso
           ? {
-              event_document_emer: {
-                event_runnumber_emer_id: Number(id),
-                event_doc_master_id: 6,
-              },
-            }
+            event_document_emer: {
+              event_runnumber_emer_id: Number(id),
+              event_doc_master_id: 6,
+            },
+          }
           : {
-              event_document_emer_id: Number(id),
-            }),
+            event_document_emer_id: Number(id),
+          }),
       },
       include: {
         group: true,
@@ -21665,7 +21675,7 @@ export class EventService {
 
       return {
         ...nE,
-        row: temp ? JSON.parse(temp) : null,
+        row: this.safeParseJSON(temp),
       };
     });
     return nresData;
@@ -21947,15 +21957,15 @@ export class EventService {
       where: {
         ...(shipperIds
           ? {
-              id: shipperIds,
-            }
+            id: shipperIds,
+          }
           : {
-              account_manage: {
-                some: {
-                  account_id: Number(userId),
-                },
+            account_manage: {
+              some: {
+                account_id: Number(userId),
               },
-            }),
+            },
+          }),
       },
       select: {
         id: true,
@@ -21997,14 +22007,14 @@ export class EventService {
       console.log('toAction : ', toAction);
       const toFullname =
         toAction?.event_doc_status_id !== 1 &&
-        toAction?.event_doc_status_id !== 2 &&
-        toAction?.create_by_account?.first_name &&
-        toAction?.create_by_account?.last_name
+          toAction?.event_doc_status_id !== 2 &&
+          toAction?.create_by_account?.first_name &&
+          toAction?.create_by_account?.last_name
           ? `${toAction?.create_by_account?.first_name} ${toAction?.create_by_account?.last_name}`
           : '';
 
       const toCompany =
-        (toAction?.group?.company_name && toAction?.group?.company_name) ||
+        (toAction?.group?.company_name) ||
         '';
       const toDate = dayjs(toAction?.create_date).locale('th');
       const toSignature =
@@ -22016,7 +22026,7 @@ export class EventService {
       // ----
       const fromFullname =
         rdoc1Find?.create_by_account?.first_name &&
-        rdoc1Find?.create_by_account?.last_name
+          rdoc1Find?.create_by_account?.last_name
           ? `${rdoc1Find?.create_by_account?.first_name} ${rdoc1Find?.create_by_account?.last_name}`
           : '';
       const fromCompany = 'บริษัท ปตท.จำกัด (มหาชน)';
@@ -22427,21 +22437,21 @@ export class EventService {
                       //   : { text: `(                                   )` },
                       fromSignature
                         ? {
-                            columns: [
-                              {
-                                text: 'รับทราบโดย',
-                                width: 'auto',
-                                alignment: 'right',
-                              },
-                              {
-                                image: fromSignature, // base64 หรือ path
-                                width: 50,
-                                alignment: 'center',
-                              },
-                            ],
-                            columnGap: 15, // ระยะห่างระหว่างวงเล็บกับภาพ
-                            margin: [0, 2, 0, 5], // ปรับระยะรอบภาพ
-                          }
+                          columns: [
+                            {
+                              text: 'รับทราบโดย',
+                              width: 'auto',
+                              alignment: 'right',
+                            },
+                            {
+                              image: fromSignature, // base64 หรือ path
+                              width: 50,
+                              alignment: 'center',
+                            },
+                          ],
+                          columnGap: 15, // ระยะห่างระหว่างวงเล็บกับภาพ
+                          margin: [0, 2, 0, 5], // ปรับระยะรอบภาพ
+                        }
                         : { text: `(                                   )` },
                       { text: `(${fromFullname})` },
                       { text: `หน่วยงาน ${fromCompany} (ผู้ให้บริการ)` },
@@ -22457,23 +22467,23 @@ export class EventService {
                       // rdoc1Find?.event_doc_status?.id === 5 && toSignature
                       rdoc1Find?.event_doc_status?.id === 5 && toSignature
                         ? {
-                            columns: [
-                              {
-                                text: 'รับทราบโดย',
-                                width: 'auto',
-                                alignment: 'right',
-                              },
-                              // { text: 'รับทราบโดย', width: 'auto', alignment: 'right' },
-                              {
-                                image: toSignature, // base64 หรือ path
-                                width: 50,
-                                alignment: 'center',
-                              },
-                              // { text: ')', width: 'auto', alignment: 'left' },
-                            ],
-                            columnGap: 5, // ระยะห่างระหว่างวงเล็บกับภาพ
-                            margin: [0, 2, 0, 5], // ปรับระยะรอบภาพ
-                          }
+                          columns: [
+                            {
+                              text: 'รับทราบโดย',
+                              width: 'auto',
+                              alignment: 'right',
+                            },
+                            // { text: 'รับทราบโดย', width: 'auto', alignment: 'right' },
+                            {
+                              image: toSignature, // base64 หรือ path
+                              width: 50,
+                              alignment: 'center',
+                            },
+                            // { text: ')', width: 'auto', alignment: 'left' },
+                          ],
+                          columnGap: 5, // ระยะห่างระหว่างวงเล็บกับภาพ
+                          margin: [0, 2, 0, 5], // ปรับระยะรอบภาพ
+                        }
                         : { text: `รับทราบโดย` },
                       {
                         text:
@@ -22607,14 +22617,14 @@ export class EventService {
         console.log('toAction : ', toAction);
         const toFullname =
           toAction?.event_doc_status_id !== 1 &&
-          toAction?.event_doc_status_id !== 2 &&
-          toAction?.create_by_account?.first_name &&
-          toAction?.create_by_account?.last_name
+            toAction?.event_doc_status_id !== 2 &&
+            toAction?.create_by_account?.first_name &&
+            toAction?.create_by_account?.last_name
             ? `${toAction?.create_by_account?.first_name} ${toAction?.create_by_account?.last_name}`
             : '';
 
         const toCompany =
-          (toAction?.group?.company_name && toAction?.group?.company_name) ||
+          (toAction?.group?.company_name) ||
           '';
         const toDate = dayjs(toAction?.create_date).locale('th');
         const toSignature =
@@ -22626,7 +22636,7 @@ export class EventService {
         // ----
         const fromFullname =
           rdoc1Find?.create_by_account?.first_name &&
-          rdoc1Find?.create_by_account?.last_name
+            rdoc1Find?.create_by_account?.last_name
             ? `${rdoc1Find?.create_by_account?.first_name} ${rdoc1Find?.create_by_account?.last_name}`
             : '';
         const fromCompany = 'บริษัท ปตท.จำกัด (มหาชน)';
@@ -23037,21 +23047,21 @@ export class EventService {
                         //   : { text: `(                                   )` },
                         fromSignature
                           ? {
-                              columns: [
-                                {
-                                  text: 'รับทราบโดย',
-                                  width: 'auto',
-                                  alignment: 'right',
-                                },
-                                {
-                                  image: fromSignature, // base64 หรือ path
-                                  width: 50,
-                                  alignment: 'center',
-                                },
-                              ],
-                              columnGap: 15, // ระยะห่างระหว่างวงเล็บกับภาพ
-                              margin: [0, 2, 0, 5], // ปรับระยะรอบภาพ
-                            }
+                            columns: [
+                              {
+                                text: 'รับทราบโดย',
+                                width: 'auto',
+                                alignment: 'right',
+                              },
+                              {
+                                image: fromSignature, // base64 หรือ path
+                                width: 50,
+                                alignment: 'center',
+                              },
+                            ],
+                            columnGap: 15, // ระยะห่างระหว่างวงเล็บกับภาพ
+                            margin: [0, 2, 0, 5], // ปรับระยะรอบภาพ
+                          }
                           : { text: `(                                   )` },
                         { text: `(${fromFullname})` },
                         { text: `หน่วยงาน ${fromCompany} (ผู้ให้บริการ)` },
@@ -23067,23 +23077,23 @@ export class EventService {
                         // rdoc1Find?.event_doc_status?.id === 5 && toSignature
                         rdoc1Find?.event_doc_status?.id === 5 && toSignature
                           ? {
-                              columns: [
-                                {
-                                  text: 'รับทราบโดย',
-                                  width: 'auto',
-                                  alignment: 'right',
-                                },
-                                // { text: 'รับทราบโดย', width: 'auto', alignment: 'right' },
-                                {
-                                  image: toSignature, // base64 หรือ path
-                                  width: 50,
-                                  alignment: 'center',
-                                },
-                                // { text: ')', width: 'auto', alignment: 'left' },
-                              ],
-                              columnGap: 5, // ระยะห่างระหว่างวงเล็บกับภาพ
-                              margin: [0, 2, 0, 5], // ปรับระยะรอบภาพ
-                            }
+                            columns: [
+                              {
+                                text: 'รับทราบโดย',
+                                width: 'auto',
+                                alignment: 'right',
+                              },
+                              // { text: 'รับทราบโดย', width: 'auto', alignment: 'right' },
+                              {
+                                image: toSignature, // base64 หรือ path
+                                width: 50,
+                                alignment: 'center',
+                              },
+                              // { text: ')', width: 'auto', alignment: 'left' },
+                            ],
+                            columnGap: 5, // ระยะห่างระหว่างวงเล็บกับภาพ
+                            margin: [0, 2, 0, 5], // ปรับระยะรอบภาพ
+                          }
                           : { text: `รับทราบโดย` },
                         {
                           text:
@@ -23515,27 +23525,27 @@ export class EventService {
     const eventDateCondition =
       !!eventDateFrom && !!eventDateTo
         ? {
-            event_date: {
-              gte: getTodayNowYYYYMMDDDfaultAdd7(eventDateFrom).toDate(),
-              lte: getTodayNowYYYYMMDDDfaultAdd7(eventDateTo)
-                .endOf('day')
-                .toDate(),
-            },
-          }
+          event_date: {
+            gte: getTodayNowYYYYMMDDDfaultAdd7(eventDateFrom).toDate(),
+            lte: getTodayNowYYYYMMDDDfaultAdd7(eventDateTo)
+              .endOf('day')
+              .toDate(),
+          },
+        }
         : eventDateFrom
           ? {
-              event_date: {
-                gte: getTodayNowYYYYMMDDDfaultAdd7(eventDateFrom).toDate(),
-              },
-            }
+            event_date: {
+              gte: getTodayNowYYYYMMDDDfaultAdd7(eventDateFrom).toDate(),
+            },
+          }
           : eventDateTo
             ? {
-                event_date: {
-                  lte: getTodayNowYYYYMMDDDfaultAdd7(eventDateTo)
-                    .endOf('day')
-                    .toDate(),
-                },
-              }
+              event_date: {
+                lte: getTodayNowYYYYMMDDDfaultAdd7(eventDateTo)
+                  .endOf('day')
+                  .toDate(),
+              },
+            }
             : {};
 
     const result = await this.prisma.event_runnumber_ofo.findMany({
@@ -23742,8 +23752,8 @@ export class EventService {
     const frData =
       userTypeId === 3
         ? newData?.filter((f: any) => {
-            return f?.document7 !== null;
-          })
+          return f?.document7 !== null;
+        })
         : newData;
 
     const calcLength = Math.abs(frData.length - newData.length);
@@ -23798,8 +23808,8 @@ export class EventService {
       document7 = document4CkGen
         ? []
         : event_document_ofo?.filter(
-            (f: any) => f?.event_doc_master_id === 7 && f?.group_id === groupId, // เป็น obj 1
-          );
+          (f: any) => f?.event_doc_master_id === 7 && f?.group_id === groupId, // เป็น obj 1
+        );
 
       document8 = event_document_ofo?.find(
         (f: any) => f?.event_doc_master_id === 8 && f?.group_id === groupId, // เป็น obj 1
@@ -23843,9 +23853,9 @@ export class EventService {
   }
 
   // doc7
-  async doc7RefMaster(userId: any){
+  async doc7RefMaster(userId: any) {
     const results = await this.prisma.event_doc_ofo_refer.findMany({
-      orderBy:{ id: "asc" },
+      orderBy: { id: "asc" },
     })
     return results
   }
@@ -24184,7 +24194,7 @@ export class EventService {
           zone_text: rJs?.zone_text ?? null,
           area_text: rJs?.area_text ?? null,
           data_temp:
-            (rJs?.data_temp && JSON.parse(rJs?.data_temp)?.[3]) ?? null,
+            (rJs?.data_temp && this.safeParseJSON(rJs?.data_temp)?.[3]) ?? null,
           entry_exit_id: rJs?.entry_exit_id ?? null,
         };
       });
@@ -24267,8 +24277,26 @@ export class EventService {
   async doc7Find(id: any, userId: any, groupObj?: any, shipperIds?: any) {
     const group = shipperIds
       ? await this.prisma.group.findFirst({
+        where: {
+          id: shipperIds,
+        },
+        select: {
+          id: true,
+          user_type: {
+            select: {
+              id: true,
+            },
+          },
+        },
+      })
+      : userId
+        ? await this.prisma.group.findFirst({
           where: {
-            id: shipperIds,
+            account_manage: {
+              some: {
+                account_id: Number(userId),
+              },
+            },
           },
           select: {
             id: true,
@@ -24279,24 +24307,6 @@ export class EventService {
             },
           },
         })
-      : userId
-        ? await this.prisma.group.findFirst({
-            where: {
-              account_manage: {
-                some: {
-                  account_id: Number(userId),
-                },
-              },
-            },
-            select: {
-              id: true,
-              user_type: {
-                select: {
-                  id: true,
-                },
-              },
-            },
-          })
         : groupObj;
 
     const userTypeId = group?.user_type?.id;
@@ -24305,337 +24315,337 @@ export class EventService {
     const result =
       userTypeId === 3
         ? await this.prisma.event_document_ofo.findFirst({
-            where: {
-              event_runnumber_ofo_id: Number(id),
-              event_doc_master_id: 7,
-              ref_document: {
-                not: null,
-              },
-              group_id: Number(groupId),
+          where: {
+            event_runnumber_ofo_id: Number(id),
+            event_doc_master_id: 7,
+            ref_document: {
+              not: null,
             },
-            include: {
-              event_runnumber_ofo: {
-                include: {
-                  event_status: true,
-                },
-              },
-              event_doc_master: true,
-              event_doc_status: true,
-              group: true,
-              user_type: true,
-              create_by_account: {
-                select: {
-                  id: true,
-                  email: true,
-                  first_name: true,
-                  last_name: true,
-                  signature_base_64: true,
-                },
-              },
-              update_by_account: {
-                select: {
-                  id: true,
-                  email: true,
-                  first_name: true,
-                  last_name: true,
-                  signature_base_64: true,
-                },
-              },
-              event_document_ofo_action: {
-                include: {
-                  event_doc_master: true,
-                  event_doc_status: true,
-                  group: true,
-                  user_type: true,
-                  create_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                      signature: true,
-                      signature_base_64: true,
-                    },
-                  },
-                  update_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                      signature: true,
-                      signature_base_64: true,
-                    },
-                  },
-                },
-                orderBy: {
-                  id: 'desc',
-                },
-              },
-              event_doc_gas_shipper_ofo_match: {
-                include: {
-                  event_doc_gas_shipper_ofo: {
-                    include: {
-                      event_document_ofo: true,
-                      event_doc_gas_shipper_ofo_file: {
-                        include: {
-                          create_by_account: {
-                            select: {
-                              id: true,
-                              email: true,
-                              first_name: true,
-                              last_name: true,
-                            },
-                          },
-                          update_by_account: {
-                            select: {
-                              id: true,
-                              email: true,
-                              first_name: true,
-                              last_name: true,
-                            },
-                          },
-                        },
-                      },
-                      nomination_point: true,
-                    },
-                  },
-                  event_document_ofo: true,
-                },
-              },
-              event_doc_gas_shipper_ofo: {
-                include: {
-                  event_doc_gas_shipper_ofo_match: {
-                    include: {
-                      event_doc_gas_shipper_ofo: {
-                        include: {
-                          event_document_ofo: true,
-                          event_doc_gas_shipper_ofo_file: {
-                            include: {
-                              create_by_account: {
-                                select: {
-                                  id: true,
-                                  email: true,
-                                  first_name: true,
-                                  last_name: true,
-                                },
-                              },
-                              update_by_account: {
-                                select: {
-                                  id: true,
-                                  email: true,
-                                  first_name: true,
-                                  last_name: true,
-                                },
-                              },
-                            },
-                          },
-                        },
-                      },
-                    },
-                  },
-                  event_doc_gas_shipper_ofo_file: {
-                    include: {
-                      create_by_account: {
-                        select: {
-                          id: true,
-                          email: true,
-                          first_name: true,
-                          last_name: true,
-                        },
-                      },
-                      update_by_account: {
-                        select: {
-                          id: true,
-                          email: true,
-                          first_name: true,
-                          last_name: true,
-                        },
-                      },
-                    },
-                    orderBy: { id: 'desc' },
-                  },
-                  nomination_point: true,
-                },
+            group_id: Number(groupId),
+          },
+          include: {
+            event_runnumber_ofo: {
+              include: {
+                event_status: true,
               },
             },
-          })
+            event_doc_master: true,
+            event_doc_status: true,
+            group: true,
+            user_type: true,
+            create_by_account: {
+              select: {
+                id: true,
+                email: true,
+                first_name: true,
+                last_name: true,
+                signature_base_64: true,
+              },
+            },
+            update_by_account: {
+              select: {
+                id: true,
+                email: true,
+                first_name: true,
+                last_name: true,
+                signature_base_64: true,
+              },
+            },
+            event_document_ofo_action: {
+              include: {
+                event_doc_master: true,
+                event_doc_status: true,
+                group: true,
+                user_type: true,
+                create_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                    signature: true,
+                    signature_base_64: true,
+                  },
+                },
+                update_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                    signature: true,
+                    signature_base_64: true,
+                  },
+                },
+              },
+              orderBy: {
+                id: 'desc',
+              },
+            },
+            event_doc_gas_shipper_ofo_match: {
+              include: {
+                event_doc_gas_shipper_ofo: {
+                  include: {
+                    event_document_ofo: true,
+                    event_doc_gas_shipper_ofo_file: {
+                      include: {
+                        create_by_account: {
+                          select: {
+                            id: true,
+                            email: true,
+                            first_name: true,
+                            last_name: true,
+                          },
+                        },
+                        update_by_account: {
+                          select: {
+                            id: true,
+                            email: true,
+                            first_name: true,
+                            last_name: true,
+                          },
+                        },
+                      },
+                    },
+                    nomination_point: true,
+                  },
+                },
+                event_document_ofo: true,
+              },
+            },
+            event_doc_gas_shipper_ofo: {
+              include: {
+                event_doc_gas_shipper_ofo_match: {
+                  include: {
+                    event_doc_gas_shipper_ofo: {
+                      include: {
+                        event_document_ofo: true,
+                        event_doc_gas_shipper_ofo_file: {
+                          include: {
+                            create_by_account: {
+                              select: {
+                                id: true,
+                                email: true,
+                                first_name: true,
+                                last_name: true,
+                              },
+                            },
+                            update_by_account: {
+                              select: {
+                                id: true,
+                                email: true,
+                                first_name: true,
+                                last_name: true,
+                              },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+                event_doc_gas_shipper_ofo_file: {
+                  include: {
+                    create_by_account: {
+                      select: {
+                        id: true,
+                        email: true,
+                        first_name: true,
+                        last_name: true,
+                      },
+                    },
+                    update_by_account: {
+                      select: {
+                        id: true,
+                        email: true,
+                        first_name: true,
+                        last_name: true,
+                      },
+                    },
+                  },
+                  orderBy: { id: 'desc' },
+                },
+                nomination_point: true,
+              },
+            },
+          },
+        })
         : await this.prisma.event_document_ofo.findFirst({
-            where: {
-              event_runnumber_ofo_id: Number(id),
-              event_doc_master_id: 7,
-              ref_document: null,
-            },
-            include: {
-              event_runnumber_ofo: {
-                include: {
-                  event_status: true,
-                  event_document_ofo: {
-                    include: {
-                      event_doc_status: true,
-                      group: true,
-                      user_type: true,
-                    },
-                    where: {
-                      user_type: {
-                        id: 3,
-                      },
-                      event_doc_master_id: 7,
-                    },
+          where: {
+            event_runnumber_ofo_id: Number(id),
+            event_doc_master_id: 7,
+            ref_document: null,
+          },
+          include: {
+            event_runnumber_ofo: {
+              include: {
+                event_status: true,
+                event_document_ofo: {
+                  include: {
+                    event_doc_status: true,
+                    group: true,
+                    user_type: true,
                   },
-                },
-              },
-              event_doc_master: true,
-              event_doc_status: true,
-              event_document_ofo_cc_email: true,
-              event_document_ofo_email_group_for_event: {
-                include: {
-                  edit_email_group_for_event: true,
-                },
-              },
-              group: true,
-              user_type: true,
-              create_by_account: {
-                select: {
-                  id: true,
-                  email: true,
-                  first_name: true,
-                  last_name: true,
-                  signature_base_64: true,
-                },
-              },
-              update_by_account: {
-                select: {
-                  id: true,
-                  email: true,
-                  first_name: true,
-                  last_name: true,
-                  signature_base_64: true,
-                },
-              },
-              event_doc_gas_shipper_ofo_match: {
-                include: {
-                  event_doc_gas_shipper_ofo: {
-                    include: {
-                      event_document_ofo: true,
-                      event_doc_gas_shipper_ofo_file: {
-                        include: {
-                          create_by_account: {
-                            select: {
-                              id: true,
-                              email: true,
-                              first_name: true,
-                              last_name: true,
-                            },
-                          },
-                          update_by_account: {
-                            select: {
-                              id: true,
-                              email: true,
-                              first_name: true,
-                              last_name: true,
-                            },
-                          },
-                        },
-                      },
+                  where: {
+                    user_type: {
+                      id: 3,
                     },
+                    event_doc_master_id: 7,
                   },
-                  event_document_ofo: true,
-                },
-              },
-              event_doc_gas_shipper_ofo: {
-                include: {
-                  event_doc_gas_shipper_ofo_match: {
-                    include: {
-                      event_doc_gas_shipper_ofo: {
-                        include: {
-                          event_doc_gas_shipper_ofo_file: {
-                            include: {
-                              create_by_account: {
-                                select: {
-                                  id: true,
-                                  email: true,
-                                  first_name: true,
-                                  last_name: true,
-                                },
-                              },
-                              update_by_account: {
-                                select: {
-                                  id: true,
-                                  email: true,
-                                  first_name: true,
-                                  last_name: true,
-                                },
-                              },
-                            },
-                          },
-                        },
-                      },
-                    },
-                    where: {
-                      event_doc_gas_shipper_ofo: {
-                        event_document_ofo: {
-                          user_type_id: 3,
-                        },
-                      },
-                    },
-                  },
-                  event_doc_gas_shipper_ofo_file: {
-                    include: {
-                      create_by_account: {
-                        select: {
-                          id: true,
-                          email: true,
-                          first_name: true,
-                          last_name: true,
-                        },
-                      },
-                      update_by_account: {
-                        select: {
-                          id: true,
-                          email: true,
-                          first_name: true,
-                          last_name: true,
-                        },
-                      },
-                    },
-                    orderBy: { id: 'desc' },
-                  },
-                },
-              },
-              event_document_ofo_action: {
-                include: {
-                  event_doc_master: true,
-                  event_doc_status: true,
-                  group: true,
-                  user_type: true,
-                  create_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                      signature: true,
-                      signature_base_64: true,
-                    },
-                  },
-                  update_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                      signature: true,
-                      signature_base_64: true,
-                    },
-                  },
-                },
-                orderBy: {
-                  id: 'desc',
                 },
               },
             },
-          });
+            event_doc_master: true,
+            event_doc_status: true,
+            event_document_ofo_cc_email: true,
+            event_document_ofo_email_group_for_event: {
+              include: {
+                edit_email_group_for_event: true,
+              },
+            },
+            group: true,
+            user_type: true,
+            create_by_account: {
+              select: {
+                id: true,
+                email: true,
+                first_name: true,
+                last_name: true,
+                signature_base_64: true,
+              },
+            },
+            update_by_account: {
+              select: {
+                id: true,
+                email: true,
+                first_name: true,
+                last_name: true,
+                signature_base_64: true,
+              },
+            },
+            event_doc_gas_shipper_ofo_match: {
+              include: {
+                event_doc_gas_shipper_ofo: {
+                  include: {
+                    event_document_ofo: true,
+                    event_doc_gas_shipper_ofo_file: {
+                      include: {
+                        create_by_account: {
+                          select: {
+                            id: true,
+                            email: true,
+                            first_name: true,
+                            last_name: true,
+                          },
+                        },
+                        update_by_account: {
+                          select: {
+                            id: true,
+                            email: true,
+                            first_name: true,
+                            last_name: true,
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+                event_document_ofo: true,
+              },
+            },
+            event_doc_gas_shipper_ofo: {
+              include: {
+                event_doc_gas_shipper_ofo_match: {
+                  include: {
+                    event_doc_gas_shipper_ofo: {
+                      include: {
+                        event_doc_gas_shipper_ofo_file: {
+                          include: {
+                            create_by_account: {
+                              select: {
+                                id: true,
+                                email: true,
+                                first_name: true,
+                                last_name: true,
+                              },
+                            },
+                            update_by_account: {
+                              select: {
+                                id: true,
+                                email: true,
+                                first_name: true,
+                                last_name: true,
+                              },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                  where: {
+                    event_doc_gas_shipper_ofo: {
+                      event_document_ofo: {
+                        user_type_id: 3,
+                      },
+                    },
+                  },
+                },
+                event_doc_gas_shipper_ofo_file: {
+                  include: {
+                    create_by_account: {
+                      select: {
+                        id: true,
+                        email: true,
+                        first_name: true,
+                        last_name: true,
+                      },
+                    },
+                    update_by_account: {
+                      select: {
+                        id: true,
+                        email: true,
+                        first_name: true,
+                        last_name: true,
+                      },
+                    },
+                  },
+                  orderBy: { id: 'desc' },
+                },
+              },
+            },
+            event_document_ofo_action: {
+              include: {
+                event_doc_master: true,
+                event_doc_status: true,
+                group: true,
+                user_type: true,
+                create_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                    signature: true,
+                    signature_base_64: true,
+                  },
+                },
+                update_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                    signature: true,
+                    signature_base_64: true,
+                  },
+                },
+              },
+              orderBy: {
+                id: 'desc',
+              },
+            },
+          },
+        });
     console.log('result : ', result);
     return result;
   }
@@ -24736,94 +24746,94 @@ export class EventService {
 
         const createEventRunnumber = id_runnumber
           ? await prisma.event_runnumber_ofo.findFirst({
-              where: {
-                id: Number(id_runnumber),
-              },
-              include: {
-                event_document_ofo: true,
-                event_status: true,
-                group: true,
-                user_type: true,
-                create_by_account: {
-                  select: {
-                    id: true,
-                    email: true,
-                    first_name: true,
-                    last_name: true,
-                  },
-                },
-                update_by_account: {
-                  select: {
-                    id: true,
-                    email: true,
-                    first_name: true,
-                    last_name: true,
-                  },
+            where: {
+              id: Number(id_runnumber),
+            },
+            include: {
+              event_document_ofo: true,
+              event_status: true,
+              group: true,
+              user_type: true,
+              create_by_account: {
+                select: {
+                  id: true,
+                  email: true,
+                  first_name: true,
+                  last_name: true,
                 },
               },
-            })
+              update_by_account: {
+                select: {
+                  id: true,
+                  email: true,
+                  first_name: true,
+                  last_name: true,
+                },
+              },
+            },
+          })
           : await prisma.event_runnumber_ofo.create({
-              data: {
-                event_nember: eventNumber,
-                event_date: getTodayNowAdd7().toDate(),
-                event_doc_ofo_type: {
-                  connect: {
-                    id: event_doc_ofo_type_id,
-                  },
-                },
-                event_doc_ofo_gas_tranmiss: {
-                  connect: {
-                    id: event_doc_ofo_gas_tranmiss_id,
-                  },
-                },
-                event_doc_ofo_gas_tranmiss_other:
-                  event_doc_ofo_gas_tranmiss_other ?? null,
-                event_status: {
-                  connect: {
-                    id: 1,
-                  },
-                },
-                group: {
-                  connect: {
-                    id: groupId,
-                  },
-                },
-                user_type: {
-                  connect: {
-                    id: userTypeId,
-                  },
-                },
-                create_date: getTodayNowAdd7().toDate(),
-                create_date_num: getTodayNowAdd7().unix(),
-                create_by_account: {
-                  connect: {
-                    id: Number(userId),
-                  },
+            data: {
+              event_nember: eventNumber,
+              event_date: getTodayNowAdd7().toDate(),
+              event_doc_ofo_type: {
+                connect: {
+                  id: event_doc_ofo_type_id,
                 },
               },
-              include: {
-                event_document_ofo: true,
-                event_status: true,
-                group: true,
-                user_type: true,
-                create_by_account: {
-                  select: {
-                    id: true,
-                    email: true,
-                    first_name: true,
-                    last_name: true,
-                  },
-                },
-                update_by_account: {
-                  select: {
-                    id: true,
-                    email: true,
-                    first_name: true,
-                    last_name: true,
-                  },
+              event_doc_ofo_gas_tranmiss: {
+                connect: {
+                  id: event_doc_ofo_gas_tranmiss_id,
                 },
               },
-            });
+              event_doc_ofo_gas_tranmiss_other:
+                event_doc_ofo_gas_tranmiss_other ?? null,
+              event_status: {
+                connect: {
+                  id: 1,
+                },
+              },
+              group: {
+                connect: {
+                  id: groupId,
+                },
+              },
+              user_type: {
+                connect: {
+                  id: userTypeId,
+                },
+              },
+              create_date: getTodayNowAdd7().toDate(),
+              create_date_num: getTodayNowAdd7().unix(),
+              create_by_account: {
+                connect: {
+                  id: Number(userId),
+                },
+              },
+            },
+            include: {
+              event_document_ofo: true,
+              event_status: true,
+              group: true,
+              user_type: true,
+              create_by_account: {
+                select: {
+                  id: true,
+                  email: true,
+                  first_name: true,
+                  last_name: true,
+                },
+              },
+              update_by_account: {
+                select: {
+                  id: true,
+                  email: true,
+                  first_name: true,
+                  last_name: true,
+                },
+              },
+            },
+          });
 
         // -----
         console.log('id_runnumber : ', id_runnumber);
@@ -24846,152 +24856,152 @@ export class EventService {
           event_date: getTodayNowAdd7(event_date).toDate(),
           ...(!!generate && !!id_documents
             ? {
-                event_doc_status_id: 2,
-                doc_7_input_date_time_of_the_incident:
-                  doc_7_input_date_time_of_the_incident ?? null,
-                doc_7_input_detail_incident:
-                  doc_7_input_detail_incident ?? null,
-                doc_7_input_time_event_start_date:
-                  (doc_7_input_time_event_start_date &&
-                    getTodayNowAdd7(
-                      doc_7_input_time_event_start_date,
-                    ).toDate()) ||
-                  null,
-                doc_7_input_time_event_start_time:
-                  doc_7_input_time_event_start_time ?? null,
-                doc_7_input_time_event_end_date:
-                  (doc_7_input_time_event_end_date &&
-                    getTodayNowAdd7(
-                      doc_7_input_time_event_end_date,
-                    ).toDate()) ||
-                  null,
-                doc_7_input_time_event_end_time:
-                  doc_7_input_time_event_end_time ?? null,
-                doc_7_input_note: doc_7_input_note ?? null,
-                ...(doc_7_input_ref_1_id && {
-                  doc_7_input_ref_1_id: doc_7_input_ref_1_id ?? null,
-                }),
-                ...(doc_7_input_ref_2_id && {
-                  doc_7_input_ref_2_id: doc_7_input_ref_2_id ?? null,
-                }),
-                ...(doc_7_input_order_ir_id && {
-                  doc_7_input_order_ir_id: doc_7_input_order_ir_id ?? null,
-                }),
-                ...(doc_7_input_order_io_id && {
-                  doc_7_input_order_io_id: doc_7_input_order_io_id ?? null,
-                }),
-                ...(doc_7_input_order_other_id && {
-                  doc_7_input_order_other_id:
-                    doc_7_input_order_other_id ?? null,
-                }),
-                doc_7_input_order_other_value:
-                  doc_7_input_order_other_value ?? null,
+              event_doc_status_id: 2,
+              doc_7_input_date_time_of_the_incident:
+                doc_7_input_date_time_of_the_incident ?? null,
+              doc_7_input_detail_incident:
+                doc_7_input_detail_incident ?? null,
+              doc_7_input_time_event_start_date:
+                (doc_7_input_time_event_start_date &&
+                  getTodayNowAdd7(
+                    doc_7_input_time_event_start_date,
+                  ).toDate()) ||
+                null,
+              doc_7_input_time_event_start_time:
+                doc_7_input_time_event_start_time ?? null,
+              doc_7_input_time_event_end_date:
+                (doc_7_input_time_event_end_date &&
+                  getTodayNowAdd7(
+                    doc_7_input_time_event_end_date,
+                  ).toDate()) ||
+                null,
+              doc_7_input_time_event_end_time:
+                doc_7_input_time_event_end_time ?? null,
+              doc_7_input_note: doc_7_input_note ?? null,
+              ...(doc_7_input_ref_1_id && {
+                doc_7_input_ref_1_id: doc_7_input_ref_1_id ?? null,
+              }),
+              ...(doc_7_input_ref_2_id && {
+                doc_7_input_ref_2_id: doc_7_input_ref_2_id ?? null,
+              }),
+              ...(doc_7_input_order_ir_id && {
+                doc_7_input_order_ir_id: doc_7_input_order_ir_id ?? null,
+              }),
+              ...(doc_7_input_order_io_id && {
+                doc_7_input_order_io_id: doc_7_input_order_io_id ?? null,
+              }),
+              ...(doc_7_input_order_other_id && {
+                doc_7_input_order_other_id:
+                  doc_7_input_order_other_id ?? null,
+              }),
+              doc_7_input_order_other_value:
+                doc_7_input_order_other_value ?? null,
 
-                longdo_dict: longdo_dict ?? null,
+              longdo_dict: longdo_dict ?? null,
 
-                update_date: getTodayNowAdd7().toDate(),
-                update_date_num: getTodayNowAdd7().unix(),
-                update_by: Number(userId),
-              }
+              update_date: getTodayNowAdd7().toDate(),
+              update_date_num: getTodayNowAdd7().unix(),
+              update_by: Number(userId),
+            }
             : {
-                version_text: `V.${generate ? version - 1 : version}`,
-                seq: generate ? version - 1 : version,
+              version_text: `V.${generate ? version - 1 : version}`,
+              seq: generate ? version - 1 : version,
 
-                event_runnumber_ofo: {
-                  connect: {
-                    id: createEventRunnumber?.id,
-                  },
+              event_runnumber_ofo: {
+                connect: {
+                  id: createEventRunnumber?.id,
                 },
-                event_doc_status: {
-                  connect: {
-                    id: generated ? 6 : 2,
-                  },
+              },
+              event_doc_status: {
+                connect: {
+                  id: generated ? 6 : 2,
                 },
-                group: {
-                  connect: {
-                    id: groupId,
-                  },
+              },
+              group: {
+                connect: {
+                  id: groupId,
                 },
-                user_type: {
-                  connect: {
-                    id: userTypeId,
-                  },
+              },
+              user_type: {
+                connect: {
+                  id: userTypeId,
                 },
-                event_doc_master: {
-                  connect: {
-                    id: 7,
-                  },
+              },
+              event_doc_master: {
+                connect: {
+                  id: 7,
                 },
+              },
 
-                doc_7_input_date_time_of_the_incident:
-                  doc_7_input_date_time_of_the_incident ?? null,
-                doc_7_input_detail_incident:
-                  doc_7_input_detail_incident ?? null,
-                doc_7_input_time_event_start_date:
-                  (doc_7_input_time_event_start_date &&
-                    getTodayNowAdd7(
-                      doc_7_input_time_event_start_date,
-                    ).toDate()) ||
-                  null,
-                doc_7_input_time_event_start_time:
-                  doc_7_input_time_event_start_time ?? null,
-                doc_7_input_time_event_end_date:
-                  (doc_7_input_time_event_end_date &&
-                    getTodayNowAdd7(
-                      doc_7_input_time_event_end_date,
-                    ).toDate()) ||
-                  null,
-                doc_7_input_time_event_end_time:
-                  doc_7_input_time_event_end_time ?? null,
-                doc_7_input_note: doc_7_input_note ?? null,
-                ...(doc_7_input_ref_1_id && {
-                  doc_7_input_ref_1: {
-                    connect: {
-                      id: doc_7_input_ref_1_id ?? null,
-                    },
-                  },
-                }),
-                ...(doc_7_input_ref_2_id && {
-                  doc_7_input_ref_2: {
-                    connect: {
-                      id: doc_7_input_ref_2_id ?? null,
-                    },
-                  },
-                }),
-                ...(doc_7_input_order_ir_id && {
-                  doc_7_input_order_ir: {
-                    connect: {
-                      id: doc_7_input_order_ir_id ?? null,
-                    },
-                  },
-                }),
-                ...(doc_7_input_order_io_id && {
-                  doc_7_input_order_io: {
-                    connect: {
-                      id: doc_7_input_order_io_id ?? null,
-                    },
-                  },
-                }),
-                ...(doc_7_input_order_other_id && {
-                  doc_7_input_order_other: {
-                    connect: {
-                      id: doc_7_input_order_other_id ?? null,
-                    },
-                  },
-                }),
-                doc_7_input_order_other_value:
-                  doc_7_input_order_other_value ?? null,
-
-                longdo_dict: longdo_dict ?? null,
-
-                create_date: getTodayNowAdd7().toDate(),
-                create_date_num: getTodayNowAdd7().unix(),
-                create_by_account: {
+              doc_7_input_date_time_of_the_incident:
+                doc_7_input_date_time_of_the_incident ?? null,
+              doc_7_input_detail_incident:
+                doc_7_input_detail_incident ?? null,
+              doc_7_input_time_event_start_date:
+                (doc_7_input_time_event_start_date &&
+                  getTodayNowAdd7(
+                    doc_7_input_time_event_start_date,
+                  ).toDate()) ||
+                null,
+              doc_7_input_time_event_start_time:
+                doc_7_input_time_event_start_time ?? null,
+              doc_7_input_time_event_end_date:
+                (doc_7_input_time_event_end_date &&
+                  getTodayNowAdd7(
+                    doc_7_input_time_event_end_date,
+                  ).toDate()) ||
+                null,
+              doc_7_input_time_event_end_time:
+                doc_7_input_time_event_end_time ?? null,
+              doc_7_input_note: doc_7_input_note ?? null,
+              ...(doc_7_input_ref_1_id && {
+                doc_7_input_ref_1: {
                   connect: {
-                    id: Number(userId),
+                    id: doc_7_input_ref_1_id ?? null,
                   },
                 },
               }),
+              ...(doc_7_input_ref_2_id && {
+                doc_7_input_ref_2: {
+                  connect: {
+                    id: doc_7_input_ref_2_id ?? null,
+                  },
+                },
+              }),
+              ...(doc_7_input_order_ir_id && {
+                doc_7_input_order_ir: {
+                  connect: {
+                    id: doc_7_input_order_ir_id ?? null,
+                  },
+                },
+              }),
+              ...(doc_7_input_order_io_id && {
+                doc_7_input_order_io: {
+                  connect: {
+                    id: doc_7_input_order_io_id ?? null,
+                  },
+                },
+              }),
+              ...(doc_7_input_order_other_id && {
+                doc_7_input_order_other: {
+                  connect: {
+                    id: doc_7_input_order_other_id ?? null,
+                  },
+                },
+              }),
+              doc_7_input_order_other_value:
+                doc_7_input_order_other_value ?? null,
+
+              longdo_dict: longdo_dict ?? null,
+
+              create_date: getTodayNowAdd7().toDate(),
+              create_date_num: getTodayNowAdd7().unix(),
+              create_by_account: {
+                connect: {
+                  id: Number(userId),
+                },
+              },
+            }),
         };
 
         if (!!id_runnumber && !!generate) {
@@ -25004,54 +25014,54 @@ export class EventService {
         const createEventDocument =
           !!id_runnumber && !!generate
             ? await prisma.event_document_ofo.findFirst({
-                where: { id: Number(id_documents) },
-                include: {
-                  event_doc_gas_shipper_ofo: true,
-                  event_doc_status: true,
-                  group: true,
-                  user_type: true,
-                  create_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                    },
-                  },
-                  update_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                    },
+              where: { id: Number(id_documents) },
+              include: {
+                event_doc_gas_shipper_ofo: true,
+                event_doc_status: true,
+                group: true,
+                user_type: true,
+                create_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
                   },
                 },
-              })
+                update_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                  },
+                },
+              },
+            })
             : await prisma.event_document_ofo.create({
-                data: tsoCreate,
-                include: {
-                  event_doc_status: true,
-                  group: true,
-                  user_type: true,
-                  create_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                    },
-                  },
-                  update_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                    },
+              data: tsoCreate,
+              include: {
+                event_doc_status: true,
+                group: true,
+                user_type: true,
+                create_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
                   },
                 },
-              });
+                update_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                  },
+                },
+              },
+            });
         console.log('createEventDocument : ', createEventDocument);
 
         // generate
@@ -25752,8 +25762,26 @@ export class EventService {
 
     const group = shipperIds
       ? await this.prisma.group.findFirst({
+        where: {
+          id: shipperIds,
+        },
+        select: {
+          id: true,
+          user_type: {
+            select: {
+              id: true,
+            },
+          },
+        },
+      })
+      : userId
+        ? await this.prisma.group.findFirst({
           where: {
-            id: shipperIds,
+            account_manage: {
+              some: {
+                account_id: Number(userId),
+              },
+            },
           },
           select: {
             id: true,
@@ -25764,24 +25792,6 @@ export class EventService {
             },
           },
         })
-      : userId
-        ? await this.prisma.group.findFirst({
-            where: {
-              account_manage: {
-                some: {
-                  account_id: Number(userId),
-                },
-              },
-            },
-            select: {
-              id: true,
-              user_type: {
-                select: {
-                  id: true,
-                },
-              },
-            },
-          })
         : groupObj;
     console.log('group : ', group);
     const userTypeId = group?.user_type?.id;
@@ -25792,249 +25802,249 @@ export class EventService {
     const result =
       userTypeId === 3
         ? await this.prisma.event_document_ofo.findMany({
-            where: {
-              event_runnumber_ofo_id: Number(id),
-              event_doc_master_id: 7,
-              ref_document: {
-                not: null,
-              },
-              group_id: Number(groupId),
+          where: {
+            event_runnumber_ofo_id: Number(id),
+            event_doc_master_id: 7,
+            ref_document: {
+              not: null,
             },
-            include: {
-              event_runnumber_ofo: {
-                include: {
-                  event_status: true,
-                },
+            group_id: Number(groupId),
+          },
+          include: {
+            event_runnumber_ofo: {
+              include: {
+                event_status: true,
               },
-              event_doc_master: true,
-              event_doc_status: true,
-              group: true,
-              user_type: true,
-              create_by_account: {
-                select: {
-                  id: true,
-                  email: true,
-                  first_name: true,
-                  last_name: true,
-                  signature_base_64: true,
-                },
+            },
+            event_doc_master: true,
+            event_doc_status: true,
+            group: true,
+            user_type: true,
+            create_by_account: {
+              select: {
+                id: true,
+                email: true,
+                first_name: true,
+                last_name: true,
+                signature_base_64: true,
               },
-              update_by_account: {
-                select: {
-                  id: true,
-                  email: true,
-                  first_name: true,
-                  last_name: true,
-                  signature_base_64: true,
-                },
+            },
+            update_by_account: {
+              select: {
+                id: true,
+                email: true,
+                first_name: true,
+                last_name: true,
+                signature_base_64: true,
               },
-              event_document_ofo_file: {
-                include: {
-                  create_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                    },
-                  },
-                  update_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                    },
+            },
+            event_document_ofo_file: {
+              include: {
+                create_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
                   },
                 },
-                orderBy: { id: 'desc' },
-              },
-              event_document_ofo_file_pdf: {
-                include: {
-                  create_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                    },
-                  },
-                  update_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                    },
+                update_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
                   },
                 },
               },
-              event_document_ofo_action: {
-                include: {
-                  event_doc_master: true,
-                  event_doc_status: true,
-                  group: true,
-                  user_type: true,
-                  create_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                      signature: true,
-                      signature_base_64: true,
-                    },
-                  },
-                  update_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                      signature: true,
-                      signature_base_64: true,
-                    },
+              orderBy: { id: 'desc' },
+            },
+            event_document_ofo_file_pdf: {
+              include: {
+                create_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
                   },
                 },
-                orderBy: {
-                  id: 'desc',
+                update_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                  },
                 },
               },
             },
-            orderBy: {
-              id: 'desc',
+            event_document_ofo_action: {
+              include: {
+                event_doc_master: true,
+                event_doc_status: true,
+                group: true,
+                user_type: true,
+                create_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                    signature: true,
+                    signature_base_64: true,
+                  },
+                },
+                update_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                    signature: true,
+                    signature_base_64: true,
+                  },
+                },
+              },
+              orderBy: {
+                id: 'desc',
+              },
             },
-          })
+          },
+          orderBy: {
+            id: 'desc',
+          },
+        })
         : await this.prisma.event_document_ofo.findMany({
-            where: {
-              event_runnumber_ofo_id: Number(id),
-              event_doc_master_id: 7,
-              ref_document: null,
-            },
-            include: {
-              event_runnumber_ofo: {
-                include: {
-                  event_status: true,
-                  event_document_ofo: {
-                    include: {
-                      event_doc_status: true,
-                      group: true,
-                      user_type: true,
-                    },
-                    where: {
-                      user_type: {
-                        id: 3,
-                      },
-                      event_doc_master_id: 7,
-                    },
+          where: {
+            event_runnumber_ofo_id: Number(id),
+            event_doc_master_id: 7,
+            ref_document: null,
+          },
+          include: {
+            event_runnumber_ofo: {
+              include: {
+                event_status: true,
+                event_document_ofo: {
+                  include: {
+                    event_doc_status: true,
+                    group: true,
+                    user_type: true,
                   },
-                },
-              },
-              event_doc_master: true,
-              event_doc_status: true,
-              event_document_ofo_cc_email: true,
-              event_document_ofo_email_group_for_event: {
-                include: {
-                  edit_email_group_for_event: true,
-                },
-              },
-              group: true,
-              user_type: true,
-              create_by_account: {
-                select: {
-                  id: true,
-                  email: true,
-                  first_name: true,
-                  last_name: true,
-                  signature_base_64: true,
-                },
-              },
-              update_by_account: {
-                select: {
-                  id: true,
-                  email: true,
-                  first_name: true,
-                  last_name: true,
-                  signature_base_64: true,
-                },
-              },
-              event_document_ofo_file: {
-                include: {
-                  create_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
+                  where: {
+                    user_type: {
+                      id: 3,
                     },
+                    event_doc_master_id: 7,
                   },
-                  update_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                    },
-                  },
-                },
-                orderBy: { id: 'desc' },
-              },
-              event_document_ofo_file_pdf: {
-                include: {
-                  create_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                    },
-                  },
-                  update_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                    },
-                  },
-                },
-              },
-              event_document_ofo_action: {
-                include: {
-                  event_doc_master: true,
-                  event_doc_status: true,
-                  group: true,
-                  user_type: true,
-                  create_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                      signature: true,
-                      signature_base_64: true,
-                    },
-                  },
-                  update_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                      signature: true,
-                      signature_base_64: true,
-                    },
-                  },
-                },
-                orderBy: {
-                  id: 'desc',
                 },
               },
             },
-            orderBy: {
-              id: 'desc',
+            event_doc_master: true,
+            event_doc_status: true,
+            event_document_ofo_cc_email: true,
+            event_document_ofo_email_group_for_event: {
+              include: {
+                edit_email_group_for_event: true,
+              },
             },
-          });
+            group: true,
+            user_type: true,
+            create_by_account: {
+              select: {
+                id: true,
+                email: true,
+                first_name: true,
+                last_name: true,
+                signature_base_64: true,
+              },
+            },
+            update_by_account: {
+              select: {
+                id: true,
+                email: true,
+                first_name: true,
+                last_name: true,
+                signature_base_64: true,
+              },
+            },
+            event_document_ofo_file: {
+              include: {
+                create_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                  },
+                },
+                update_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                  },
+                },
+              },
+              orderBy: { id: 'desc' },
+            },
+            event_document_ofo_file_pdf: {
+              include: {
+                create_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                  },
+                },
+                update_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                  },
+                },
+              },
+            },
+            event_document_ofo_action: {
+              include: {
+                event_doc_master: true,
+                event_doc_status: true,
+                group: true,
+                user_type: true,
+                create_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                    signature: true,
+                    signature_base_64: true,
+                  },
+                },
+                update_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                    signature: true,
+                    signature_base_64: true,
+                  },
+                },
+              },
+              orderBy: {
+                id: 'desc',
+              },
+            },
+          },
+          orderBy: {
+            id: 'desc',
+          },
+        });
     console.log('result : ', result);
     return result;
   }
@@ -26045,8 +26055,26 @@ export class EventService {
 
     const group = shipperIds
       ? await this.prisma.group.findFirst({
+        where: {
+          id: shipperIds,
+        },
+        select: {
+          id: true,
+          user_type: {
+            select: {
+              id: true,
+            },
+          },
+        },
+      })
+      : userId
+        ? await this.prisma.group.findFirst({
           where: {
-            id: shipperIds,
+            account_manage: {
+              some: {
+                account_id: Number(userId),
+              },
+            },
           },
           select: {
             id: true,
@@ -26057,24 +26085,6 @@ export class EventService {
             },
           },
         })
-      : userId
-        ? await this.prisma.group.findFirst({
-            where: {
-              account_manage: {
-                some: {
-                  account_id: Number(userId),
-                },
-              },
-            },
-            select: {
-              id: true,
-              user_type: {
-                select: {
-                  id: true,
-                },
-              },
-            },
-          })
         : groupObj;
     console.log('group : ', group);
     const userTypeId = group?.user_type?.id;
@@ -26085,447 +26095,447 @@ export class EventService {
     const result =
       userTypeId === 3
         ? await this.prisma.event_document_ofo.findFirst({
-            where: {
-              id: Number(id),
+          where: {
+            id: Number(id),
+          },
+          include: {
+            event_runnumber_ofo: {
+              include: {
+                event_status: true,
+              },
             },
-            include: {
-              event_runnumber_ofo: {
-                include: {
-                  event_status: true,
-                },
+            event_doc_master: true,
+            event_doc_status: true,
+            group: true,
+            user_type: true,
+            create_by_account: {
+              select: {
+                id: true,
+                email: true,
+                first_name: true,
+                last_name: true,
+                signature_base_64: true,
               },
-              event_doc_master: true,
-              event_doc_status: true,
-              group: true,
-              user_type: true,
-              create_by_account: {
-                select: {
-                  id: true,
-                  email: true,
-                  first_name: true,
-                  last_name: true,
-                  signature_base_64: true,
-                },
+            },
+            update_by_account: {
+              select: {
+                id: true,
+                email: true,
+                first_name: true,
+                last_name: true,
+                signature_base_64: true,
               },
-              update_by_account: {
-                select: {
-                  id: true,
-                  email: true,
-                  first_name: true,
-                  last_name: true,
-                  signature_base_64: true,
-                },
-              },
-              event_document_ofo_file: {
-                include: {
-                  create_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                    },
-                  },
-                  update_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                    },
+            },
+            event_document_ofo_file: {
+              include: {
+                create_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
                   },
                 },
-                orderBy: { id: 'desc' },
-              },
-              event_document_ofo_file_pdf: {
-                include: {
-                  create_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                    },
-                  },
-                  update_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                    },
+                update_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
                   },
                 },
               },
-              event_document_ofo_action: {
-                include: {
-                  event_doc_master: true,
-                  event_doc_status: true,
-                  group: true,
-                  user_type: true,
-                  create_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                      signature: true,
-                      signature_base_64: true,
-                    },
-                  },
-                  update_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                      signature: true,
-                      signature_base_64: true,
-                    },
+              orderBy: { id: 'desc' },
+            },
+            event_document_ofo_file_pdf: {
+              include: {
+                create_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
                   },
                 },
-                orderBy: {
-                  id: 'desc',
-                },
-              },
-              event_doc_gas_shipper_ofo_match: {
-                where: {
-                  event_document_ofo_id: {
-                    not: null,
-                  },
-                },
-                include: {
-                  event_doc_gas_shipper_ofo: {
-                    include: {
-                      event_document_ofo: true,
-                      event_doc_gas_shipper_ofo_file: {
-                        include: {
-                          create_by_account: {
-                            select: {
-                              id: true,
-                              email: true,
-                              first_name: true,
-                              last_name: true,
-                            },
-                          },
-                          update_by_account: {
-                            select: {
-                              id: true,
-                              email: true,
-                              first_name: true,
-                              last_name: true,
-                            },
-                          },
-                        },
-                      },
-                      nomination_point: {
-                        include: {
-                          area: true,
-                        },
-                      },
-                    },
-                  },
-                  event_document_ofo: true,
-                },
-              },
-              event_doc_gas_shipper_ofo: {
-                include: {
-                  event_doc_gas_shipper_ofo_match: {
-                    where: {
-                      event_document_ofo_id: {
-                        not: null,
-                      },
-                    },
-                    include: {
-                      event_document_ofo: true,
-                      event_doc_gas_shipper_ofo: {
-                        include: {
-                          event_document_ofo: true,
-                          event_doc_gas_shipper_ofo_file: {
-                            include: {
-                              create_by_account: {
-                                select: {
-                                  id: true,
-                                  email: true,
-                                  first_name: true,
-                                  last_name: true,
-                                },
-                              },
-                              update_by_account: {
-                                select: {
-                                  id: true,
-                                  email: true,
-                                  first_name: true,
-                                  last_name: true,
-                                },
-                              },
-                            },
-                          },
-                        },
-                      },
-                    },
-                  },
-                  event_doc_gas_shipper_ofo_file: {
-                    include: {
-                      create_by_account: {
-                        select: {
-                          id: true,
-                          email: true,
-                          first_name: true,
-                          last_name: true,
-                        },
-                      },
-                      update_by_account: {
-                        select: {
-                          id: true,
-                          email: true,
-                          first_name: true,
-                          last_name: true,
-                        },
-                      },
-                    },
-                    orderBy: { id: 'desc' },
-                  },
-                  nomination_point: {
-                    include: {
-                      area: true,
-                    },
+                update_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
                   },
                 },
               },
             },
-          })
+            event_document_ofo_action: {
+              include: {
+                event_doc_master: true,
+                event_doc_status: true,
+                group: true,
+                user_type: true,
+                create_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                    signature: true,
+                    signature_base_64: true,
+                  },
+                },
+                update_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                    signature: true,
+                    signature_base_64: true,
+                  },
+                },
+              },
+              orderBy: {
+                id: 'desc',
+              },
+            },
+            event_doc_gas_shipper_ofo_match: {
+              where: {
+                event_document_ofo_id: {
+                  not: null,
+                },
+              },
+              include: {
+                event_doc_gas_shipper_ofo: {
+                  include: {
+                    event_document_ofo: true,
+                    event_doc_gas_shipper_ofo_file: {
+                      include: {
+                        create_by_account: {
+                          select: {
+                            id: true,
+                            email: true,
+                            first_name: true,
+                            last_name: true,
+                          },
+                        },
+                        update_by_account: {
+                          select: {
+                            id: true,
+                            email: true,
+                            first_name: true,
+                            last_name: true,
+                          },
+                        },
+                      },
+                    },
+                    nomination_point: {
+                      include: {
+                        area: true,
+                      },
+                    },
+                  },
+                },
+                event_document_ofo: true,
+              },
+            },
+            event_doc_gas_shipper_ofo: {
+              include: {
+                event_doc_gas_shipper_ofo_match: {
+                  where: {
+                    event_document_ofo_id: {
+                      not: null,
+                    },
+                  },
+                  include: {
+                    event_document_ofo: true,
+                    event_doc_gas_shipper_ofo: {
+                      include: {
+                        event_document_ofo: true,
+                        event_doc_gas_shipper_ofo_file: {
+                          include: {
+                            create_by_account: {
+                              select: {
+                                id: true,
+                                email: true,
+                                first_name: true,
+                                last_name: true,
+                              },
+                            },
+                            update_by_account: {
+                              select: {
+                                id: true,
+                                email: true,
+                                first_name: true,
+                                last_name: true,
+                              },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+                event_doc_gas_shipper_ofo_file: {
+                  include: {
+                    create_by_account: {
+                      select: {
+                        id: true,
+                        email: true,
+                        first_name: true,
+                        last_name: true,
+                      },
+                    },
+                    update_by_account: {
+                      select: {
+                        id: true,
+                        email: true,
+                        first_name: true,
+                        last_name: true,
+                      },
+                    },
+                  },
+                  orderBy: { id: 'desc' },
+                },
+                nomination_point: {
+                  include: {
+                    area: true,
+                  },
+                },
+              },
+            },
+          },
+        })
         : await this.prisma.event_document_ofo.findFirst({
-            where: {
-              id: Number(id),
-            },
-            include: {
-              event_runnumber_ofo: {
-                include: {
-                  event_status: true,
-                  event_document_ofo: {
-                    include: {
-                      event_doc_status: true,
-                      group: true,
-                      user_type: true,
-                    },
-                    where: {
-                      user_type: {
-                        id: 3,
-                      },
-                      event_doc_master_id: 7,
-                      ref_document: Number(id),
-                    },
+          where: {
+            id: Number(id),
+          },
+          include: {
+            event_runnumber_ofo: {
+              include: {
+                event_status: true,
+                event_document_ofo: {
+                  include: {
+                    event_doc_status: true,
+                    group: true,
+                    user_type: true,
                   },
-                },
-              },
-              event_doc_master: true,
-              event_doc_status: true,
-              event_document_ofo_cc_email: true,
-              event_document_ofo_email_group_for_event: {
-                include: {
-                  edit_email_group_for_event: true,
-                },
-              },
-              group: true,
-              user_type: true,
-              create_by_account: {
-                select: {
-                  id: true,
-                  email: true,
-                  first_name: true,
-                  last_name: true,
-                  signature_base_64: true,
-                },
-              },
-              update_by_account: {
-                select: {
-                  id: true,
-                  email: true,
-                  first_name: true,
-                  last_name: true,
-                  signature_base_64: true,
-                },
-              },
-              event_document_ofo_file: {
-                include: {
-                  create_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
+                  where: {
+                    user_type: {
+                      id: 3,
                     },
-                  },
-                  update_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                    },
-                  },
-                },
-                orderBy: { id: 'desc' },
-              },
-              event_document_ofo_file_pdf: {
-                include: {
-                  create_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                    },
-                  },
-                  update_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                    },
-                  },
-                },
-              },
-              event_document_ofo_action: {
-                include: {
-                  event_doc_master: true,
-                  event_doc_status: true,
-                  group: true,
-                  user_type: true,
-                  create_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                      signature: true,
-                      signature_base_64: true,
-                    },
-                  },
-                  update_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                      signature: true,
-                      signature_base_64: true,
-                    },
-                  },
-                },
-                orderBy: {
-                  id: 'desc',
-                },
-              },
-              event_doc_gas_shipper_ofo_match: {
-                include: {
-                  event_doc_gas_shipper_ofo: {
-                    include: {
-                      event_document_ofo: true,
-                      event_doc_gas_shipper_ofo_file: {
-                        include: {
-                          create_by_account: {
-                            select: {
-                              id: true,
-                              email: true,
-                              first_name: true,
-                              last_name: true,
-                            },
-                          },
-                          update_by_account: {
-                            select: {
-                              id: true,
-                              email: true,
-                              first_name: true,
-                              last_name: true,
-                            },
-                          },
-                        },
-                      },
-                      nomination_point: {
-                        include: {
-                          area: true,
-                        },
-                      },
-                    },
-                  },
-                  event_document_ofo: true,
-                },
-                where: {
-                  event_document_ofo_id: {
-                    not: null,
-                  },
-                },
-              },
-              event_doc_gas_shipper_ofo: {
-                include: {
-                  event_doc_gas_shipper_ofo_match: {
-                    where: {
-                      event_document_ofo_id: {
-                        not: null,
-                      },
-                    },
-                    include: {
-                      event_document_ofo: true,
-                      event_doc_gas_shipper_ofo: {
-                        include: {
-                          event_document_ofo: true,
-                          event_doc_gas_shipper_ofo_file: {
-                            include: {
-                              create_by_account: {
-                                select: {
-                                  id: true,
-                                  email: true,
-                                  first_name: true,
-                                  last_name: true,
-                                },
-                              },
-                              update_by_account: {
-                                select: {
-                                  id: true,
-                                  email: true,
-                                  first_name: true,
-                                  last_name: true,
-                                },
-                              },
-                            },
-                          },
-                        },
-                      },
-                    },
-                  },
-                  event_doc_gas_shipper_ofo_file: {
-                    include: {
-                      create_by_account: {
-                        select: {
-                          id: true,
-                          email: true,
-                          first_name: true,
-                          last_name: true,
-                        },
-                      },
-                      update_by_account: {
-                        select: {
-                          id: true,
-                          email: true,
-                          first_name: true,
-                          last_name: true,
-                        },
-                      },
-                    },
-                    orderBy: { id: 'desc' },
-                  },
-                  nomination_point: {
-                    include: {
-                      area: true,
-                    },
+                    event_doc_master_id: 7,
+                    ref_document: Number(id),
                   },
                 },
               },
             },
-          });
+            event_doc_master: true,
+            event_doc_status: true,
+            event_document_ofo_cc_email: true,
+            event_document_ofo_email_group_for_event: {
+              include: {
+                edit_email_group_for_event: true,
+              },
+            },
+            group: true,
+            user_type: true,
+            create_by_account: {
+              select: {
+                id: true,
+                email: true,
+                first_name: true,
+                last_name: true,
+                signature_base_64: true,
+              },
+            },
+            update_by_account: {
+              select: {
+                id: true,
+                email: true,
+                first_name: true,
+                last_name: true,
+                signature_base_64: true,
+              },
+            },
+            event_document_ofo_file: {
+              include: {
+                create_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                  },
+                },
+                update_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                  },
+                },
+              },
+              orderBy: { id: 'desc' },
+            },
+            event_document_ofo_file_pdf: {
+              include: {
+                create_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                  },
+                },
+                update_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                  },
+                },
+              },
+            },
+            event_document_ofo_action: {
+              include: {
+                event_doc_master: true,
+                event_doc_status: true,
+                group: true,
+                user_type: true,
+                create_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                    signature: true,
+                    signature_base_64: true,
+                  },
+                },
+                update_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                    signature: true,
+                    signature_base_64: true,
+                  },
+                },
+              },
+              orderBy: {
+                id: 'desc',
+              },
+            },
+            event_doc_gas_shipper_ofo_match: {
+              include: {
+                event_doc_gas_shipper_ofo: {
+                  include: {
+                    event_document_ofo: true,
+                    event_doc_gas_shipper_ofo_file: {
+                      include: {
+                        create_by_account: {
+                          select: {
+                            id: true,
+                            email: true,
+                            first_name: true,
+                            last_name: true,
+                          },
+                        },
+                        update_by_account: {
+                          select: {
+                            id: true,
+                            email: true,
+                            first_name: true,
+                            last_name: true,
+                          },
+                        },
+                      },
+                    },
+                    nomination_point: {
+                      include: {
+                        area: true,
+                      },
+                    },
+                  },
+                },
+                event_document_ofo: true,
+              },
+              where: {
+                event_document_ofo_id: {
+                  not: null,
+                },
+              },
+            },
+            event_doc_gas_shipper_ofo: {
+              include: {
+                event_doc_gas_shipper_ofo_match: {
+                  where: {
+                    event_document_ofo_id: {
+                      not: null,
+                    },
+                  },
+                  include: {
+                    event_document_ofo: true,
+                    event_doc_gas_shipper_ofo: {
+                      include: {
+                        event_document_ofo: true,
+                        event_doc_gas_shipper_ofo_file: {
+                          include: {
+                            create_by_account: {
+                              select: {
+                                id: true,
+                                email: true,
+                                first_name: true,
+                                last_name: true,
+                              },
+                            },
+                            update_by_account: {
+                              select: {
+                                id: true,
+                                email: true,
+                                first_name: true,
+                                last_name: true,
+                              },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+                event_doc_gas_shipper_ofo_file: {
+                  include: {
+                    create_by_account: {
+                      select: {
+                        id: true,
+                        email: true,
+                        first_name: true,
+                        last_name: true,
+                      },
+                    },
+                    update_by_account: {
+                      select: {
+                        id: true,
+                        email: true,
+                        first_name: true,
+                        last_name: true,
+                      },
+                    },
+                  },
+                  orderBy: { id: 'desc' },
+                },
+                nomination_point: {
+                  include: {
+                    area: true,
+                  },
+                },
+              },
+            },
+          },
+        });
     console.log('result : ', result);
     return result;
   }
@@ -26809,15 +26819,15 @@ export class EventService {
       where: {
         ...(shipperIds
           ? {
-              id: shipperIds,
-            }
+            id: shipperIds,
+          }
           : {
-              account_manage: {
-                some: {
-                  account_id: Number(userId),
-                },
+            account_manage: {
+              some: {
+                account_id: Number(userId),
               },
-            }),
+            },
+          }),
       },
       select: {
         id: true,
@@ -26852,14 +26862,14 @@ export class EventService {
       console.log('toAction : ', toAction);
       const toFullname =
         toAction?.event_doc_status_id !== 1 &&
-        toAction?.event_doc_status_id !== 2 &&
-        toAction?.create_by_account?.first_name &&
-        toAction?.create_by_account?.last_name
+          toAction?.event_doc_status_id !== 2 &&
+          toAction?.create_by_account?.first_name &&
+          toAction?.create_by_account?.last_name
           ? `${toAction?.create_by_account?.first_name} ${toAction?.create_by_account?.last_name}`
           : '';
 
       const toCompany =
-        (toAction?.group?.company_name && toAction?.group?.company_name) ||
+        (toAction?.group?.company_name) ||
         '';
       const toDate = dayjs(toAction?.create_date).locale('th');
       const toSignature =
@@ -26871,7 +26881,7 @@ export class EventService {
       // ----
       const fromFullname =
         rdoc1Find?.create_by_account?.first_name &&
-        rdoc1Find?.create_by_account?.last_name
+          rdoc1Find?.create_by_account?.last_name
           ? `${rdoc1Find?.create_by_account?.first_name} ${rdoc1Find?.create_by_account?.last_name}`
           : '';
       const fromCompany = 'บริษัท ปตท.จำกัด (มหาชน)';
@@ -26976,8 +26986,8 @@ export class EventService {
                 ...(ir?.event_doc_gas_shipper_ofo?.io === 3 &&
                   ir?.event_doc_gas_shipper_ofo?.nomination_point
                     ?.nomination_point && {
-                    decoration: 'underline',
-                  }),
+                  decoration: 'underline',
+                }),
               },
             ],
             columnGap: 5,
@@ -26994,8 +27004,8 @@ export class EventService {
                 text: `${(ir?.event_doc_gas_shipper_ofo?.io === 3 && !!ir?.event_doc_gas_shipper_ofo?.nom_value_mmscfh && ir?.event_doc_gas_shipper_ofo?.nom_value_mmscfh) || '________'}`,
                 ...(ir?.event_doc_gas_shipper_ofo?.io === 3 &&
                   !!ir?.event_doc_gas_shipper_ofo?.nom_value_mmscfh && {
-                    decoration: 'underline',
-                  }),
+                  decoration: 'underline',
+                }),
               },
             ],
             columnGap: 5,
@@ -27022,8 +27032,8 @@ export class EventService {
                 ...(ir?.event_doc_gas_shipper_ofo?.io === 4 &&
                   ir?.event_doc_gas_shipper_ofo?.nomination_point
                     ?.nomination_point && {
-                    decoration: 'underline',
-                  }),
+                  decoration: 'underline',
+                }),
               },
             ],
             columnGap: 5,
@@ -27040,8 +27050,8 @@ export class EventService {
                 text: `${(ir?.event_doc_gas_shipper_ofo?.io === 4 && !!ir?.event_doc_gas_shipper_ofo?.nom_value_mmscfh && ir?.event_doc_gas_shipper_ofo?.nom_value_mmscfh) || '________'}`,
                 ...(ir?.event_doc_gas_shipper_ofo?.io === 4 &&
                   !!ir?.event_doc_gas_shipper_ofo?.nom_value_mmscfh && {
-                    decoration: 'underline',
-                  }),
+                  decoration: 'underline',
+                }),
               },
             ],
             columnGap: 5,
@@ -27409,22 +27419,22 @@ export class EventService {
                       //   : { text: `(                                   )` },
                       fromSignature
                         ? {
-                            columns: [
-                              {
-                                // text: 'รับทราบโดย',
-                                text: 'แจ้งโดย', // https://app.clickup.com/t/86eum0p1r
-                                width: 'auto',
-                                alignment: 'right',
-                              },
-                              {
-                                image: fromSignature, // base64 หรือ path
-                                width: 50,
-                                alignment: 'center',
-                              },
-                            ],
-                            columnGap: 15, // ระยะห่างระหว่างวงเล็บกับภาพ
-                            margin: [0, 2, 0, 5], // ปรับระยะรอบภาพ
-                          }
+                          columns: [
+                            {
+                              // text: 'รับทราบโดย',
+                              text: 'แจ้งโดย', // https://app.clickup.com/t/86eum0p1r
+                              width: 'auto',
+                              alignment: 'right',
+                            },
+                            {
+                              image: fromSignature, // base64 หรือ path
+                              width: 50,
+                              alignment: 'center',
+                            },
+                          ],
+                          columnGap: 15, // ระยะห่างระหว่างวงเล็บกับภาพ
+                          margin: [0, 2, 0, 5], // ปรับระยะรอบภาพ
+                        }
                         : { text: `แจ้งโดย ` },
                       { text: fromFullname ? `( ${fromFullname} )` : `(                                   )` },
                       { text: `หน่วยงาน ${fromCompany} (ผู้ให้บริการ)` },
@@ -27440,23 +27450,23 @@ export class EventService {
                       // rdoc1Find?.event_doc_status?.id === 5 && toSignature
                       rdoc1Find?.event_doc_status?.id === 5 && toSignature
                         ? {
-                            columns: [
-                              {
-                                text: 'รับทราบโดย',
-                                width: 'auto',
-                                alignment: 'right',
-                              },
-                              // { text: 'รับทราบโดย', width: 'auto', alignment: 'right' },
-                              {
-                                image: toSignature, // base64 หรือ path
-                                width: 50,
-                                alignment: 'center',
-                              },
-                              // { text: ')', width: 'auto', alignment: 'left' },
-                            ],
-                            columnGap: 5, // ระยะห่างระหว่างวงเล็บกับภาพ
-                            margin: [0, 2, 0, 5], // ปรับระยะรอบภาพ
-                          }
+                          columns: [
+                            {
+                              text: 'รับทราบโดย',
+                              width: 'auto',
+                              alignment: 'right',
+                            },
+                            // { text: 'รับทราบโดย', width: 'auto', alignment: 'right' },
+                            {
+                              image: toSignature, // base64 หรือ path
+                              width: 50,
+                              alignment: 'center',
+                            },
+                            // { text: ')', width: 'auto', alignment: 'left' },
+                          ],
+                          columnGap: 5, // ระยะห่างระหว่างวงเล็บกับภาพ
+                          margin: [0, 2, 0, 5], // ปรับระยะรอบภาพ
+                        }
                         : { text: `รับทราบโดย` },
                       {
                         text:
@@ -27582,14 +27592,14 @@ export class EventService {
         console.log('toAction : ', toAction);
         const toFullname =
           toAction?.event_doc_status_id !== 1 &&
-          toAction?.event_doc_status_id !== 2 &&
-          toAction?.create_by_account?.first_name &&
-          toAction?.create_by_account?.last_name
+            toAction?.event_doc_status_id !== 2 &&
+            toAction?.create_by_account?.first_name &&
+            toAction?.create_by_account?.last_name
             ? `${toAction?.create_by_account?.first_name} ${toAction?.create_by_account?.last_name}`
             : '';
 
         const toCompany =
-          (toAction?.group?.company_name && toAction?.group?.company_name) ||
+          (toAction?.group?.company_name) ||
           '';
         const toDate = dayjs(toAction?.create_date).locale('th');
         const toSignature =
@@ -27601,7 +27611,7 @@ export class EventService {
         // ----
         const fromFullname =
           rdoc1Find?.create_by_account?.first_name &&
-          rdoc1Find?.create_by_account?.last_name
+            rdoc1Find?.create_by_account?.last_name
             ? `${rdoc1Find?.create_by_account?.first_name} ${rdoc1Find?.create_by_account?.last_name}`
             : '';
         const fromCompany = 'บริษัท ปตท.จำกัด (มหาชน)';
@@ -27706,8 +27716,8 @@ export class EventService {
                   ...(ir?.event_doc_gas_shipper_ofo?.io === 3 &&
                     ir?.event_doc_gas_shipper_ofo?.nomination_point
                       ?.nomination_point && {
-                      decoration: 'underline',
-                    }),
+                    decoration: 'underline',
+                  }),
                 },
               ],
               columnGap: 5,
@@ -27724,8 +27734,8 @@ export class EventService {
                   text: `${(ir?.event_doc_gas_shipper_ofo?.io === 3 && !!ir?.event_doc_gas_shipper_ofo?.nom_value_mmscfh && ir?.event_doc_gas_shipper_ofo?.nom_value_mmscfh) || '________'}`,
                   ...(ir?.event_doc_gas_shipper_ofo?.io === 3 &&
                     !!ir?.event_doc_gas_shipper_ofo?.nom_value_mmscfh && {
-                      decoration: 'underline',
-                    }),
+                    decoration: 'underline',
+                  }),
                 },
               ],
               columnGap: 5,
@@ -27752,8 +27762,8 @@ export class EventService {
                   ...(ir?.event_doc_gas_shipper_ofo?.io === 4 &&
                     ir?.event_doc_gas_shipper_ofo?.nomination_point
                       ?.nomination_point && {
-                      decoration: 'underline',
-                    }),
+                    decoration: 'underline',
+                  }),
                 },
               ],
               columnGap: 5,
@@ -27770,8 +27780,8 @@ export class EventService {
                   text: `${(ir?.event_doc_gas_shipper_ofo?.io === 4 && !!ir?.event_doc_gas_shipper_ofo?.nom_value_mmscfh && ir?.event_doc_gas_shipper_ofo?.nom_value_mmscfh) || '________'}`,
                   ...(ir?.event_doc_gas_shipper_ofo?.io === 4 &&
                     !!ir?.event_doc_gas_shipper_ofo?.nom_value_mmscfh && {
-                      decoration: 'underline',
-                    }),
+                    decoration: 'underline',
+                  }),
                 },
               ],
               columnGap: 5,
@@ -27779,7 +27789,7 @@ export class EventService {
             };
 
             return [data1, dataI, dataIValue, dataO, dataOValue]; // https://app.clickup.com/t/86eum0nt8
-          // return [data1, dataI, dataIValue, hrLine, dataO, dataOValue];
+            // return [data1, dataI, dataIValue, hrLine, dataO, dataOValue];
           },
         );
         console.log('----');
@@ -28139,22 +28149,22 @@ export class EventService {
                         //   : { text: `(                                   )` },
                         fromSignature
                           ? {
-                              columns: [
-                                {
-                                  // text: 'รับทราบโดย',
-                                  text: 'แจ้งโดย', // https://app.clickup.com/t/86eum0p1r
-                                  width: 'auto',
-                                  alignment: 'right',
-                                },
-                                {
-                                  image: fromSignature, // base64 หรือ path
-                                  width: 50,
-                                  alignment: 'center',
-                                },
-                              ],
-                              columnGap: 15, // ระยะห่างระหว่างวงเล็บกับภาพ
-                              margin: [0, 2, 0, 5], // ปรับระยะรอบภาพ
-                            }
+                            columns: [
+                              {
+                                // text: 'รับทราบโดย',
+                                text: 'แจ้งโดย', // https://app.clickup.com/t/86eum0p1r
+                                width: 'auto',
+                                alignment: 'right',
+                              },
+                              {
+                                image: fromSignature, // base64 หรือ path
+                                width: 50,
+                                alignment: 'center',
+                              },
+                            ],
+                            columnGap: 15, // ระยะห่างระหว่างวงเล็บกับภาพ
+                            margin: [0, 2, 0, 5], // ปรับระยะรอบภาพ
+                          }
                           : { text: `แจ้งโดย ` },
                         { text: fromFullname ? `( ${fromFullname} )` : `(                                   )` },
                         { text: `หน่วยงาน ${fromCompany} (ผู้ให้บริการ)` },
@@ -28170,23 +28180,23 @@ export class EventService {
                         // rdoc1Find?.event_doc_status?.id === 5 && toSignature
                         rdoc1Find?.event_doc_status?.id === 5 && toSignature
                           ? {
-                              columns: [
-                                {
-                                  text: 'รับทราบโดย',
-                                  width: 'auto',
-                                  alignment: 'right',
-                                },
-                                // { text: 'รับทราบโดย', width: 'auto', alignment: 'right' },
-                                {
-                                  image: toSignature, // base64 หรือ path
-                                  width: 50,
-                                  alignment: 'center',
-                                },
-                                // { text: ')', width: 'auto', alignment: 'left' },
-                              ],
-                              columnGap: 5, // ระยะห่างระหว่างวงเล็บกับภาพ
-                              margin: [0, 2, 0, 5], // ปรับระยะรอบภาพ
-                            }
+                            columns: [
+                              {
+                                text: 'รับทราบโดย',
+                                width: 'auto',
+                                alignment: 'right',
+                              },
+                              // { text: 'รับทราบโดย', width: 'auto', alignment: 'right' },
+                              {
+                                image: toSignature, // base64 หรือ path
+                                width: 50,
+                                alignment: 'center',
+                              },
+                              // { text: ')', width: 'auto', alignment: 'left' },
+                            ],
+                            columnGap: 5, // ระยะห่างระหว่างวงเล็บกับภาพ
+                            margin: [0, 2, 0, 5], // ปรับระยะรอบภาพ
+                          }
                           : { text: `รับทราบโดย` },
                         {
                           text:
@@ -28331,8 +28341,8 @@ export class EventService {
         },
         event_document_ofo: {
           include: {
-            event_document_ofo_cc_email:true,
-            event_document_ofo_email_group_for_event:true,
+            event_document_ofo_cc_email: true,
+            event_document_ofo_email_group_for_event: true,
             create_by_account: {
               select: {
                 id: true,
@@ -29262,8 +29272,26 @@ export class EventService {
 
     const group = shipperIds
       ? await this.prisma.group.findFirst({
+        where: {
+          id: shipperIds,
+        },
+        select: {
+          id: true,
+          user_type: {
+            select: {
+              id: true,
+            },
+          },
+        },
+      })
+      : userId
+        ? await this.prisma.group.findFirst({
           where: {
-            id: shipperIds,
+            account_manage: {
+              some: {
+                account_id: Number(userId),
+              },
+            },
           },
           select: {
             id: true,
@@ -29274,24 +29302,6 @@ export class EventService {
             },
           },
         })
-      : userId
-        ? await this.prisma.group.findFirst({
-            where: {
-              account_manage: {
-                some: {
-                  account_id: Number(userId),
-                },
-              },
-            },
-            select: {
-              id: true,
-              user_type: {
-                select: {
-                  id: true,
-                },
-              },
-            },
-          })
         : groupObj;
     console.log('group : ', group);
     const userTypeId = group?.user_type?.id;
@@ -29302,243 +29312,243 @@ export class EventService {
     const result =
       userTypeId === 3
         ? await this.prisma.event_document_ofo.findFirst({
-            where: {
-              event_runnumber_ofo_id: Number(id),
-              event_doc_master_id: 8,
-              ref_document: {
-                not: null,
-              },
-              group_id: Number(groupId),
+          where: {
+            event_runnumber_ofo_id: Number(id),
+            event_doc_master_id: 8,
+            ref_document: {
+              not: null,
             },
-            include: {
-              event_runnumber_ofo: {
-                include: {
-                  event_status: true,
-                },
+            group_id: Number(groupId),
+          },
+          include: {
+            event_runnumber_ofo: {
+              include: {
+                event_status: true,
               },
-              event_doc_master: true,
-              event_doc_status: true,
-              group: true,
-              user_type: true,
-              create_by_account: {
-                select: {
-                  id: true,
-                  email: true,
-                  first_name: true,
-                  last_name: true,
-                  signature_base_64: true,
-                },
+            },
+            event_doc_master: true,
+            event_doc_status: true,
+            group: true,
+            user_type: true,
+            create_by_account: {
+              select: {
+                id: true,
+                email: true,
+                first_name: true,
+                last_name: true,
+                signature_base_64: true,
               },
-              update_by_account: {
-                select: {
-                  id: true,
-                  email: true,
-                  first_name: true,
-                  last_name: true,
-                  signature_base_64: true,
-                },
+            },
+            update_by_account: {
+              select: {
+                id: true,
+                email: true,
+                first_name: true,
+                last_name: true,
+                signature_base_64: true,
               },
-              event_document_ofo_file: {
-                include: {
-                  create_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                    },
-                  },
-                  update_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                    },
+            },
+            event_document_ofo_file: {
+              include: {
+                create_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
                   },
                 },
-                orderBy: { id: 'desc' },
-              },
-              event_document_ofo_file_pdf: {
-                include: {
-                  create_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                    },
-                  },
-                  update_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                    },
+                update_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
                   },
                 },
               },
-              event_document_ofo_action: {
-                include: {
-                  event_doc_master: true,
-                  event_doc_status: true,
-                  group: true,
-                  user_type: true,
-                  create_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                      signature: true,
-                      signature_base_64: true,
-                    },
-                  },
-                  update_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                      signature: true,
-                      signature_base_64: true,
-                    },
+              orderBy: { id: 'desc' },
+            },
+            event_document_ofo_file_pdf: {
+              include: {
+                create_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
                   },
                 },
-                orderBy: {
-                  id: 'desc',
+                update_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                  },
                 },
               },
             },
-          })
+            event_document_ofo_action: {
+              include: {
+                event_doc_master: true,
+                event_doc_status: true,
+                group: true,
+                user_type: true,
+                create_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                    signature: true,
+                    signature_base_64: true,
+                  },
+                },
+                update_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                    signature: true,
+                    signature_base_64: true,
+                  },
+                },
+              },
+              orderBy: {
+                id: 'desc',
+              },
+            },
+          },
+        })
         : await this.prisma.event_document_ofo.findFirst({
-            where: {
-              event_runnumber_ofo_id: Number(id),
-              event_doc_master_id: 8,
-              ref_document: null,
-            },
-            include: {
-              event_runnumber_ofo: {
-                include: {
-                  event_status: true,
-                  event_document_ofo: {
-                    include: {
-                      event_doc_status: true,
-                      group: true,
-                      user_type: true,
-                    },
-                    where: {
-                      user_type: {
-                        id: 3,
-                      },
-                      event_doc_master_id: 8,
-                    },
+          where: {
+            event_runnumber_ofo_id: Number(id),
+            event_doc_master_id: 8,
+            ref_document: null,
+          },
+          include: {
+            event_runnumber_ofo: {
+              include: {
+                event_status: true,
+                event_document_ofo: {
+                  include: {
+                    event_doc_status: true,
+                    group: true,
+                    user_type: true,
                   },
-                },
-              },
-              event_doc_master: true,
-              event_doc_status: true,
-              event_document_ofo_cc_email: true,
-              event_document_ofo_email_group_for_event: {
-                include: {
-                  edit_email_group_for_event: true,
-                },
-              },
-              group: true,
-              user_type: true,
-              create_by_account: {
-                select: {
-                  id: true,
-                  email: true,
-                  first_name: true,
-                  last_name: true,
-                  signature_base_64: true,
-                },
-              },
-              update_by_account: {
-                select: {
-                  id: true,
-                  email: true,
-                  first_name: true,
-                  last_name: true,
-                  signature_base_64: true,
-                },
-              },
-              event_document_ofo_file: {
-                include: {
-                  create_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
+                  where: {
+                    user_type: {
+                      id: 3,
                     },
+                    event_doc_master_id: 8,
                   },
-                  update_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                    },
-                  },
-                },
-                orderBy: { id: 'desc' },
-              },
-              event_document_ofo_file_pdf: {
-                include: {
-                  create_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                    },
-                  },
-                  update_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                    },
-                  },
-                },
-              },
-              event_document_ofo_action: {
-                include: {
-                  event_doc_master: true,
-                  event_doc_status: true,
-                  group: true,
-                  user_type: true,
-                  create_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                      signature: true,
-                      signature_base_64: true,
-                    },
-                  },
-                  update_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                      signature: true,
-                      signature_base_64: true,
-                    },
-                  },
-                },
-                orderBy: {
-                  id: 'desc',
                 },
               },
             },
-          });
+            event_doc_master: true,
+            event_doc_status: true,
+            event_document_ofo_cc_email: true,
+            event_document_ofo_email_group_for_event: {
+              include: {
+                edit_email_group_for_event: true,
+              },
+            },
+            group: true,
+            user_type: true,
+            create_by_account: {
+              select: {
+                id: true,
+                email: true,
+                first_name: true,
+                last_name: true,
+                signature_base_64: true,
+              },
+            },
+            update_by_account: {
+              select: {
+                id: true,
+                email: true,
+                first_name: true,
+                last_name: true,
+                signature_base_64: true,
+              },
+            },
+            event_document_ofo_file: {
+              include: {
+                create_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                  },
+                },
+                update_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                  },
+                },
+              },
+              orderBy: { id: 'desc' },
+            },
+            event_document_ofo_file_pdf: {
+              include: {
+                create_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                  },
+                },
+                update_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                  },
+                },
+              },
+            },
+            event_document_ofo_action: {
+              include: {
+                event_doc_master: true,
+                event_doc_status: true,
+                group: true,
+                user_type: true,
+                create_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                    signature: true,
+                    signature_base_64: true,
+                  },
+                },
+                update_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                    signature: true,
+                    signature_base_64: true,
+                  },
+                },
+              },
+              orderBy: {
+                id: 'desc',
+              },
+            },
+          },
+        });
     console.log('result : ', result);
     return result;
   }
@@ -29548,14 +29558,14 @@ export class EventService {
       where: {
         ...(tso
           ? {
-              event_document_ofo: {
-                event_runnumber_ofo_id: Number(id),
-                event_doc_master_id: 8,
-              },
-            }
+            event_document_ofo: {
+              event_runnumber_ofo_id: Number(id),
+              event_doc_master_id: 8,
+            },
+          }
           : {
-              event_document_ofo_id: Number(id),
-            }),
+            event_document_ofo_id: Number(id),
+          }),
       },
       include: {
         group: true,
@@ -29583,7 +29593,7 @@ export class EventService {
 
       return {
         ...nE,
-        row: temp ? JSON.parse(temp) : null,
+        row: this.safeParseJSON(temp),
       };
     });
     return nresData;
@@ -29866,15 +29876,15 @@ export class EventService {
       where: {
         ...(shipperIds
           ? {
-              id: shipperIds,
-            }
+            id: shipperIds,
+          }
           : {
-              account_manage: {
-                some: {
-                  account_id: Number(userId),
-                },
+            account_manage: {
+              some: {
+                account_id: Number(userId),
               },
-            }),
+            },
+          }),
       },
       select: {
         id: true,
@@ -29916,14 +29926,14 @@ export class EventService {
       console.log('toAction : ', toAction);
       const toFullname =
         toAction?.event_doc_status_id !== 1 &&
-        toAction?.event_doc_status_id !== 2 &&
-        toAction?.create_by_account?.first_name &&
-        toAction?.create_by_account?.last_name
+          toAction?.event_doc_status_id !== 2 &&
+          toAction?.create_by_account?.first_name &&
+          toAction?.create_by_account?.last_name
           ? `${toAction?.create_by_account?.first_name} ${toAction?.create_by_account?.last_name}`
           : '';
 
       const toCompany =
-        (toAction?.group?.company_name && toAction?.group?.company_name) ||
+        (toAction?.group?.company_name) ||
         '';
       const toDate = dayjs(toAction?.create_date).locale('th');
       const toSignature =
@@ -29935,7 +29945,7 @@ export class EventService {
       // ----
       const fromFullname =
         rdoc1Find?.create_by_account?.first_name &&
-        rdoc1Find?.create_by_account?.last_name
+          rdoc1Find?.create_by_account?.last_name
           ? `${rdoc1Find?.create_by_account?.first_name} ${rdoc1Find?.create_by_account?.last_name}`
           : '';
       const fromCompany = 'บริษัท ปตท.จำกัด (มหาชน)';
@@ -30071,7 +30081,7 @@ export class EventService {
                               `อ้างอิงคำสั่งเพิ่ม/ลดปริมาณก๊าซ (${rdoc1Find?.event_runnumber_ofo?.event_doc_ofo_type_id === 1 ? 'Operation Flow Order' : 'Instructed Flow Order'}) ตามเอกสารเลขที่ `,
                               {
                                 text:
-                                input_ref_doc_at ? input_ref_doc_at : '____________',
+                                  input_ref_doc_at ? input_ref_doc_at : '____________',
                                 decoration: input_ref_doc_at && 'underline',
                               },
                               ` เพื่อปกป้องหรือระงับความเสียหายหรืออันตรายที่อากเกิดขึ้นกับระบบส่งก๊าซ`,
@@ -30090,13 +30100,13 @@ export class EventService {
                               `ปัจจุบันผู้ให้บริการระบบส่งก๊าซ (TSO) สามารถควบคุมเหตุการณ์ที่เกิดขึ้นจนกลับสู่สภาวะปกติ เมื่อวันที่ `,
                               {
                                 text:
-                                input_event_date ? input_event_date : '____________',
+                                  input_event_date ? input_event_date : '____________',
                                 decoration: input_event_date && 'underline',
                               },
                               ` เวลา `,
                               {
                                 text:
-                                input_event_time ? input_event_time : '____________',
+                                  input_event_time ? input_event_time : '____________',
                                 decoration: input_event_time && 'underline',
                               },
                               ` น. จึงขอแจ้งสิ้นสุดคำสั่งเพิ่ม/ลดปริมาณก๊าซ (${rdoc1Find?.event_runnumber_ofo?.event_doc_ofo_type_id === 1 ? 'Operation Flow Order' : 'Instructed Flow Order'}) ในเอกสารดังกล่าว และให้ผู้ใช้บริการรับ-ส่งก๊าซได้ตามปกติ`,
@@ -30111,11 +30121,11 @@ export class EventService {
                           // { text: `space`, opacity: 0 },
                           {
                             // text: `สรุปการแก้ไขปัญหา: ${input_event_summary}`,
-                             text: [
+                            text: [
                               `สรุปการแก้ไขปัญหา `,
                               {
                                 text:
-                                input_event_summary ? input_event_summary : '____________',
+                                  input_event_summary ? input_event_summary : '____________',
                                 decoration: input_event_summary && 'underline',
                               },
                             ],
@@ -30133,7 +30143,7 @@ export class EventService {
                               `สรุปผลกระทบด้านปริมาณ และด้านคุณภาพก๊าซ: `,
                               {
                                 text:
-                                input_summary_gas ? input_summary_gas : '____________',
+                                  input_summary_gas ? input_summary_gas : '____________',
                                 decoration: input_summary_gas && 'underline',
                               },
                             ],
@@ -30147,11 +30157,11 @@ export class EventService {
                           // { text: `space`, opacity: 0 },
                           {
                             // text: `ข้อมูลเพิ่มเติม: ${input_more_info}`,
-                             text: [
+                            text: [
                               `ข้อมูลเพิ่มเติม: `,
                               {
                                 text:
-                                input_more_info ? input_more_info : '____________',
+                                  input_more_info ? input_more_info : '____________',
                                 decoration: input_more_info && 'underline',
                               },
                             ],
@@ -30175,77 +30185,77 @@ export class EventService {
 
           // ======== กรอบช่องเซ็นชื่อ =========
           {
-              table: {
-                widths: ['*', '*'],
-                body: [
-                  [
-                    {
-                      stack: [
-                        // https://app.clickup.com/t/86eugkjfb
-                        fromSignature
-                          ? {
-                              columns: [
-                                {
-                                  text: 'แจ้งโดย ',
-                                  width: 'auto',
-                                  alignment: 'right',
-                                },
-                                {
-                                  image: fromSignature, // base64 หรือ path
-                                  width: 50,
-                                  alignment: 'center',
-                                },
-                                { text: '', width: 'auto', alignment: 'left' },
-                              ],
-                              columnGap: 15, // ระยะห่างระหว่างวงเล็บกับภาพ
-                              margin: [0, 2, 0, 5], // ปรับระยะรอบภาพ
-                            }
-                          : { text: `แจ้งโดย ` },
-                          { text: fromFullname ? `( ${fromFullname} )` : `(                                   )` },
-
-                        // { text: `แจ้งโดย ${fromFullname}` },
-                        // fromSignature
-                        //   ? {
-                        //       columns: [
-                        //         {
-                        //           text: '(',
-                        //           width: 'auto',
-                        //           alignment: 'right',
-                        //         },
-                        //         {
-                        //           image: fromSignature, // base64 หรือ path
-                        //           width: 50,
-                        //           alignment: 'center',
-                        //         },
-                        //         { text: ')', width: 'auto', alignment: 'left' },
-                        //       ],
-                        //       columnGap: 15, // ระยะห่างระหว่างวงเล็บกับภาพ
-                        //       margin: [0, 2, 0, 5], // ปรับระยะรอบภาพ
-                        //     }
-                        //   : { text: `(                                   )` },
-                        { text: `หน่วยงาน ${fromCompany} (ผู้ให้บริการ)` },
-                        {
-                          text: `เวลา : ${fromDate.format('HH:mm')} น. วันที่/เดือน/ปี: ${fromDate.format('DD')} / ${fromDate.format('MM')} / ${fromDate.format('BB')}`,
-                        },
-                      ],
-                      margin: [5, 5, 5, 5],
-                    },
-                    {
+            table: {
+              widths: ['*', '*'],
+              body: [
+                [
+                  {
                     stack: [
-                      toSignature && toFullname 
+                      // https://app.clickup.com/t/86eugkjfb
+                      fromSignature
                         ? {
-                            columns: [
-                              { text: 'รับทราบโดย ', width: 'auto', alignment: 'right' },
-                              {
-                                image: toSignature, // base64 หรือ path
-                                width: 50,
-                                alignment: 'center',
-                              },
-                              { text: '', width: 'auto', alignment: 'left' },
-                            ],
-                            columnGap: 5, // ระยะห่างระหว่างวงเล็บกับภาพ
-                            margin: [0, 2, 0, 5], // ปรับระยะรอบภาพ
-                          }
+                          columns: [
+                            {
+                              text: 'แจ้งโดย ',
+                              width: 'auto',
+                              alignment: 'right',
+                            },
+                            {
+                              image: fromSignature, // base64 หรือ path
+                              width: 50,
+                              alignment: 'center',
+                            },
+                            { text: '', width: 'auto', alignment: 'left' },
+                          ],
+                          columnGap: 15, // ระยะห่างระหว่างวงเล็บกับภาพ
+                          margin: [0, 2, 0, 5], // ปรับระยะรอบภาพ
+                        }
+                        : { text: `แจ้งโดย ` },
+                      { text: fromFullname ? `( ${fromFullname} )` : `(                                   )` },
+
+                      // { text: `แจ้งโดย ${fromFullname}` },
+                      // fromSignature
+                      //   ? {
+                      //       columns: [
+                      //         {
+                      //           text: '(',
+                      //           width: 'auto',
+                      //           alignment: 'right',
+                      //         },
+                      //         {
+                      //           image: fromSignature, // base64 หรือ path
+                      //           width: 50,
+                      //           alignment: 'center',
+                      //         },
+                      //         { text: ')', width: 'auto', alignment: 'left' },
+                      //       ],
+                      //       columnGap: 15, // ระยะห่างระหว่างวงเล็บกับภาพ
+                      //       margin: [0, 2, 0, 5], // ปรับระยะรอบภาพ
+                      //     }
+                      //   : { text: `(                                   )` },
+                      { text: `หน่วยงาน ${fromCompany} (ผู้ให้บริการ)` },
+                      {
+                        text: `เวลา : ${fromDate.format('HH:mm')} น. วันที่/เดือน/ปี: ${fromDate.format('DD')} / ${fromDate.format('MM')} / ${fromDate.format('BB')}`,
+                      },
+                    ],
+                    margin: [5, 5, 5, 5],
+                  },
+                  {
+                    stack: [
+                      toSignature && toFullname
+                        ? {
+                          columns: [
+                            { text: 'รับทราบโดย ', width: 'auto', alignment: 'right' },
+                            {
+                              image: toSignature, // base64 หรือ path
+                              width: 50,
+                              alignment: 'center',
+                            },
+                            { text: '', width: 'auto', alignment: 'left' },
+                          ],
+                          columnGap: 5, // ระยะห่างระหว่างวงเล็บกับภาพ
+                          margin: [0, 2, 0, 5], // ปรับระยะรอบภาพ
+                        }
                         : { text: `รับทราบโดย ` },
                       { text: toFullname ? `( ${toFullname} )` : `(                                   )` },
 
@@ -30272,15 +30282,15 @@ export class EventService {
                     ],
                     margin: [5, 5, 5, 5],
                   },
-                  ],
                 ],
-              },
-              layout: {
-                hLineWidth: () => 0.5,
-                vLineWidth: () => 0.5,
-              },
-              margin: [0, 0, 0, 0],
+              ],
             },
+            layout: {
+              hLineWidth: () => 0.5,
+              vLineWidth: () => 0.5,
+            },
+            margin: [0, 0, 0, 0],
+          },
 
           // ======== Footer ========
           // {
@@ -30358,291 +30368,291 @@ export class EventService {
         console.log('- groupId : ', groupId);
 
         const findRunnumber = await this.prisma.event_runnumber_ofo?.findFirst({
-        where: { event_document_ofo: { some: { id: Number(id) } } },
-      });
-      console.log('findRunnumber : ', findRunnumber);
-      const rdoc1Find = await this.doc8Find(
-        findRunnumber?.id,
-        userId,
-        null,
-        group_id,
-      );
-      console.log('rdoc1Find : ', rdoc1Find);
-      // rdoc1Find?.event_runnumber_ofo
-      console.log(
-        'rdoc1Find?.event_runnumber_ofo : ',
-        rdoc1Find?.event_runnumber_ofo,
-      );
+          where: { event_document_ofo: { some: { id: Number(id) } } },
+        });
+        console.log('findRunnumber : ', findRunnumber);
+        const rdoc1Find = await this.doc8Find(
+          findRunnumber?.id,
+          userId,
+          null,
+          group_id,
+        );
+        console.log('rdoc1Find : ', rdoc1Find);
+        // rdoc1Find?.event_runnumber_ofo
+        console.log(
+          'rdoc1Find?.event_runnumber_ofo : ',
+          rdoc1Find?.event_runnumber_ofo,
+        );
 
-      const event_document_action = rdoc1Find?.event_document_ofo_action;
-      console.log('event_document_action : ', event_document_action);
-      const toAction = event_document_action?.find(
-        // (f: any) => f?.user_type_id === 3 && f?.group_id === groupId,
-        (f: any) => f?.group_id === groupId,
-      );
-      console.log('toAction : ', toAction);
-      const toFullname =
-        // toAction?.event_doc_status_id !== 1 &&
-        // toAction?.event_doc_status_id !== 2 &&
-        toAction?.create_by_account?.first_name &&
-        toAction?.create_by_account?.last_name
-          ? `${toAction?.create_by_account?.first_name} ${toAction?.create_by_account?.last_name}`
-          : '';
+        const event_document_action = rdoc1Find?.event_document_ofo_action;
+        console.log('event_document_action : ', event_document_action);
+        const toAction = event_document_action?.find(
+          // (f: any) => f?.user_type_id === 3 && f?.group_id === groupId,
+          (f: any) => f?.group_id === groupId,
+        );
+        console.log('toAction : ', toAction);
+        const toFullname =
+          // toAction?.event_doc_status_id !== 1 &&
+          // toAction?.event_doc_status_id !== 2 &&
+          toAction?.create_by_account?.first_name &&
+            toAction?.create_by_account?.last_name
+            ? `${toAction?.create_by_account?.first_name} ${toAction?.create_by_account?.last_name}`
+            : '';
 
-      const toCompany =
-        (toAction?.group?.company_name && toAction?.group?.company_name) ||
-        '';
-      const toDate = dayjs(toAction?.create_date).locale('th');
-      const toSignature =
-        (toAction?.event_doc_status_id !== 1 &&
-          toAction?.event_doc_status_id !== 2 &&
-          toAction?.create_by_account?.signature_base_64) ||
-        ''; //
+        const toCompany =
+          (toAction?.group?.company_name) ||
+          '';
+        const toDate = dayjs(toAction?.create_date).locale('th');
+        const toSignature =
+          (toAction?.event_doc_status_id !== 1 &&
+            toAction?.event_doc_status_id !== 2 &&
+            toAction?.create_by_account?.signature_base_64) ||
+          ''; //
 
-      // ----
-      const fromFullname =
-        rdoc1Find?.create_by_account?.first_name &&
-        rdoc1Find?.create_by_account?.last_name
-          ? `${rdoc1Find?.create_by_account?.first_name} ${rdoc1Find?.create_by_account?.last_name}`
-          : '';
-      const fromCompany = 'บริษัท ปตท.จำกัด (มหาชน)';
-      const fromSignature =
-        rdoc1Find?.create_by_account?.signature_base_64 || ''; //
+        // ----
+        const fromFullname =
+          rdoc1Find?.create_by_account?.first_name &&
+            rdoc1Find?.create_by_account?.last_name
+            ? `${rdoc1Find?.create_by_account?.first_name} ${rdoc1Find?.create_by_account?.last_name}`
+            : '';
+        const fromCompany = 'บริษัท ปตท.จำกัด (มหาชน)';
+        const fromSignature =
+          rdoc1Find?.create_by_account?.signature_base_64 || ''; //
 
-      const fromDate = dayjs(rdoc1Find?.create_date).locale('th');
+        const fromDate = dayjs(rdoc1Find?.create_date).locale('th');
 
-      const event_nember = rdoc1Find?.event_runnumber_ofo?.event_nember;
-      const event_doc_status = rdoc1Find?.event_doc_status?.id; // 3 accept, 4 reject, 5 Acknowledge
-      const event_runnumber = dayjs(rdoc1Find?.event_date).locale('th');
+        const event_nember = rdoc1Find?.event_runnumber_ofo?.event_nember;
+        const event_doc_status = rdoc1Find?.event_doc_status?.id; // 3 accept, 4 reject, 5 Acknowledge
+        const event_runnumber = dayjs(rdoc1Find?.event_date).locale('th');
 
-      const input_ref_doc_at =
-        rdoc1Find?.doc_8_input_ref_doc_at; //อ้างอิงเอกสารเลขที่
-      const input_event_date =
-        (rdoc1Find?.doc_8_input_date &&
-          `${dayjs(rdoc1Find?.doc_8_input_date).locale('th').format('DD')} ${dayjs(rdoc1Find?.doc_8_input_date).locale('th').format('MMM')} ${dayjs(rdoc1Find?.doc_8_input_date).locale('th').format('BBBB')}`) //ช่วงเวลาของเหตุการณ์ วันที่
-      const input_event_time =
-        rdoc1Find?.doc_8_input_time; //ช่วงเวลาของเหตุการณ์ เวลา
-      const input_event_summary =
-        rdoc1Find?.doc_8_input_summary; //ช่วงเวลาของเหตุการณ์ สรุปการแก้ไขปัญหา
-      const input_summary_gas =
-        rdoc1Find?.doc_8_input_summary_gas; //สรุปผลกระทบด้านปริมาณก๊าซ และด้านคุณภาพก๊าซ
-      const input_more_info =
-        rdoc1Find?.doc_8_input_more; //ข้อมูลเพิ่มเติม
+        const input_ref_doc_at =
+          rdoc1Find?.doc_8_input_ref_doc_at; //อ้างอิงเอกสารเลขที่
+        const input_event_date =
+          (rdoc1Find?.doc_8_input_date &&
+            `${dayjs(rdoc1Find?.doc_8_input_date).locale('th').format('DD')} ${dayjs(rdoc1Find?.doc_8_input_date).locale('th').format('MMM')} ${dayjs(rdoc1Find?.doc_8_input_date).locale('th').format('BBBB')}`) //ช่วงเวลาของเหตุการณ์ วันที่
+        const input_event_time =
+          rdoc1Find?.doc_8_input_time; //ช่วงเวลาของเหตุการณ์ เวลา
+        const input_event_summary =
+          rdoc1Find?.doc_8_input_summary; //ช่วงเวลาของเหตุการณ์ สรุปการแก้ไขปัญหา
+        const input_summary_gas =
+          rdoc1Find?.doc_8_input_summary_gas; //สรุปผลกระทบด้านปริมาณก๊าซ และด้านคุณภาพก๊าซ
+        const input_more_info =
+          rdoc1Find?.doc_8_input_more; //ข้อมูลเพิ่มเติม
 
-      const longdo_dict = rdoc1Find?.longdo_dict || ''; //สำเนา
-      console.log('- -');
+        const longdo_dict = rdoc1Find?.longdo_dict || ''; //สำเนา
+        console.log('- -');
 
-      (pdfMake as any).vfs = vfs;
-      const fonts = {
-        THSarabun: {
-          normal: 'THSarabunNew.ttf',
-          bold: 'THSarabunNew-Bold.ttf',
-          italics: 'THSarabunNew.ttf',
-          bolditalics: 'THSarabunNew-Bold.ttf',
-        },
-      };
-      (pdfMake as any).fonts = fonts;
-      const docDefinition = {
-        header: (currentPage, pageCount) => {
-          return {
-            columns: [
-              { width: '*', text: '' }, // เว้นซ้าย
-              {
-                width: 'auto',
-                stack: [
-                  {
-                    text: `เลขที่เอกสาร: …………${event_nember}…………`,
-                    fontSize: 12,
-                    alignment: 'right',
-                  },
-                  {
-                    text: `วันเดือนปีเอกสาร: ……${event_runnumber.format('DD')}…/……${event_runnumber.format('MMM')}……${event_runnumber.format('BBBB')}…………`,
-                    fontSize: 12,
-                    alignment: 'right',
-                  },
+        (pdfMake as any).vfs = vfs;
+        const fonts = {
+          THSarabun: {
+            normal: 'THSarabunNew.ttf',
+            bold: 'THSarabunNew-Bold.ttf',
+            italics: 'THSarabunNew.ttf',
+            bolditalics: 'THSarabunNew-Bold.ttf',
+          },
+        };
+        (pdfMake as any).fonts = fonts;
+        const docDefinition = {
+          header: (currentPage, pageCount) => {
+            return {
+              columns: [
+                { width: '*', text: '' }, // เว้นซ้าย
+                {
+                  width: 'auto',
+                  stack: [
+                    {
+                      text: `เลขที่เอกสาร: …………${event_nember}…………`,
+                      fontSize: 12,
+                      alignment: 'right',
+                    },
+                    {
+                      text: `วันเดือนปีเอกสาร: ……${event_runnumber.format('DD')}…/……${event_runnumber.format('MMM')}……${event_runnumber.format('BBBB')}…………`,
+                      fontSize: 12,
+                      alignment: 'right',
+                    },
+                  ],
+                  margin: [0, 5, 10, 0], // [left, top, right, bottom],
+                },
+              ],
+            };
+          },
+          content: [
+            {
+              image: logoImage,
+              width: 70,
+              alignment: 'center',
+              margin: [0, 0, 0, 10],
+            },
+
+            {
+              text: `เอกสารแจ้งสิ้นสุดคำสั่งเพิ่ม/ลดปริมาณก๊าซ (${rdoc1Find?.event_runnumber_ofo?.event_doc_ofo_type_id === 1 ? 'Operation Flow Order' : 'Instructed Flow Order'})`,
+              alignment: 'center',
+              fontSize: 18,
+              bold: true,
+              margin: [0, 0, 0, 5],
+            },
+
+            // ======== กรอบ "เรียน / สำเนา" =========
+            {
+              table: {
+                widths: ['auto', '*'],
+                body: [
+                  [
+                    {
+                      text: 'ส่ง:',
+                      bold: true,
+                      alignment: 'center',
+                      verticalAlignment: 'middle',
+                      margin: [0, 10, 0, 10],
+                    },
+                    {
+                      stack: [`${groups?.name}`],
+                      margin: [0, 10, 0, 10], // << บังคับความสูงให้จัดกลาง
+                    },
+                  ],
+                  [
+                    {
+                      text: 'สำเนา:',
+                      bold: true,
+                      alignment: 'center',
+                      verticalAlignment: 'middle',
+                      margin: [0, 10, 0, 10],
+                    },
+                    {
+                      stack: [`${longdo_dict || ''}`],
+                      margin: [0, 10, 0, 10], // << บังคับความสูงให้จัดกลาง
+                    },
+                  ],
                 ],
-                margin: [0, 5, 10, 0], // [left, top, right, bottom],
               },
-            ],
-          };
-        },
-        content: [
-          {
-            image: logoImage,
-            width: 70,
-            alignment: 'center',
-            margin: [0, 0, 0, 10],
-          },
+              layout: {
+                hLineWidth: () => 0.5,
+                vLineWidth: () => 0.5,
+              },
+              margin: [0, 0, 0, 0],
+            },
 
-          {
-            text: `เอกสารแจ้งสิ้นสุดคำสั่งเพิ่ม/ลดปริมาณก๊าซ (${rdoc1Find?.event_runnumber_ofo?.event_doc_ofo_type_id === 1 ? 'Operation Flow Order' : 'Instructed Flow Order'})`,
-            alignment: 'center',
-            fontSize: 18,
-            bold: true,
-            margin: [0, 0, 0, 5],
-          },
-
-          // ======== กรอบ "เรียน / สำเนา" =========
-          {
-            table: {
-              widths: ['auto', '*'],
-              body: [
-                [
-                  {
-                    text: 'ส่ง:',
-                    bold: true,
-                    alignment: 'center',
-                    verticalAlignment: 'middle',
-                    margin: [0, 10, 0, 10],
-                  },
-                  {
-                    stack: [`${groups?.name}`],
-                    margin: [0, 10, 0, 10], // << บังคับความสูงให้จัดกลาง
-                  },
+            // ======== กรอบ =========
+            {
+              table: {
+                widths: ['*'],
+                body: [
+                  [
+                    {
+                      stack: [
+                        {
+                          text: [
+                            { text: `space`, opacity: 0 },
+                            {
+                              // text: `อ้างอิงคำสั่งเพิ่ม/ลดปริมาณก๊าซ (${rdoc1Find?.event_runnumber_ofo?.event_doc_ofo_type_id === 1 ? 'Operation Flow Order' : 'Instructed Flow Order'}) ตามเอกสารเลขที่ ${input_ref_doc_at} เพื่อปกป้องหรือระงับความเสียหายหรืออันตรายที่อากเกิดขึ้นกับระบบส่งก๊าซ`,
+                              text: [
+                                `อ้างอิงคำสั่งเพิ่ม/ลดปริมาณก๊าซ (${rdoc1Find?.event_runnumber_ofo?.event_doc_ofo_type_id === 1 ? 'Operation Flow Order' : 'Instructed Flow Order'}) ตามเอกสารเลขที่ `,
+                                {
+                                  text:
+                                    input_ref_doc_at ? input_ref_doc_at : '____________',
+                                  decoration: input_ref_doc_at && 'underline',
+                                },
+                                ` เพื่อปกป้องหรือระงับความเสียหายหรืออันตรายที่อากเกิดขึ้นกับระบบส่งก๊าซ`,
+                              ],
+                            },
+                          ],
+                          margin: [0, 0, 0, 5],
+                          alignment: 'justify',
+                        },
+                        {
+                          text: [
+                            { text: `space`, opacity: 0 },
+                            {
+                              // text: `ปัจจุบันผู้ให้บริการระบบส่งก๊าซ (TSO) สามารถควบคุมเหตุการณ์ที่เกิดขึ้นจนกลับสู่สภาวะปกติ เมื่อวันที่ ${input_event_date} เวลา ${input_event_time} น. จึงขอแจ้งสิ้นสุดคำสั่งเพิ่ม/ลดปริมาณก๊าซ (${rdoc1Find?.event_runnumber_ofo?.event_doc_ofo_type_id === 1 ? 'Operation Flow Order' : 'Instructed Flow Order'}) ในเอกสารดังกล่าว และให้ผู้ใช้บริการรับ-ส่งก๊าซได้ตามปกติ`,
+                              text: [
+                                `ปัจจุบันผู้ให้บริการระบบส่งก๊าซ (TSO) สามารถควบคุมเหตุการณ์ที่เกิดขึ้นจนกลับสู่สภาวะปกติ เมื่อวันที่ `,
+                                {
+                                  text:
+                                    input_event_date ? input_event_date : '____________',
+                                  decoration: input_event_date && 'underline',
+                                },
+                                ` เวลา `,
+                                {
+                                  text:
+                                    input_event_time ? input_event_time : '____________',
+                                  decoration: input_event_time && 'underline',
+                                },
+                                ` น. จึงขอแจ้งสิ้นสุดคำสั่งเพิ่ม/ลดปริมาณก๊าซ (${rdoc1Find?.event_runnumber_ofo?.event_doc_ofo_type_id === 1 ? 'Operation Flow Order' : 'Instructed Flow Order'}) ในเอกสารดังกล่าว และให้ผู้ใช้บริการรับ-ส่งก๊าซได้ตามปกติ`,
+                              ],
+                            },
+                          ],
+                          margin: [0, 0, 0, 5],
+                          alignment: 'justify',
+                        },
+                        {
+                          text: [
+                            // { text: `space`, opacity: 0 },
+                            {
+                              // text: `สรุปการแก้ไขปัญหา: ${input_event_summary}`,
+                              text: [
+                                `สรุปการแก้ไขปัญหา `,
+                                {
+                                  text:
+                                    input_event_summary ? input_event_summary : '____________',
+                                  decoration: input_event_summary && 'underline',
+                                },
+                              ],
+                            },
+                          ],
+                          margin: [0, 0, 0, 5],
+                          alignment: 'justify',
+                        },
+                        {
+                          text: [
+                            // { text: `space`, opacity: 0 },
+                            {
+                              // text: `สรุปผลกระทบด้านปริมาณ และด้านคุณภาพก๊าซ: ${input_summary_gas}`,
+                              text: [
+                                `สรุปผลกระทบด้านปริมาณ และด้านคุณภาพก๊าซ: `,
+                                {
+                                  text:
+                                    input_summary_gas ? input_summary_gas : '____________',
+                                  decoration: input_summary_gas && 'underline',
+                                },
+                              ],
+                            },
+                          ],
+                          margin: [0, 0, 0, 5],
+                          alignment: 'justify',
+                        },
+                        {
+                          text: [
+                            // { text: `space`, opacity: 0 },
+                            {
+                              // text: `ข้อมูลเพิ่มเติม: ${input_more_info}`,
+                              text: [
+                                `ข้อมูลเพิ่มเติม: `,
+                                {
+                                  text:
+                                    input_more_info ? input_more_info : '____________',
+                                  decoration: input_more_info && 'underline',
+                                },
+                              ],
+                            },
+                          ],
+                          margin: [0, 0, 0, 5],
+                          alignment: 'justify',
+                        },
+                      ],
+                      margin: [5, 5, 5, 5],
+                    },
+                  ],
                 ],
-                [
-                  {
-                    text: 'สำเนา:',
-                    bold: true,
-                    alignment: 'center',
-                    verticalAlignment: 'middle',
-                    margin: [0, 10, 0, 10],
-                  },
-                  {
-                    stack: [`${longdo_dict || ''}`],
-                    margin: [0, 10, 0, 10], // << บังคับความสูงให้จัดกลาง
-                  },
-                ],
-              ],
+              },
+              layout: {
+                hLineWidth: () => 0.5,
+                vLineWidth: () => 0.5,
+              },
+              margin: [0, 0, 0, 0],
             },
-            layout: {
-              hLineWidth: () => 0.5,
-              vLineWidth: () => 0.5,
-            },
-            margin: [0, 0, 0, 0],
-          },
 
-          // ======== กรอบ =========
-          {
-            table: {
-              widths: ['*'],
-              body: [
-                [
-                  {
-                    stack: [
-                      {
-                        text: [
-                          { text: `space`, opacity: 0 },
-                          {
-                            // text: `อ้างอิงคำสั่งเพิ่ม/ลดปริมาณก๊าซ (${rdoc1Find?.event_runnumber_ofo?.event_doc_ofo_type_id === 1 ? 'Operation Flow Order' : 'Instructed Flow Order'}) ตามเอกสารเลขที่ ${input_ref_doc_at} เพื่อปกป้องหรือระงับความเสียหายหรืออันตรายที่อากเกิดขึ้นกับระบบส่งก๊าซ`,
-                            text: [
-                              `อ้างอิงคำสั่งเพิ่ม/ลดปริมาณก๊าซ (${rdoc1Find?.event_runnumber_ofo?.event_doc_ofo_type_id === 1 ? 'Operation Flow Order' : 'Instructed Flow Order'}) ตามเอกสารเลขที่ `,
-                              {
-                                text:
-                                input_ref_doc_at ? input_ref_doc_at : '____________',
-                                decoration: input_ref_doc_at && 'underline',
-                              },
-                              ` เพื่อปกป้องหรือระงับความเสียหายหรืออันตรายที่อากเกิดขึ้นกับระบบส่งก๊าซ`,
-                            ],
-                          },
-                        ],
-                        margin: [0, 0, 0, 5],
-                        alignment: 'justify',
-                      },
-                      {
-                        text: [
-                          { text: `space`, opacity: 0 },
-                          {
-                            // text: `ปัจจุบันผู้ให้บริการระบบส่งก๊าซ (TSO) สามารถควบคุมเหตุการณ์ที่เกิดขึ้นจนกลับสู่สภาวะปกติ เมื่อวันที่ ${input_event_date} เวลา ${input_event_time} น. จึงขอแจ้งสิ้นสุดคำสั่งเพิ่ม/ลดปริมาณก๊าซ (${rdoc1Find?.event_runnumber_ofo?.event_doc_ofo_type_id === 1 ? 'Operation Flow Order' : 'Instructed Flow Order'}) ในเอกสารดังกล่าว และให้ผู้ใช้บริการรับ-ส่งก๊าซได้ตามปกติ`,
-                            text: [
-                              `ปัจจุบันผู้ให้บริการระบบส่งก๊าซ (TSO) สามารถควบคุมเหตุการณ์ที่เกิดขึ้นจนกลับสู่สภาวะปกติ เมื่อวันที่ `,
-                              {
-                                text:
-                                input_event_date ? input_event_date : '____________',
-                                decoration: input_event_date && 'underline',
-                              },
-                              ` เวลา `,
-                              {
-                                text:
-                                input_event_time ? input_event_time : '____________',
-                                decoration: input_event_time && 'underline',
-                              },
-                              ` น. จึงขอแจ้งสิ้นสุดคำสั่งเพิ่ม/ลดปริมาณก๊าซ (${rdoc1Find?.event_runnumber_ofo?.event_doc_ofo_type_id === 1 ? 'Operation Flow Order' : 'Instructed Flow Order'}) ในเอกสารดังกล่าว และให้ผู้ใช้บริการรับ-ส่งก๊าซได้ตามปกติ`,
-                            ],
-                          },
-                        ],
-                        margin: [0, 0, 0, 5],
-                        alignment: 'justify',
-                      },
-                      {
-                        text: [
-                          // { text: `space`, opacity: 0 },
-                          {
-                            // text: `สรุปการแก้ไขปัญหา: ${input_event_summary}`,
-                             text: [
-                              `สรุปการแก้ไขปัญหา `,
-                              {
-                                text:
-                                input_event_summary ? input_event_summary : '____________',
-                                decoration: input_event_summary && 'underline',
-                              },
-                            ],
-                          },
-                        ],
-                        margin: [0, 0, 0, 5],
-                        alignment: 'justify',
-                      },
-                      {
-                        text: [
-                          // { text: `space`, opacity: 0 },
-                          {
-                            // text: `สรุปผลกระทบด้านปริมาณ และด้านคุณภาพก๊าซ: ${input_summary_gas}`,
-                            text: [
-                              `สรุปผลกระทบด้านปริมาณ และด้านคุณภาพก๊าซ: `,
-                              {
-                                text:
-                                input_summary_gas ? input_summary_gas : '____________',
-                                decoration: input_summary_gas && 'underline',
-                              },
-                            ],
-                          },
-                        ],
-                        margin: [0, 0, 0, 5],
-                        alignment: 'justify',
-                      },
-                      {
-                        text: [
-                          // { text: `space`, opacity: 0 },
-                          {
-                            // text: `ข้อมูลเพิ่มเติม: ${input_more_info}`,
-                             text: [
-                              `ข้อมูลเพิ่มเติม: `,
-                              {
-                                text:
-                                input_more_info ? input_more_info : '____________',
-                                decoration: input_more_info && 'underline',
-                              },
-                            ],
-                          },
-                        ],
-                        margin: [0, 0, 0, 5],
-                        alignment: 'justify',
-                      },
-                    ],
-                    margin: [5, 5, 5, 5],
-                  },
-                ],
-              ],
-            },
-            layout: {
-              hLineWidth: () => 0.5,
-              vLineWidth: () => 0.5,
-            },
-            margin: [0, 0, 0, 0],
-          },
-
-          // ======== กรอบช่องเซ็นชื่อ =========
-          {
+            // ======== กรอบช่องเซ็นชื่อ =========
+            {
               table: {
                 widths: ['*', '*'],
                 body: [
@@ -30652,24 +30662,24 @@ export class EventService {
                         // https://app.clickup.com/t/86eugkjfb
                         fromSignature
                           ? {
-                              columns: [
-                                {
-                                  text: 'แจ้งโดย ',
-                                  width: 'auto',
-                                  alignment: 'right',
-                                },
-                                {
-                                  image: fromSignature, // base64 หรือ path
-                                  width: 50,
-                                  alignment: 'center',
-                                },
-                                { text: '', width: 'auto', alignment: 'left' },
-                              ],
-                              columnGap: 15, // ระยะห่างระหว่างวงเล็บกับภาพ
-                              margin: [0, 2, 0, 5], // ปรับระยะรอบภาพ
-                            }
+                            columns: [
+                              {
+                                text: 'แจ้งโดย ',
+                                width: 'auto',
+                                alignment: 'right',
+                              },
+                              {
+                                image: fromSignature, // base64 หรือ path
+                                width: 50,
+                                alignment: 'center',
+                              },
+                              { text: '', width: 'auto', alignment: 'left' },
+                            ],
+                            columnGap: 15, // ระยะห่างระหว่างวงเล็บกับภาพ
+                            margin: [0, 2, 0, 5], // ปรับระยะรอบภาพ
+                          }
                           : { text: `แจ้งโดย ` },
-                          { text: fromFullname ? `( ${fromFullname} )` : `(                                   )` },
+                        { text: fromFullname ? `( ${fromFullname} )` : `(                                   )` },
 
                         // { text: `แจ้งโดย ${fromFullname}` },
                         // fromSignature
@@ -30699,9 +30709,9 @@ export class EventService {
                       margin: [5, 5, 5, 5],
                     },
                     {
-                    stack: [
-                      toSignature && toFullname 
-                        ? {
+                      stack: [
+                        toSignature && toFullname
+                          ? {
                             columns: [
                               { text: 'รับทราบโดย ', width: 'auto', alignment: 'right' },
                               {
@@ -30714,32 +30724,32 @@ export class EventService {
                             columnGap: 5, // ระยะห่างระหว่างวงเล็บกับภาพ
                             margin: [0, 2, 0, 5], // ปรับระยะรอบภาพ
                           }
-                        : { text: `รับทราบโดย ` },
-                      { text: toFullname ? `( ${toFullname} )` : `(                                   )` },
+                          : { text: `รับทราบโดย ` },
+                        { text: toFullname ? `( ${toFullname} )` : `(                                   )` },
 
-                      // { text: `รับทราบโดย ${toFullname}` },
-                      // toSignature && toFullname 
-                      //   ? {
-                      //       columns: [
-                      //         { text: '(', width: 'auto', alignment: 'right' },
-                      //         {
-                      //           image: toSignature, // base64 หรือ path
-                      //           width: 50,
-                      //           alignment: 'center',
-                      //         },
-                      //         { text: ')', width: 'auto', alignment: 'left' },
-                      //       ],
-                      //       columnGap: 5, // ระยะห่างระหว่างวงเล็บกับภาพ
-                      //       margin: [0, 2, 0, 5], // ปรับระยะรอบภาพ
-                      //     }
-                      //   : { text: `(                                   )` },
-                      { text: `หน่วยงาน ${toFullname && toCompany || "________________"} (ผู้ใช้บริการ/คู่สัญญาของผู้ใช้บริการ)` },
-                      {
-                        text: `เวลา : ${toFullname && toDate.format('HH:mm') || "___"} น. วันที่/เดือน/ปี: ${toFullname && toDate.format('DD') || "___"} / ${toFullname && toDate.format('MM') || "___"} / ${toFullname && toDate.format('BB') || "___"}`,
-                      },
-                    ],
-                    margin: [5, 5, 5, 5],
-                  },
+                        // { text: `รับทราบโดย ${toFullname}` },
+                        // toSignature && toFullname 
+                        //   ? {
+                        //       columns: [
+                        //         { text: '(', width: 'auto', alignment: 'right' },
+                        //         {
+                        //           image: toSignature, // base64 หรือ path
+                        //           width: 50,
+                        //           alignment: 'center',
+                        //         },
+                        //         { text: ')', width: 'auto', alignment: 'left' },
+                        //       ],
+                        //       columnGap: 5, // ระยะห่างระหว่างวงเล็บกับภาพ
+                        //       margin: [0, 2, 0, 5], // ปรับระยะรอบภาพ
+                        //     }
+                        //   : { text: `(                                   )` },
+                        { text: `หน่วยงาน ${toFullname && toCompany || "________________"} (ผู้ใช้บริการ/คู่สัญญาของผู้ใช้บริการ)` },
+                        {
+                          text: `เวลา : ${toFullname && toDate.format('HH:mm') || "___"} น. วันที่/เดือน/ปี: ${toFullname && toDate.format('DD') || "___"} / ${toFullname && toDate.format('MM') || "___"} / ${toFullname && toDate.format('BB') || "___"}`,
+                        },
+                      ],
+                      margin: [5, 5, 5, 5],
+                    },
                   ],
                 ],
               },
@@ -30750,21 +30760,21 @@ export class EventService {
               margin: [0, 0, 0, 0],
             },
 
-          // ======== Footer ========
-          // {
-          //   text: 'F–บก.บกคด.–0023 ประกาศใช้ 05/11/2564 เวอร์ชั่น 4',
-          //   alignment: 'left',
-          //   fontSize: 10,
-          //   bold: true,
-          //   margin: [0, 10, 0, 0],
-          // },
-        ],
-        defaultStyle: {
-          font: 'THSarabun',
-          fontSize: 14,
-          // characterSpacing: -0.5,
-        },
-      };
+            // ======== Footer ========
+            // {
+            //   text: 'F–บก.บกคด.–0023 ประกาศใช้ 05/11/2564 เวอร์ชั่น 4',
+            //   alignment: 'left',
+            //   fontSize: 10,
+            //   bold: true,
+            //   margin: [0, 10, 0, 0],
+            // },
+          ],
+          defaultStyle: {
+            font: 'THSarabun',
+            fontSize: 14,
+            // characterSpacing: -0.5,
+          },
+        };
 
         const buffer = await this.getPdfBuffer(docDefinition); // แปลงเป็น Buffer แบบ Node.js
 
@@ -30994,8 +31004,26 @@ export class EventService {
   async doc41Find(id: any, userId: any, groupObj?: any, shipperIds?: any) {
     const group = shipperIds
       ? await this.prisma.group.findFirst({
+        where: {
+          id: shipperIds,
+        },
+        select: {
+          id: true,
+          user_type: {
+            select: {
+              id: true,
+            },
+          },
+        },
+      })
+      : userId
+        ? await this.prisma.group.findFirst({
           where: {
-            id: shipperIds,
+            account_manage: {
+              some: {
+                account_id: Number(userId),
+              },
+            },
           },
           select: {
             id: true,
@@ -31006,24 +31034,6 @@ export class EventService {
             },
           },
         })
-      : userId
-        ? await this.prisma.group.findFirst({
-            where: {
-              account_manage: {
-                some: {
-                  account_id: Number(userId),
-                },
-              },
-            },
-            select: {
-              id: true,
-              user_type: {
-                select: {
-                  id: true,
-                },
-              },
-            },
-          })
         : groupObj;
 
     const userTypeId = group?.user_type?.id;
@@ -31032,330 +31042,330 @@ export class EventService {
     const result =
       userTypeId === 3
         ? await this.prisma.event_document_emer.findFirst({
-            where: {
-              event_runnumber_emer_id: Number(id),
-              event_doc_master_id: 41,
-              ref_document: {
-                not: null,
-              },
-              group_id: Number(groupId),
+          where: {
+            event_runnumber_emer_id: Number(id),
+            event_doc_master_id: 41,
+            ref_document: {
+              not: null,
             },
-            include: {
-              event_runnumber_emer: {
-                include: {
-                  event_status: true,
-                },
-              },
-              event_doc_master: true,
-              event_doc_status: true,
-              group: true,
-              user_type: true,
-              create_by_account: {
-                select: {
-                  id: true,
-                  email: true,
-                  first_name: true,
-                  last_name: true,
-                  signature_base_64: true,
-                },
-              },
-              update_by_account: {
-                select: {
-                  id: true,
-                  email: true,
-                  first_name: true,
-                  last_name: true,
-                  signature_base_64: true,
-                },
-              },
-              event_document_emer_action: {
-                include: {
-                  event_doc_master: true,
-                  event_doc_status: true,
-                  group: true,
-                  user_type: true,
-                  create_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                      signature: true,
-                      signature_base_64: true,
-                    },
-                  },
-                  update_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                      signature: true,
-                      signature_base_64: true,
-                    },
-                  },
-                },
-                orderBy: {
-                  id: 'desc',
-                },
-              },
-              event_doc_gas_shipper_match_41: {
-                include: {
-                  event_doc_gas_shipper_41: {
-                    include: {
-                      event_document_emer: true,
-                      event_doc_gas_shipper_file_41: {
-                        include: {
-                          create_by_account: {
-                            select: {
-                              id: true,
-                              email: true,
-                              first_name: true,
-                              last_name: true,
-                            },
-                          },
-                          update_by_account: {
-                            select: {
-                              id: true,
-                              email: true,
-                              first_name: true,
-                              last_name: true,
-                            },
-                          },
-                        },
-                      },
-                    },
-                  },
-                  event_document_emer: true,
-                },
-              },
-              event_doc_gas_shipper_41: {
-                include: {
-                  event_doc_gas_shipper_match_41: {
-                    include: {
-                      event_doc_gas_shipper_41: {
-                        include: {
-                          event_document_emer: true,
-                          event_doc_gas_shipper_file_41: {
-                            include: {
-                              create_by_account: {
-                                select: {
-                                  id: true,
-                                  email: true,
-                                  first_name: true,
-                                  last_name: true,
-                                },
-                              },
-                              update_by_account: {
-                                select: {
-                                  id: true,
-                                  email: true,
-                                  first_name: true,
-                                  last_name: true,
-                                },
-                              },
-                            },
-                          },
-                        },
-                      },
-                    },
-                  },
-                  event_doc_gas_shipper_file_41: {
-                    include: {
-                      create_by_account: {
-                        select: {
-                          id: true,
-                          email: true,
-                          first_name: true,
-                          last_name: true,
-                        },
-                      },
-                      update_by_account: {
-                        select: {
-                          id: true,
-                          email: true,
-                          first_name: true,
-                          last_name: true,
-                        },
-                      },
-                    },
-                    orderBy: { id: 'desc' },
-                  },
-                },
+            group_id: Number(groupId),
+          },
+          include: {
+            event_runnumber_emer: {
+              include: {
+                event_status: true,
               },
             },
-          })
+            event_doc_master: true,
+            event_doc_status: true,
+            group: true,
+            user_type: true,
+            create_by_account: {
+              select: {
+                id: true,
+                email: true,
+                first_name: true,
+                last_name: true,
+                signature_base_64: true,
+              },
+            },
+            update_by_account: {
+              select: {
+                id: true,
+                email: true,
+                first_name: true,
+                last_name: true,
+                signature_base_64: true,
+              },
+            },
+            event_document_emer_action: {
+              include: {
+                event_doc_master: true,
+                event_doc_status: true,
+                group: true,
+                user_type: true,
+                create_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                    signature: true,
+                    signature_base_64: true,
+                  },
+                },
+                update_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                    signature: true,
+                    signature_base_64: true,
+                  },
+                },
+              },
+              orderBy: {
+                id: 'desc',
+              },
+            },
+            event_doc_gas_shipper_match_41: {
+              include: {
+                event_doc_gas_shipper_41: {
+                  include: {
+                    event_document_emer: true,
+                    event_doc_gas_shipper_file_41: {
+                      include: {
+                        create_by_account: {
+                          select: {
+                            id: true,
+                            email: true,
+                            first_name: true,
+                            last_name: true,
+                          },
+                        },
+                        update_by_account: {
+                          select: {
+                            id: true,
+                            email: true,
+                            first_name: true,
+                            last_name: true,
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+                event_document_emer: true,
+              },
+            },
+            event_doc_gas_shipper_41: {
+              include: {
+                event_doc_gas_shipper_match_41: {
+                  include: {
+                    event_doc_gas_shipper_41: {
+                      include: {
+                        event_document_emer: true,
+                        event_doc_gas_shipper_file_41: {
+                          include: {
+                            create_by_account: {
+                              select: {
+                                id: true,
+                                email: true,
+                                first_name: true,
+                                last_name: true,
+                              },
+                            },
+                            update_by_account: {
+                              select: {
+                                id: true,
+                                email: true,
+                                first_name: true,
+                                last_name: true,
+                              },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+                event_doc_gas_shipper_file_41: {
+                  include: {
+                    create_by_account: {
+                      select: {
+                        id: true,
+                        email: true,
+                        first_name: true,
+                        last_name: true,
+                      },
+                    },
+                    update_by_account: {
+                      select: {
+                        id: true,
+                        email: true,
+                        first_name: true,
+                        last_name: true,
+                      },
+                    },
+                  },
+                  orderBy: { id: 'desc' },
+                },
+              },
+            },
+          },
+        })
         : await this.prisma.event_document_emer.findFirst({
-            where: {
-              event_runnumber_emer_id: Number(id),
-              event_doc_master_id: 41,
-              ref_document: null,
-            },
-            include: {
-              event_runnumber_emer: {
-                include: {
-                  event_status: true,
-                  event_document_emer: {
-                    include: {
-                      event_doc_status: true,
-                      group: true,
-                      user_type: true,
-                    },
-                    where: {
-                      user_type: {
-                        id: 3,
-                      },
-                      event_doc_master_id: 6,
-                    },
+          where: {
+            event_runnumber_emer_id: Number(id),
+            event_doc_master_id: 41,
+            ref_document: null,
+          },
+          include: {
+            event_runnumber_emer: {
+              include: {
+                event_status: true,
+                event_document_emer: {
+                  include: {
+                    event_doc_status: true,
+                    group: true,
+                    user_type: true,
                   },
-                },
-              },
-              event_doc_master: true,
-              event_doc_status: true,
-              event_document_emer_cc_email: true,
-              event_document_emer_email_group_for_event: {
-                include: {
-                  edit_email_group_for_event: true,
-                },
-              },
-              group: true,
-              user_type: true,
-              create_by_account: {
-                select: {
-                  id: true,
-                  email: true,
-                  first_name: true,
-                  last_name: true,
-                  signature_base_64: true,
-                },
-              },
-              update_by_account: {
-                select: {
-                  id: true,
-                  email: true,
-                  first_name: true,
-                  last_name: true,
-                  signature_base_64: true,
-                },
-              },
-              event_doc_gas_shipper_match_41: {
-                include: {
-                  event_doc_gas_shipper_41: {
-                    include: {
-                      event_document_emer: true,
-                      event_doc_gas_shipper_file_41: {
-                        include: {
-                          create_by_account: {
-                            select: {
-                              id: true,
-                              email: true,
-                              first_name: true,
-                              last_name: true,
-                            },
-                          },
-                          update_by_account: {
-                            select: {
-                              id: true,
-                              email: true,
-                              first_name: true,
-                              last_name: true,
-                            },
-                          },
-                        },
-                      },
+                  where: {
+                    user_type: {
+                      id: 3,
                     },
+                    event_doc_master_id: 6,
                   },
-                  event_document_emer: true,
-                },
-              },
-              event_doc_gas_shipper_41: {
-                include: {
-                  event_doc_gas_shipper_match_41: {
-                    include: {
-                      event_doc_gas_shipper_41: {
-                        include: {
-                          event_document_emer: true,
-                          event_doc_gas_shipper_file_41: {
-                            include: {
-                              create_by_account: {
-                                select: {
-                                  id: true,
-                                  email: true,
-                                  first_name: true,
-                                  last_name: true,
-                                },
-                              },
-                              update_by_account: {
-                                select: {
-                                  id: true,
-                                  email: true,
-                                  first_name: true,
-                                  last_name: true,
-                                },
-                              },
-                            },
-                          },
-                        },
-                      },
-                      event_document_emer: true,
-                    },
-                  },
-                  event_doc_gas_shipper_file_41: {
-                    include: {
-                      create_by_account: {
-                        select: {
-                          id: true,
-                          email: true,
-                          first_name: true,
-                          last_name: true,
-                        },
-                      },
-                      update_by_account: {
-                        select: {
-                          id: true,
-                          email: true,
-                          first_name: true,
-                          last_name: true,
-                        },
-                      },
-                    },
-                    orderBy: { id: 'desc' },
-                  },
-                },
-              },
-              event_document_emer_action: {
-                include: {
-                  event_doc_master: true,
-                  event_doc_status: true,
-                  group: true,
-                  user_type: true,
-                  create_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                      signature: true,
-                      signature_base_64: true,
-                    },
-                  },
-                  update_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                      signature: true,
-                      signature_base_64: true,
-                    },
-                  },
-                },
-                orderBy: {
-                  id: 'desc',
                 },
               },
             },
-          });
+            event_doc_master: true,
+            event_doc_status: true,
+            event_document_emer_cc_email: true,
+            event_document_emer_email_group_for_event: {
+              include: {
+                edit_email_group_for_event: true,
+              },
+            },
+            group: true,
+            user_type: true,
+            create_by_account: {
+              select: {
+                id: true,
+                email: true,
+                first_name: true,
+                last_name: true,
+                signature_base_64: true,
+              },
+            },
+            update_by_account: {
+              select: {
+                id: true,
+                email: true,
+                first_name: true,
+                last_name: true,
+                signature_base_64: true,
+              },
+            },
+            event_doc_gas_shipper_match_41: {
+              include: {
+                event_doc_gas_shipper_41: {
+                  include: {
+                    event_document_emer: true,
+                    event_doc_gas_shipper_file_41: {
+                      include: {
+                        create_by_account: {
+                          select: {
+                            id: true,
+                            email: true,
+                            first_name: true,
+                            last_name: true,
+                          },
+                        },
+                        update_by_account: {
+                          select: {
+                            id: true,
+                            email: true,
+                            first_name: true,
+                            last_name: true,
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+                event_document_emer: true,
+              },
+            },
+            event_doc_gas_shipper_41: {
+              include: {
+                event_doc_gas_shipper_match_41: {
+                  include: {
+                    event_doc_gas_shipper_41: {
+                      include: {
+                        event_document_emer: true,
+                        event_doc_gas_shipper_file_41: {
+                          include: {
+                            create_by_account: {
+                              select: {
+                                id: true,
+                                email: true,
+                                first_name: true,
+                                last_name: true,
+                              },
+                            },
+                            update_by_account: {
+                              select: {
+                                id: true,
+                                email: true,
+                                first_name: true,
+                                last_name: true,
+                              },
+                            },
+                          },
+                        },
+                      },
+                    },
+                    event_document_emer: true,
+                  },
+                },
+                event_doc_gas_shipper_file_41: {
+                  include: {
+                    create_by_account: {
+                      select: {
+                        id: true,
+                        email: true,
+                        first_name: true,
+                        last_name: true,
+                      },
+                    },
+                    update_by_account: {
+                      select: {
+                        id: true,
+                        email: true,
+                        first_name: true,
+                        last_name: true,
+                      },
+                    },
+                  },
+                  orderBy: { id: 'desc' },
+                },
+              },
+            },
+            event_document_emer_action: {
+              include: {
+                event_doc_master: true,
+                event_doc_status: true,
+                group: true,
+                user_type: true,
+                create_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                    signature: true,
+                    signature_base_64: true,
+                  },
+                },
+                update_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                    signature: true,
+                    signature_base_64: true,
+                  },
+                },
+              },
+              orderBy: {
+                id: 'desc',
+              },
+            },
+          },
+        });
     console.log('result : ', result);
     return result;
   }
@@ -31481,72 +31491,72 @@ export class EventService {
           event_date: getTodayNowAdd7(event_date).toDate(),
           ...(!!generate && !!id_documents
             ? {
-                event_doc_status_id: 2,
+              event_doc_status_id: 2,
 
-                doc_41_input_date_time_of_the_incident:
-                  doc_41_input_date_time_of_the_incident ?? null,
-                doc_41_input_incident: doc_41_input_incident ?? null,
-                doc_41_input_detail_incident:
-                  doc_41_input_detail_incident ?? null,
-                doc_41_input_expected_day_time:
-                  doc_41_input_expected_day_time ?? null,
-                doc_41_input_note: doc_41_input_note ?? null,
+              doc_41_input_date_time_of_the_incident:
+                doc_41_input_date_time_of_the_incident ?? null,
+              doc_41_input_incident: doc_41_input_incident ?? null,
+              doc_41_input_detail_incident:
+                doc_41_input_detail_incident ?? null,
+              doc_41_input_expected_day_time:
+                doc_41_input_expected_day_time ?? null,
+              doc_41_input_note: doc_41_input_note ?? null,
 
-                longdo_dict: longdo_dict ?? null,
+              longdo_dict: longdo_dict ?? null,
 
-                update_date: getTodayNowAdd7().toDate(),
-                update_date_num: getTodayNowAdd7().unix(),
-                update_by: Number(userId),
-              }
+              update_date: getTodayNowAdd7().toDate(),
+              update_date_num: getTodayNowAdd7().unix(),
+              update_by: Number(userId),
+            }
             : {
-                version_text: `V.${generate ? version - 1 : version}`,
-                seq: generate ? version - 1 : version,
+              version_text: `V.${generate ? version - 1 : version}`,
+              seq: generate ? version - 1 : version,
 
-                event_runnumber_emer: {
-                  connect: {
-                    id: createEventRunnumber?.id,
-                  },
+              event_runnumber_emer: {
+                connect: {
+                  id: createEventRunnumber?.id,
                 },
-                event_doc_status: {
-                  connect: {
-                    id: generated ? 6 : 2,
-                  },
+              },
+              event_doc_status: {
+                connect: {
+                  id: generated ? 6 : 2,
                 },
-                group: {
-                  connect: {
-                    id: groupId,
-                  },
+              },
+              group: {
+                connect: {
+                  id: groupId,
                 },
-                user_type: {
-                  connect: {
-                    id: userTypeId,
-                  },
+              },
+              user_type: {
+                connect: {
+                  id: userTypeId,
                 },
-                event_doc_master: {
-                  connect: {
-                    id: 41,
-                  },
+              },
+              event_doc_master: {
+                connect: {
+                  id: 41,
                 },
+              },
 
-                doc_41_input_date_time_of_the_incident:
-                  doc_41_input_date_time_of_the_incident ?? null,
-                doc_41_input_incident: doc_41_input_incident ?? null,
-                doc_41_input_detail_incident:
-                  doc_41_input_detail_incident ?? null,
-                doc_41_input_expected_day_time:
-                  doc_41_input_expected_day_time ?? null,
-                doc_41_input_note: doc_41_input_note ?? null,
+              doc_41_input_date_time_of_the_incident:
+                doc_41_input_date_time_of_the_incident ?? null,
+              doc_41_input_incident: doc_41_input_incident ?? null,
+              doc_41_input_detail_incident:
+                doc_41_input_detail_incident ?? null,
+              doc_41_input_expected_day_time:
+                doc_41_input_expected_day_time ?? null,
+              doc_41_input_note: doc_41_input_note ?? null,
 
-                longdo_dict: longdo_dict ?? null,
+              longdo_dict: longdo_dict ?? null,
 
-                create_date: getTodayNowAdd7().toDate(),
-                create_date_num: getTodayNowAdd7().unix(),
-                create_by_account: {
-                  connect: {
-                    id: Number(userId),
-                  },
+              create_date: getTodayNowAdd7().toDate(),
+              create_date_num: getTodayNowAdd7().unix(),
+              create_by_account: {
+                connect: {
+                  id: Number(userId),
                 },
-              }),
+              },
+            }),
         };
 
         if (!!id_runnumber && !!generate) {
@@ -31559,54 +31569,54 @@ export class EventService {
         const createEventDocument =
           !!id_runnumber && !!generate
             ? await prisma.event_document_emer.findFirst({
-                where: { id: Number(id_documents) },
-                include: {
-                  event_doc_gas_shipper_41: true,
-                  event_doc_status: true,
-                  group: true,
-                  user_type: true,
-                  create_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                    },
-                  },
-                  update_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                    },
+              where: { id: Number(id_documents) },
+              include: {
+                event_doc_gas_shipper_41: true,
+                event_doc_status: true,
+                group: true,
+                user_type: true,
+                create_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
                   },
                 },
-              })
+                update_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                  },
+                },
+              },
+            })
             : await prisma.event_document_emer.create({
-                data: tsoCreate,
-                include: {
-                  event_doc_status: true,
-                  group: true,
-                  user_type: true,
-                  create_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                    },
-                  },
-                  update_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                    },
+              data: tsoCreate,
+              include: {
+                event_doc_status: true,
+                group: true,
+                user_type: true,
+                create_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
                   },
                 },
-              });
+                update_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                  },
+                },
+              },
+            });
         console.log('createEventDocument : ', createEventDocument);
 
         if (!!id_runnumber && !!generate) {
@@ -32132,8 +32142,26 @@ export class EventService {
 
     const group = shipperIds
       ? await this.prisma.group.findFirst({
+        where: {
+          id: shipperIds,
+        },
+        select: {
+          id: true,
+          user_type: {
+            select: {
+              id: true,
+            },
+          },
+        },
+      })
+      : userId
+        ? await this.prisma.group.findFirst({
           where: {
-            id: shipperIds,
+            account_manage: {
+              some: {
+                account_id: Number(userId),
+              },
+            },
           },
           select: {
             id: true,
@@ -32144,24 +32172,6 @@ export class EventService {
             },
           },
         })
-      : userId
-        ? await this.prisma.group.findFirst({
-            where: {
-              account_manage: {
-                some: {
-                  account_id: Number(userId),
-                },
-              },
-            },
-            select: {
-              id: true,
-              user_type: {
-                select: {
-                  id: true,
-                },
-              },
-            },
-          })
         : groupObj;
     console.log('group : ', group);
     const userTypeId = group?.user_type?.id;
@@ -32172,249 +32182,249 @@ export class EventService {
     const result =
       userTypeId === 3
         ? await this.prisma.event_document_emer.findMany({
-            where: {
-              event_runnumber_emer_id: Number(id),
-              event_doc_master_id: 41,
-              ref_document: {
-                not: null,
-              },
-              group_id: Number(groupId),
+          where: {
+            event_runnumber_emer_id: Number(id),
+            event_doc_master_id: 41,
+            ref_document: {
+              not: null,
             },
-            include: {
-              event_runnumber_emer: {
-                include: {
-                  event_status: true,
-                },
+            group_id: Number(groupId),
+          },
+          include: {
+            event_runnumber_emer: {
+              include: {
+                event_status: true,
               },
-              event_doc_master: true,
-              event_doc_status: true,
-              group: true,
-              user_type: true,
-              create_by_account: {
-                select: {
-                  id: true,
-                  email: true,
-                  first_name: true,
-                  last_name: true,
-                  signature_base_64: true,
-                },
+            },
+            event_doc_master: true,
+            event_doc_status: true,
+            group: true,
+            user_type: true,
+            create_by_account: {
+              select: {
+                id: true,
+                email: true,
+                first_name: true,
+                last_name: true,
+                signature_base_64: true,
               },
-              update_by_account: {
-                select: {
-                  id: true,
-                  email: true,
-                  first_name: true,
-                  last_name: true,
-                  signature_base_64: true,
-                },
+            },
+            update_by_account: {
+              select: {
+                id: true,
+                email: true,
+                first_name: true,
+                last_name: true,
+                signature_base_64: true,
               },
-              event_document_emer_file: {
-                include: {
-                  create_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                    },
-                  },
-                  update_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                    },
+            },
+            event_document_emer_file: {
+              include: {
+                create_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
                   },
                 },
-                orderBy: { id: 'desc' },
-              },
-              event_document_emer_file_pdf: {
-                include: {
-                  create_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                    },
-                  },
-                  update_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                    },
+                update_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
                   },
                 },
               },
-              event_document_emer_action: {
-                include: {
-                  event_doc_master: true,
-                  event_doc_status: true,
-                  group: true,
-                  user_type: true,
-                  create_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                      signature: true,
-                      signature_base_64: true,
-                    },
-                  },
-                  update_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                      signature: true,
-                      signature_base_64: true,
-                    },
+              orderBy: { id: 'desc' },
+            },
+            event_document_emer_file_pdf: {
+              include: {
+                create_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
                   },
                 },
-                orderBy: {
-                  id: 'desc',
+                update_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                  },
                 },
               },
             },
-            orderBy: {
-              id: 'desc',
+            event_document_emer_action: {
+              include: {
+                event_doc_master: true,
+                event_doc_status: true,
+                group: true,
+                user_type: true,
+                create_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                    signature: true,
+                    signature_base_64: true,
+                  },
+                },
+                update_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                    signature: true,
+                    signature_base_64: true,
+                  },
+                },
+              },
+              orderBy: {
+                id: 'desc',
+              },
             },
-          })
+          },
+          orderBy: {
+            id: 'desc',
+          },
+        })
         : await this.prisma.event_document_emer.findMany({
-            where: {
-              event_runnumber_emer_id: Number(id),
-              event_doc_master_id: 41,
-              ref_document: null,
-            },
-            include: {
-              event_runnumber_emer: {
-                include: {
-                  event_status: true,
-                  event_document_emer: {
-                    include: {
-                      event_doc_status: true,
-                      group: true,
-                      user_type: true,
-                    },
-                    where: {
-                      user_type: {
-                        id: 3,
-                      },
-                      event_doc_master_id: 41,
-                    },
+          where: {
+            event_runnumber_emer_id: Number(id),
+            event_doc_master_id: 41,
+            ref_document: null,
+          },
+          include: {
+            event_runnumber_emer: {
+              include: {
+                event_status: true,
+                event_document_emer: {
+                  include: {
+                    event_doc_status: true,
+                    group: true,
+                    user_type: true,
                   },
-                },
-              },
-              event_doc_master: true,
-              event_doc_status: true,
-              event_document_emer_cc_email: true,
-              event_document_emer_email_group_for_event: {
-                include: {
-                  edit_email_group_for_event: true,
-                },
-              },
-              group: true,
-              user_type: true,
-              create_by_account: {
-                select: {
-                  id: true,
-                  email: true,
-                  first_name: true,
-                  last_name: true,
-                  signature_base_64: true,
-                },
-              },
-              update_by_account: {
-                select: {
-                  id: true,
-                  email: true,
-                  first_name: true,
-                  last_name: true,
-                  signature_base_64: true,
-                },
-              },
-              event_document_emer_file: {
-                include: {
-                  create_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
+                  where: {
+                    user_type: {
+                      id: 3,
                     },
+                    event_doc_master_id: 41,
                   },
-                  update_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                    },
-                  },
-                },
-                orderBy: { id: 'desc' },
-              },
-              event_document_emer_file_pdf: {
-                include: {
-                  create_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                    },
-                  },
-                  update_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                    },
-                  },
-                },
-              },
-              event_document_emer_action: {
-                include: {
-                  event_doc_master: true,
-                  event_doc_status: true,
-                  group: true,
-                  user_type: true,
-                  create_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                      signature: true,
-                      signature_base_64: true,
-                    },
-                  },
-                  update_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                      signature: true,
-                      signature_base_64: true,
-                    },
-                  },
-                },
-                orderBy: {
-                  id: 'desc',
                 },
               },
             },
-            orderBy: {
-              id: 'desc',
+            event_doc_master: true,
+            event_doc_status: true,
+            event_document_emer_cc_email: true,
+            event_document_emer_email_group_for_event: {
+              include: {
+                edit_email_group_for_event: true,
+              },
             },
-          });
+            group: true,
+            user_type: true,
+            create_by_account: {
+              select: {
+                id: true,
+                email: true,
+                first_name: true,
+                last_name: true,
+                signature_base_64: true,
+              },
+            },
+            update_by_account: {
+              select: {
+                id: true,
+                email: true,
+                first_name: true,
+                last_name: true,
+                signature_base_64: true,
+              },
+            },
+            event_document_emer_file: {
+              include: {
+                create_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                  },
+                },
+                update_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                  },
+                },
+              },
+              orderBy: { id: 'desc' },
+            },
+            event_document_emer_file_pdf: {
+              include: {
+                create_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                  },
+                },
+                update_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                  },
+                },
+              },
+            },
+            event_document_emer_action: {
+              include: {
+                event_doc_master: true,
+                event_doc_status: true,
+                group: true,
+                user_type: true,
+                create_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                    signature: true,
+                    signature_base_64: true,
+                  },
+                },
+                update_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                    signature: true,
+                    signature_base_64: true,
+                  },
+                },
+              },
+              orderBy: {
+                id: 'desc',
+              },
+            },
+          },
+          orderBy: {
+            id: 'desc',
+          },
+        });
     console.log('result : ', result);
     return result;
   }
@@ -32425,8 +32435,26 @@ export class EventService {
 
     const group = shipperIds
       ? await this.prisma.group.findFirst({
+        where: {
+          id: shipperIds,
+        },
+        select: {
+          id: true,
+          user_type: {
+            select: {
+              id: true,
+            },
+          },
+        },
+      })
+      : userId
+        ? await this.prisma.group.findFirst({
           where: {
-            id: shipperIds,
+            account_manage: {
+              some: {
+                account_id: Number(userId),
+              },
+            },
           },
           select: {
             id: true,
@@ -32437,24 +32465,6 @@ export class EventService {
             },
           },
         })
-      : userId
-        ? await this.prisma.group.findFirst({
-            where: {
-              account_manage: {
-                some: {
-                  account_id: Number(userId),
-                },
-              },
-            },
-            select: {
-              id: true,
-              user_type: {
-                select: {
-                  id: true,
-                },
-              },
-            },
-          })
         : groupObj;
     console.log('group : ', group);
     const userTypeId = group?.user_type?.id;
@@ -32465,427 +32475,427 @@ export class EventService {
     const result =
       userTypeId === 3
         ? await this.prisma.event_document_emer.findFirst({
-            where: {
-              id: Number(id),
+          where: {
+            id: Number(id),
+          },
+          include: {
+            event_runnumber_emer: {
+              include: {
+                event_status: true,
+              },
             },
-            include: {
-              event_runnumber_emer: {
-                include: {
-                  event_status: true,
-                },
+            event_doc_master: true,
+            event_doc_status: true,
+            group: true,
+            user_type: true,
+            create_by_account: {
+              select: {
+                id: true,
+                email: true,
+                first_name: true,
+                last_name: true,
+                signature_base_64: true,
               },
-              event_doc_master: true,
-              event_doc_status: true,
-              group: true,
-              user_type: true,
-              create_by_account: {
-                select: {
-                  id: true,
-                  email: true,
-                  first_name: true,
-                  last_name: true,
-                  signature_base_64: true,
-                },
+            },
+            update_by_account: {
+              select: {
+                id: true,
+                email: true,
+                first_name: true,
+                last_name: true,
+                signature_base_64: true,
               },
-              update_by_account: {
-                select: {
-                  id: true,
-                  email: true,
-                  first_name: true,
-                  last_name: true,
-                  signature_base_64: true,
-                },
-              },
-              event_document_emer_file: {
-                include: {
-                  create_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                    },
-                  },
-                  update_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                    },
+            },
+            event_document_emer_file: {
+              include: {
+                create_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
                   },
                 },
-                orderBy: { id: 'desc' },
-              },
-              event_document_emer_file_pdf: {
-                include: {
-                  create_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                    },
-                  },
-                  update_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                    },
+                update_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
                   },
                 },
               },
-              event_document_emer_action: {
-                include: {
-                  event_doc_master: true,
-                  event_doc_status: true,
-                  group: true,
-                  user_type: true,
-                  create_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                      signature: true,
-                      signature_base_64: true,
-                    },
-                  },
-                  update_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                      signature: true,
-                      signature_base_64: true,
-                    },
+              orderBy: { id: 'desc' },
+            },
+            event_document_emer_file_pdf: {
+              include: {
+                create_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
                   },
                 },
-                orderBy: {
-                  id: 'desc',
-                },
-              },
-              event_doc_gas_shipper_match_41: {
-                where: {
-                  event_document_emer_id: {
-                    not: null,
-                  },
-                },
-                include: {
-                  event_doc_gas_shipper_41: {
-                    include: {
-                      event_document_emer: true,
-                      event_doc_gas_shipper_file_41: {
-                        include: {
-                          create_by_account: {
-                            select: {
-                              id: true,
-                              email: true,
-                              first_name: true,
-                              last_name: true,
-                            },
-                          },
-                          update_by_account: {
-                            select: {
-                              id: true,
-                              email: true,
-                              first_name: true,
-                              last_name: true,
-                            },
-                          },
-                        },
-                      },
-                    },
-                  },
-                  event_document_emer: true,
-                },
-              },
-              event_doc_gas_shipper_41: {
-                include: {
-                  event_doc_gas_shipper_match_41: {
-                    where: {
-                      event_document_emer_id: {
-                        not: null,
-                      },
-                    },
-                    include: {
-                      event_document_emer: true,
-                      event_doc_gas_shipper_41: {
-                        include: {
-                          event_document_emer: true,
-                          event_doc_gas_shipper_file_41: {
-                            include: {
-                              create_by_account: {
-                                select: {
-                                  id: true,
-                                  email: true,
-                                  first_name: true,
-                                  last_name: true,
-                                },
-                              },
-                              update_by_account: {
-                                select: {
-                                  id: true,
-                                  email: true,
-                                  first_name: true,
-                                  last_name: true,
-                                },
-                              },
-                            },
-                          },
-                        },
-                      },
-                    },
-                  },
-                  event_doc_gas_shipper_file_41: {
-                    include: {
-                      create_by_account: {
-                        select: {
-                          id: true,
-                          email: true,
-                          first_name: true,
-                          last_name: true,
-                        },
-                      },
-                      update_by_account: {
-                        select: {
-                          id: true,
-                          email: true,
-                          first_name: true,
-                          last_name: true,
-                        },
-                      },
-                    },
-                    orderBy: { id: 'desc' },
+                update_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
                   },
                 },
               },
             },
-          })
+            event_document_emer_action: {
+              include: {
+                event_doc_master: true,
+                event_doc_status: true,
+                group: true,
+                user_type: true,
+                create_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                    signature: true,
+                    signature_base_64: true,
+                  },
+                },
+                update_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                    signature: true,
+                    signature_base_64: true,
+                  },
+                },
+              },
+              orderBy: {
+                id: 'desc',
+              },
+            },
+            event_doc_gas_shipper_match_41: {
+              where: {
+                event_document_emer_id: {
+                  not: null,
+                },
+              },
+              include: {
+                event_doc_gas_shipper_41: {
+                  include: {
+                    event_document_emer: true,
+                    event_doc_gas_shipper_file_41: {
+                      include: {
+                        create_by_account: {
+                          select: {
+                            id: true,
+                            email: true,
+                            first_name: true,
+                            last_name: true,
+                          },
+                        },
+                        update_by_account: {
+                          select: {
+                            id: true,
+                            email: true,
+                            first_name: true,
+                            last_name: true,
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+                event_document_emer: true,
+              },
+            },
+            event_doc_gas_shipper_41: {
+              include: {
+                event_doc_gas_shipper_match_41: {
+                  where: {
+                    event_document_emer_id: {
+                      not: null,
+                    },
+                  },
+                  include: {
+                    event_document_emer: true,
+                    event_doc_gas_shipper_41: {
+                      include: {
+                        event_document_emer: true,
+                        event_doc_gas_shipper_file_41: {
+                          include: {
+                            create_by_account: {
+                              select: {
+                                id: true,
+                                email: true,
+                                first_name: true,
+                                last_name: true,
+                              },
+                            },
+                            update_by_account: {
+                              select: {
+                                id: true,
+                                email: true,
+                                first_name: true,
+                                last_name: true,
+                              },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+                event_doc_gas_shipper_file_41: {
+                  include: {
+                    create_by_account: {
+                      select: {
+                        id: true,
+                        email: true,
+                        first_name: true,
+                        last_name: true,
+                      },
+                    },
+                    update_by_account: {
+                      select: {
+                        id: true,
+                        email: true,
+                        first_name: true,
+                        last_name: true,
+                      },
+                    },
+                  },
+                  orderBy: { id: 'desc' },
+                },
+              },
+            },
+          },
+        })
         : await this.prisma.event_document_emer.findFirst({
-            where: {
-              id: Number(id),
-            },
-            include: {
-              event_runnumber_emer: {
-                include: {
-                  event_status: true,
-                  event_document_emer: {
-                    include: {
-                      event_doc_status: true,
-                      group: true,
-                      user_type: true,
-                    },
-                    where: {
-                      user_type: {
-                        id: 3,
-                      },
-                      event_doc_master_id: 41,
-                      ref_document: Number(id),
-                    },
+          where: {
+            id: Number(id),
+          },
+          include: {
+            event_runnumber_emer: {
+              include: {
+                event_status: true,
+                event_document_emer: {
+                  include: {
+                    event_doc_status: true,
+                    group: true,
+                    user_type: true,
                   },
-                },
-              },
-              event_doc_master: true,
-              event_doc_status: true,
-              event_document_emer_cc_email: true,
-              event_document_emer_email_group_for_event: {
-                include: {
-                  edit_email_group_for_event: true,
-                },
-              },
-              group: true,
-              user_type: true,
-              create_by_account: {
-                select: {
-                  id: true,
-                  email: true,
-                  first_name: true,
-                  last_name: true,
-                  signature_base_64: true,
-                },
-              },
-              update_by_account: {
-                select: {
-                  id: true,
-                  email: true,
-                  first_name: true,
-                  last_name: true,
-                  signature_base_64: true,
-                },
-              },
-              event_document_emer_file: {
-                include: {
-                  create_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
+                  where: {
+                    user_type: {
+                      id: 3,
                     },
-                  },
-                  update_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                    },
-                  },
-                },
-                orderBy: { id: 'desc' },
-              },
-              event_document_emer_file_pdf: {
-                include: {
-                  create_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                    },
-                  },
-                  update_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                    },
-                  },
-                },
-              },
-              event_document_emer_action: {
-                include: {
-                  event_doc_master: true,
-                  event_doc_status: true,
-                  group: true,
-                  user_type: true,
-                  create_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                      signature: true,
-                      signature_base_64: true,
-                    },
-                  },
-                  update_by_account: {
-                    select: {
-                      id: true,
-                      email: true,
-                      first_name: true,
-                      last_name: true,
-                      signature: true,
-                      signature_base_64: true,
-                    },
-                  },
-                },
-                orderBy: {
-                  id: 'desc',
-                },
-              },
-              event_doc_gas_shipper_match_41: {
-                include: {
-                  event_doc_gas_shipper_41: {
-                    include: {
-                      event_document_emer: true,
-                      event_doc_gas_shipper_file_41: {
-                        include: {
-                          create_by_account: {
-                            select: {
-                              id: true,
-                              email: true,
-                              first_name: true,
-                              last_name: true,
-                            },
-                          },
-                          update_by_account: {
-                            select: {
-                              id: true,
-                              email: true,
-                              first_name: true,
-                              last_name: true,
-                            },
-                          },
-                        },
-                      },
-                    },
-                  },
-                  event_document_emer: true,
-                },
-                where: {
-                  event_document_emer_id: {
-                    not: null,
-                  },
-                },
-              },
-              event_doc_gas_shipper_41: {
-                include: {
-                  event_doc_gas_shipper_match_41: {
-                    where: {
-                      event_document_emer_id: {
-                        not: null,
-                      },
-                    },
-                    include: {
-                      event_document_emer: true,
-                      event_doc_gas_shipper_41: {
-                        include: {
-                          event_document_emer: true,
-                          event_doc_gas_shipper_file_41: {
-                            include: {
-                              create_by_account: {
-                                select: {
-                                  id: true,
-                                  email: true,
-                                  first_name: true,
-                                  last_name: true,
-                                },
-                              },
-                              update_by_account: {
-                                select: {
-                                  id: true,
-                                  email: true,
-                                  first_name: true,
-                                  last_name: true,
-                                },
-                              },
-                            },
-                          },
-                        },
-                      },
-                    },
-                  },
-                  event_doc_gas_shipper_file_41: {
-                    include: {
-                      create_by_account: {
-                        select: {
-                          id: true,
-                          email: true,
-                          first_name: true,
-                          last_name: true,
-                        },
-                      },
-                      update_by_account: {
-                        select: {
-                          id: true,
-                          email: true,
-                          first_name: true,
-                          last_name: true,
-                        },
-                      },
-                    },
-                    orderBy: { id: 'desc' },
+                    event_doc_master_id: 41,
+                    ref_document: Number(id),
                   },
                 },
               },
             },
-          });
+            event_doc_master: true,
+            event_doc_status: true,
+            event_document_emer_cc_email: true,
+            event_document_emer_email_group_for_event: {
+              include: {
+                edit_email_group_for_event: true,
+              },
+            },
+            group: true,
+            user_type: true,
+            create_by_account: {
+              select: {
+                id: true,
+                email: true,
+                first_name: true,
+                last_name: true,
+                signature_base_64: true,
+              },
+            },
+            update_by_account: {
+              select: {
+                id: true,
+                email: true,
+                first_name: true,
+                last_name: true,
+                signature_base_64: true,
+              },
+            },
+            event_document_emer_file: {
+              include: {
+                create_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                  },
+                },
+                update_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                  },
+                },
+              },
+              orderBy: { id: 'desc' },
+            },
+            event_document_emer_file_pdf: {
+              include: {
+                create_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                  },
+                },
+                update_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                  },
+                },
+              },
+            },
+            event_document_emer_action: {
+              include: {
+                event_doc_master: true,
+                event_doc_status: true,
+                group: true,
+                user_type: true,
+                create_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                    signature: true,
+                    signature_base_64: true,
+                  },
+                },
+                update_by_account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    first_name: true,
+                    last_name: true,
+                    signature: true,
+                    signature_base_64: true,
+                  },
+                },
+              },
+              orderBy: {
+                id: 'desc',
+              },
+            },
+            event_doc_gas_shipper_match_41: {
+              include: {
+                event_doc_gas_shipper_41: {
+                  include: {
+                    event_document_emer: true,
+                    event_doc_gas_shipper_file_41: {
+                      include: {
+                        create_by_account: {
+                          select: {
+                            id: true,
+                            email: true,
+                            first_name: true,
+                            last_name: true,
+                          },
+                        },
+                        update_by_account: {
+                          select: {
+                            id: true,
+                            email: true,
+                            first_name: true,
+                            last_name: true,
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+                event_document_emer: true,
+              },
+              where: {
+                event_document_emer_id: {
+                  not: null,
+                },
+              },
+            },
+            event_doc_gas_shipper_41: {
+              include: {
+                event_doc_gas_shipper_match_41: {
+                  where: {
+                    event_document_emer_id: {
+                      not: null,
+                    },
+                  },
+                  include: {
+                    event_document_emer: true,
+                    event_doc_gas_shipper_41: {
+                      include: {
+                        event_document_emer: true,
+                        event_doc_gas_shipper_file_41: {
+                          include: {
+                            create_by_account: {
+                              select: {
+                                id: true,
+                                email: true,
+                                first_name: true,
+                                last_name: true,
+                              },
+                            },
+                            update_by_account: {
+                              select: {
+                                id: true,
+                                email: true,
+                                first_name: true,
+                                last_name: true,
+                              },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+                event_doc_gas_shipper_file_41: {
+                  include: {
+                    create_by_account: {
+                      select: {
+                        id: true,
+                        email: true,
+                        first_name: true,
+                        last_name: true,
+                      },
+                    },
+                    update_by_account: {
+                      select: {
+                        id: true,
+                        email: true,
+                        first_name: true,
+                        last_name: true,
+                      },
+                    },
+                  },
+                  orderBy: { id: 'desc' },
+                },
+              },
+            },
+          },
+        });
     console.log('result : ', result);
     return result;
   }
@@ -33175,15 +33185,15 @@ export class EventService {
       where: {
         ...(shipperIds
           ? {
-              id: shipperIds,
-            }
+            id: shipperIds,
+          }
           : {
-              account_manage: {
-                some: {
-                  account_id: Number(userId),
-                },
+            account_manage: {
+              some: {
+                account_id: Number(userId),
               },
-            }),
+            },
+          }),
       },
       select: {
         id: true,
@@ -33218,14 +33228,14 @@ export class EventService {
       console.log('toAction : ', toAction);
       const toFullname =
         toAction?.event_doc_status_id !== 1 &&
-        toAction?.event_doc_status_id !== 2 &&
-        toAction?.create_by_account?.first_name &&
-        toAction?.create_by_account?.last_name
+          toAction?.event_doc_status_id !== 2 &&
+          toAction?.create_by_account?.first_name &&
+          toAction?.create_by_account?.last_name
           ? `${toAction?.create_by_account?.first_name} ${toAction?.create_by_account?.last_name}`
           : '';
 
       const toCompany =
-        (toAction?.group?.company_name && toAction?.group?.company_name) ||
+        (toAction?.group?.company_name) ||
         '';
       const toDate = dayjs(toAction?.create_date).locale('th');
       const toSignature =
@@ -33237,7 +33247,7 @@ export class EventService {
       // ----
       const fromFullname =
         rdoc1Find?.create_by_account?.first_name &&
-        rdoc1Find?.create_by_account?.last_name
+          rdoc1Find?.create_by_account?.last_name
           ? `${rdoc1Find?.create_by_account?.first_name} ${rdoc1Find?.create_by_account?.last_name}`
           : '';
       const fromCompany = 'บริษัท ปตท.จำกัด (มหาชน)';
@@ -33639,10 +33649,11 @@ export class EventService {
                         columns: [
                           // { width: 'auto', text: `space`, opacity: 0 },
                           // { width: 10, text: `${ix + 1}.` },
-                          { text: 'การสั่งการ: - ', width: 'auto',
+                          {
+                            text: 'การสั่งการ: - ', width: 'auto',
                             bold: true,
                             decoration: 'underline',
-                           },
+                          },
                           {
                             image:
                               input_order_ir_id === 1 ? logoUsed : logoNotUsed,
@@ -33722,10 +33733,11 @@ export class EventService {
                       {
                         columns: [
                           // { width: 'auto', text: `space`, opacity: 0 },
-                          { width: 'auto', text: `หมายเหตุ:`, 
+                          {
+                            width: 'auto', text: `หมายเหตุ:`,
                             bold: true,
                             decoration: 'underline',
-                           },
+                          },
                           {
                             width: 'auto',
                             text: `${input_note}`,
@@ -33769,31 +33781,31 @@ export class EventService {
                         margin: [0, 0, 0, 5],
                       },
                       {
-                          columns: [
-                            // { width: 'auto', text: `space`, opacity: 0 },
-                            { width: 'auto', text: `การดำเนินการ:` },
-                            {
-                              width: 'auto',
-                              text: input_shipper_operation ? `${input_shipper_operation}` : `__________`,
-                              decoration: input_shipper_operation && 'underline',
-                            },
-                          ],
-                          columnGap: 5,
-                          margin: [0, 0, 0, 5],
-                        },
-                        {
-                          columns: [
-                            // { width: 'auto', text: `space`, opacity: 0 },
-                            { width: 'auto', text: `หมายเหตุ:` },
-                            {
-                              width: 'auto',
-                              text: input_shipper_note ? `${input_shipper_note}` : `__________`,
-                              decoration: input_shipper_note && 'underline',
-                            },
-                          ],
-                          columnGap: 5,
-                          margin: [0, 0, 0, 5],
-                        },
+                        columns: [
+                          // { width: 'auto', text: `space`, opacity: 0 },
+                          { width: 'auto', text: `การดำเนินการ:` },
+                          {
+                            width: 'auto',
+                            text: input_shipper_operation ? `${input_shipper_operation}` : `__________`,
+                            decoration: input_shipper_operation && 'underline',
+                          },
+                        ],
+                        columnGap: 5,
+                        margin: [0, 0, 0, 5],
+                      },
+                      {
+                        columns: [
+                          // { width: 'auto', text: `space`, opacity: 0 },
+                          { width: 'auto', text: `หมายเหตุ:` },
+                          {
+                            width: 'auto',
+                            text: input_shipper_note ? `${input_shipper_note}` : `__________`,
+                            decoration: input_shipper_note && 'underline',
+                          },
+                        ],
+                        columnGap: 5,
+                        margin: [0, 0, 0, 5],
+                      },
                     ],
                     margin: [5, 5, 5, 5],
                   },
@@ -33839,21 +33851,21 @@ export class EventService {
                       //   : { text: `(                                   )` },
                       fromSignature
                         ? {
-                            columns: [
-                              {
-                                text: 'แจ้งโดย',
-                                width: 'auto',
-                                alignment: 'right',
-                              },
-                              {
-                                image: fromSignature, // base64 หรือ path
-                                width: 50,
-                                alignment: 'center',
-                              },
-                            ],
-                            columnGap: 15, // ระยะห่างระหว่างวงเล็บกับภาพ
-                            margin: [0, 2, 0, 5], // ปรับระยะรอบภาพ
-                          }
+                          columns: [
+                            {
+                              text: 'แจ้งโดย',
+                              width: 'auto',
+                              alignment: 'right',
+                            },
+                            {
+                              image: fromSignature, // base64 หรือ path
+                              width: 50,
+                              alignment: 'center',
+                            },
+                          ],
+                          columnGap: 15, // ระยะห่างระหว่างวงเล็บกับภาพ
+                          margin: [0, 2, 0, 5], // ปรับระยะรอบภาพ
+                        }
                         : { text: `แจ้งโดย ` },
                       { text: `(${fromFullname})` },
                       { text: `หน่วยงาน ${fromCompany} (ผู้ให้บริการ)` },
@@ -33869,23 +33881,23 @@ export class EventService {
                       // rdoc1Find?.event_doc_status?.id === 5 && toSignature
                       rdoc1Find?.event_doc_status?.id === 5 && toSignature
                         ? {
-                            columns: [
-                              {
-                                text: 'รับทราบโดย',
-                                width: 'auto',
-                                alignment: 'right',
-                              },
-                              // { text: 'รับทราบโดย', width: 'auto', alignment: 'right' },
-                              {
-                                image: toSignature, // base64 หรือ path
-                                width: 50,
-                                alignment: 'center',
-                              },
-                              // { text: ')', width: 'auto', alignment: 'left' },
-                            ],
-                            columnGap: 5, // ระยะห่างระหว่างวงเล็บกับภาพ
-                            margin: [0, 2, 0, 5], // ปรับระยะรอบภาพ
-                          }
+                          columns: [
+                            {
+                              text: 'รับทราบโดย',
+                              width: 'auto',
+                              alignment: 'right',
+                            },
+                            // { text: 'รับทราบโดย', width: 'auto', alignment: 'right' },
+                            {
+                              image: toSignature, // base64 หรือ path
+                              width: 50,
+                              alignment: 'center',
+                            },
+                            // { text: ')', width: 'auto', alignment: 'left' },
+                          ],
+                          columnGap: 5, // ระยะห่างระหว่างวงเล็บกับภาพ
+                          margin: [0, 2, 0, 5], // ปรับระยะรอบภาพ
+                        }
                         : { text: `รับทราบโดย` },
                       {
                         text:
@@ -34012,14 +34024,14 @@ export class EventService {
         console.log('toAction : ', toAction);
         const toFullname =
           toAction?.event_doc_status_id !== 1 &&
-          toAction?.event_doc_status_id !== 2 &&
-          toAction?.create_by_account?.first_name &&
-          toAction?.create_by_account?.last_name
+            toAction?.event_doc_status_id !== 2 &&
+            toAction?.create_by_account?.first_name &&
+            toAction?.create_by_account?.last_name
             ? `${toAction?.create_by_account?.first_name} ${toAction?.create_by_account?.last_name}`
             : '';
 
         const toCompany =
-          (toAction?.group?.company_name && toAction?.group?.company_name) ||
+          (toAction?.group?.company_name) ||
           '';
         const toDate = dayjs(toAction?.create_date).locale('th');
         const toSignature =
@@ -34031,7 +34043,7 @@ export class EventService {
         // ----
         const fromFullname =
           rdoc1Find?.create_by_account?.first_name &&
-          rdoc1Find?.create_by_account?.last_name
+            rdoc1Find?.create_by_account?.last_name
             ? `${rdoc1Find?.create_by_account?.first_name} ${rdoc1Find?.create_by_account?.last_name}`
             : '';
         const fromCompany = 'บริษัท ปตท.จำกัด (มหาชน)';
@@ -34144,7 +34156,7 @@ export class EventService {
                   width: 15,
                   image:
                     rdoc1Find?.event_runnumber_emer?.event_doc_emer_type_id ===
-                    1
+                      1
                       ? logoUsed
                       : logoNotUsed, // แทนด้วย base64 string //event_doc_status
                   verticalAlignment: 'middle',
@@ -34166,7 +34178,7 @@ export class EventService {
                   width: 15,
                   image:
                     rdoc1Find?.event_runnumber_emer?.event_doc_emer_type_id ===
-                    2
+                      2
                       ? logoUsed
                       : logoNotUsed, // แทนด้วย base64 string //event_doc_status
                   verticalAlignment: 'middle',
@@ -34406,7 +34418,7 @@ export class EventService {
                             {
                               text: `คาดว่าจะแก้ไขปัญหาแล้วเสร็จในวันที่/เวลา: `,
                               bold: true,
-                            decoration: 'underline',
+                              decoration: 'underline',
                             },
                             {
                               text:
@@ -34436,10 +34448,11 @@ export class EventService {
                           columns: [
                             // { width: 'auto', text: `space`, opacity: 0 },
                             // { width: 10, text: `${ix + 1}.` },
-                            { text: 'การสั่งการ: - ', width: 'auto',
+                            {
+                              text: 'การสั่งการ: - ', width: 'auto',
                               bold: true,
-                            decoration: 'underline',
-                             },
+                              decoration: 'underline',
+                            },
                             {
                               image:
                                 input_order_ir_id === 1
@@ -34499,7 +34512,7 @@ export class EventService {
                               width: 'auto',
                               opacity: 0,
                               bold: true,
-                            decoration: 'underline',
+                              decoration: 'underline',
                             },
                             {
                               image:
@@ -34528,10 +34541,11 @@ export class EventService {
                         {
                           columns: [
                             // { width: 'auto', text: `space`, opacity: 0 },
-                            { width: 'auto', text: `หมายเหตุ:`,
+                            {
+                              width: 'auto', text: `หมายเหตุ:`,
                               bold: true,
-                            decoration: 'underline',
-                             },
+                              decoration: 'underline',
+                            },
                             {
                               width: 'auto',
                               text: `${input_note}`,
@@ -34645,21 +34659,21 @@ export class EventService {
                         //   : { text: `(                                   )` },
                         fromSignature
                           ? {
-                              columns: [
-                                {
-                                  text: 'แจ้งโดย ',
-                                  width: 'auto',
-                                  alignment: 'right',
-                                },
-                                {
-                                  image: fromSignature, // base64 หรือ path
-                                  width: 50,
-                                  alignment: 'center',
-                                },
-                              ],
-                              columnGap: 15, // ระยะห่างระหว่างวงเล็บกับภาพ
-                              margin: [0, 2, 0, 5], // ปรับระยะรอบภาพ
-                            }
+                            columns: [
+                              {
+                                text: 'แจ้งโดย ',
+                                width: 'auto',
+                                alignment: 'right',
+                              },
+                              {
+                                image: fromSignature, // base64 หรือ path
+                                width: 50,
+                                alignment: 'center',
+                              },
+                            ],
+                            columnGap: 15, // ระยะห่างระหว่างวงเล็บกับภาพ
+                            margin: [0, 2, 0, 5], // ปรับระยะรอบภาพ
+                          }
                           : { text: `แจ้งโดย ` },
                         { text: `(${fromFullname})` },
                         { text: `หน่วยงาน ${fromCompany} (ผู้ให้บริการ)` },
@@ -34675,23 +34689,23 @@ export class EventService {
                         // rdoc1Find?.event_doc_status?.id === 5 && toSignature
                         rdoc1Find?.event_doc_status?.id === 5 && toSignature
                           ? {
-                              columns: [
-                                {
-                                  text: 'รับทราบโดย',
-                                  width: 'auto',
-                                  alignment: 'right',
-                                },
-                                // { text: 'รับทราบโดย', width: 'auto', alignment: 'right' },
-                                {
-                                  image: toSignature, // base64 หรือ path
-                                  width: 50,
-                                  alignment: 'center',
-                                },
-                                // { text: ')', width: 'auto', alignment: 'left' },
-                              ],
-                              columnGap: 5, // ระยะห่างระหว่างวงเล็บกับภาพ
-                              margin: [0, 2, 0, 5], // ปรับระยะรอบภาพ
-                            }
+                            columns: [
+                              {
+                                text: 'รับทราบโดย',
+                                width: 'auto',
+                                alignment: 'right',
+                              },
+                              // { text: 'รับทราบโดย', width: 'auto', alignment: 'right' },
+                              {
+                                image: toSignature, // base64 หรือ path
+                                width: 50,
+                                alignment: 'center',
+                              },
+                              // { text: ')', width: 'auto', alignment: 'left' },
+                            ],
+                            columnGap: 5, // ระยะห่างระหว่างวงเล็บกับภาพ
+                            margin: [0, 2, 0, 5], // ปรับระยะรอบภาพ
+                          }
                           : { text: `รับทราบโดย` },
                         {
                           text:

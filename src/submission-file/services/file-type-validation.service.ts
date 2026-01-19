@@ -8,7 +8,18 @@ export interface FileTypeValidationResult {
 
 @Injectable()
 export class FileTypeValidationService {
+
+  private safeParseJSON(jsonString: string): any {
+    try {
+      return JSON.parse(jsonString);
+    } catch (error) {
+      console.error('Error parsing JSON:', error);
+      return []; // Return empty array as fallback for findData
+    }
+  }
+
   /**
+
    * STEP 2: FILE TYPE VALIDATION - ตรวจสอบประเภทไฟล์ (Daily/Weekly)
    * @param file - ไฟล์ที่ส่งมาจาก gRPC
    * @param tabType - ประเภทที่คาดหวัง (1 = Daily, 2 = Weekly)
@@ -17,8 +28,8 @@ export class FileTypeValidationService {
   async executeFileTypeValidation(file: any, tabType: number): Promise<FileTypeValidationResult> {
     try {
       // Parse the multi-sheet JSON data from gRPC
-      const findData = JSON.parse(file?.jsonDataMultiSheet);
-      
+      const findData = this.safeParseJSON(file?.jsonDataMultiSheet);
+
       // Determine nomination type from sheet names
       const checkType = findData.reduce((acc: string | null, f: any) => {
         if (f?.sheet === 'Daily Nomination') return 'Daily Nomination';
@@ -37,7 +48,7 @@ export class FileTypeValidationService {
       // Validate that file type matches the expected tabType
       console.log("nomination_type_id : ", nomination_type_id);
       console.log("tabType : ", tabType);
-      
+
       if (nomination_type_id != tabType) {
         console.log('File type validation failed');
         throw new HttpException(

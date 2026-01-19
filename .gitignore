@@ -68,3 +68,8 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 /tmp
 /.vscode
 /.gitea
+# SSL Keys
+/src/ssl/*.key
+/src/ssl/*.crt
+/src/ssl/*.pem
+

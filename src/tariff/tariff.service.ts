@@ -88,10 +88,10 @@ export class TariffService {
     private readonly exportFilesService: ExportFilesService,
     private readonly balancingService: BalancingService,
     private readonly configService: ConfigService,
-  ) {}
+  ) { }
 
   async useReqs(req: any) {
-    const ip = req.headers['x-forwarded-for'] || req.ip;
+    const ip = req?.headers?.['x-forwarded-for'] || req?.ip;
     return {
       ip: ip,
       sub: req?.user?.sub,
@@ -246,8 +246,8 @@ export class TariffService {
 
         await prisma.tariff.updateMany({
           where: {
-            tariff_charge:{
-              some:{
+            tariff_charge: {
+              some: {
                 id: result.tariff_id
               }
             },
@@ -338,29 +338,29 @@ export class TariffService {
   }
 
   toArray(input: any): any[] {
-  if (input == null) return [];
-  if (Array.isArray(input)) return input;
+    if (input == null) return [];
+    if (Array.isArray(input)) return input;
 
-  if (typeof input === 'string') {
-    const s = input.trim();
-    if (s === '') return [];
+    if (typeof input === 'string') {
+      const s = input.trim();
+      if (s === '') return [];
 
-    // ลอง parse JSON ก่อน (เช่น '["a","b"]', '123', 'true', 'null')
-    try {
-      const parsed = JSON.parse(s);
-      return Array.isArray(parsed) ? parsed : (parsed == null ? [] : [parsed]);
-    } catch {
-      // ไม่ใช่ JSON → รองรับ comma-separated เช่น 'a,b,c'
-      if (s.includes(',')) {
-        return s.split(',').map(x => x.trim()).filter(Boolean);
+      // ลอง parse JSON ก่อน (เช่น '["a","b"]', '123', 'true', 'null')
+      try {
+        const parsed = JSON.parse(s);
+        return Array.isArray(parsed) ? parsed : (parsed == null ? [] : [parsed]);
+      } catch {
+        // ไม่ใช่ JSON → รองรับ comma-separated เช่น 'a,b,c'
+        if (s.includes(',')) {
+          return s.split(',').map(x => x.trim()).filter(Boolean);
+        }
+        return [s]; // สตริงเดี่ยว
       }
-      return [s]; // สตริงเดี่ยว
     }
-  }
 
-  // กรณี object/number/boolean
-  return [input];
-}
+    // กรณี object/number/boolean
+    return [input];
+  }
 
   async tariffChargeReportFindAll(payload: any, userId: any) {
     const { month_year_charge, id, limit, offset } = payload;
@@ -384,7 +384,7 @@ export class TariffService {
         },
       },
     });
-    const userTypeId = group.user_type?.id;
+    const userTypeId = group?.user_type?.id;
     const groupId = group?.id;
 
     console.log('payload : ', payload);
@@ -408,7 +408,7 @@ export class TariffService {
         //   id: ids,
         // }),
         ...(this.toArray(id).length > 0 && {
-          id:{
+          id: {
             in: this.toArray(id)
           }
         }),
@@ -479,7 +479,7 @@ export class TariffService {
         //   id: ids,
         // }),
         ...(this.toArray(id).length > 0 && {
-          id:{
+          id: {
             in: this.toArray(id)
           }
         }),
@@ -528,7 +528,7 @@ export class TariffService {
         },
       },
     });
-    const userTypeId = group.user_type?.id;
+    const userTypeId = group?.user_type?.id;
     const groupId = group?.id;
 
     const results = await this.prisma.tariff_charge.findMany({
@@ -750,7 +750,7 @@ export class TariffService {
     });
 
     await this.prisma.tariff.updateMany({
-      where:{
+      where: {
         id: Number(id),
       },
       data: {
@@ -759,7 +759,7 @@ export class TariffService {
         update_by: Number(userId),
       },
     });
-    
+
     return result;
   }
 
@@ -779,7 +779,7 @@ export class TariffService {
       },
     });
 
-    
+
     try {
       const todayStartMY = getTodayStartYYYYMMDDDfaultAdd7(month_year).toDate();
       const todayEndMY = getTodayNowAdd7(month_year).toDate();
@@ -787,7 +787,7 @@ export class TariffService {
       const formateDDMMYYYY = dayjs(month_year, 'YYYY-MM-DD').format(
         'DD/MM/YYYY',
       );
-  
+
       let monthStartDayjs: dayjs.Dayjs | null = null;
       let monthEndDayjs: dayjs.Dayjs | null = null;
       try {
@@ -804,8 +804,8 @@ export class TariffService {
       const monthEnd =
         monthEndDayjs?.tz('Asia/Bangkok')?.format('YYYY-MM-DD') ?? '';
 
-        console.log('monthStart : ', monthStart);
-        console.log('monthEnd : ', monthEnd);
+      console.log('monthStart : ', monthStart);
+      console.log('monthEnd : ', monthEnd);
 
       // 1 System คือยังไม่มีการ Edit
       // 2 Manual คือ มีการ edit ค่าแล้ว
@@ -813,18 +813,18 @@ export class TariffService {
       // 20241021-TAR-0002-B (13:08:45)
       // Tariff ID-A คำนวณค่าแต่ละรายการโดยยังไม่ปัดทศนิยมแบบ Round และจะปัดทศนิยมครั้งเดียวที่ผลรวม
       // Tariff ID-B การคำนวณค่าแต่ละรายการ ให้ปัดทศนิยมแบบ Round ได้เลย และปัดทศนิยมอีกครั้งเมื่อแสดงผลรวม
-  
+
       // term_type_id 1, 2, 3 M | 4 D
       // file_period_mode
-  
+
       // ...
-  
-  
+
+
       // Create array of all TARIFF_SYSTEM_PARAMETER enum values dynamically
       const tariffSystemParameterIds = Object.values(
         TARIFF_SYSTEM_PARAMETER,
       ).filter((value) => typeof value === 'number') as number[];
-  
+
       const systemParameter: systemParameterWithRelations[] =
         await this.prisma.system_parameter.findMany({
           where: {
@@ -849,7 +849,7 @@ export class TariffService {
           },
           ...systemParameterPopulate,
         });
-  
+
       // 
       let entryCapOverCoEff = getLatestSystemParameterValue(systemParameter, [
         ENTRY_CAP_OVER_USE_CO_EFF_ID,
@@ -883,7 +883,7 @@ export class TariffService {
       const toleranceN = getLatestSystemParameterValue(systemParameter, [
         ABS_VALUE_ADJ_DAILY_NEGATIVE_IMB_TOLERANCE_ID,
       ]);
-  
+
       const zoneMaster = await this.prisma.zone.findMany({
         where: {
           AND: [
@@ -901,7 +901,7 @@ export class TariffService {
           ],
         },
       });
-  
+
       const areaMaster = await this.prisma.area.findMany({
         where: {
           AND: [
@@ -919,7 +919,7 @@ export class TariffService {
           ],
         },
       });
-  
+
       const tariffData = {
         shipper: {
           connect: {
@@ -945,7 +945,7 @@ export class TariffService {
           },
         },
       };
-  
+
       // contract
       const contract_code = await this.prisma.contract_code.findMany({
         where: {
@@ -1028,7 +1028,7 @@ export class TariffService {
         include: {
           term_type: true,
           booking_version: {
-            where:{
+            where: {
               flag_use: true,
             },
             include: {
@@ -1044,21 +1044,21 @@ export class TariffService {
           },
         },
       });
-  
+
       const contract_code_final = contract_code.map((e: any) => {
         const { booking_version, ...nE } = e;
         const booking_version_use = booking_version?.[0];
         const booking_full_json_use = booking_version_use?.booking_full_json_release?.length > 0 ?
-            (booking_version_use?.booking_full_json_release?.[0]?.data_temp && JSON.parse(booking_version_use?.booking_full_json_release?.[0]?.data_temp))
-          : (booking_version_use?.booking_full_json?.[0]?.data_temp && JSON.parse(booking_version_use?.booking_full_json?.[0]?.data_temp)) 
+          (booking_version_use?.booking_full_json_release?.[0]?.data_temp && JSON.parse(booking_version_use?.booking_full_json_release?.[0]?.data_temp))
+          : (booking_version_use?.booking_full_json?.[0]?.data_temp && JSON.parse(booking_version_use?.booking_full_json?.[0]?.data_temp))
           || null;
-  
+
         const entryDailyBooking =
           booking_full_json_use?.['headerEntry']?.[
-            'Capacity Daily Booking (MMBTU/d)'
+          'Capacity Daily Booking (MMBTU/d)'
           ];
         const keyHead = entryDailyBooking?.[formateDDMMYYYY]?.['key'];
-  
+
         let shortTermNonFirmKeyHead = [];
         if (e?.term_type_id === 4) {
           const formateMMYYYY = getTodayStartYYYYMMDDDfaultAdd7(month_year)
@@ -1068,12 +1068,12 @@ export class TariffService {
             .filter((key: any) => key.includes(`/${formateMMYYYY}`))
             .map((key: any) => entryDailyBooking[key]?.['key']);
         }
-  
+
         const booking_row_json_use = (
           booking_version?.booking_full_json_release?.length > 0
-          ? booking_version?.[0]?.booking_row_json_release
-          : booking_version?.[0]?.booking_row_json 
-          || []
+            ? booking_version?.[0]?.booking_row_json_release
+            : booking_version?.[0]?.booking_row_json
+            || []
         )?.map(
           (brj: any) => {
             const {
@@ -1109,7 +1109,7 @@ export class TariffService {
                       }
                     }
                   }
-  
+
                   return {
                     key,
                     capacityMMBTUValue: value,
@@ -1118,7 +1118,7 @@ export class TariffService {
               );
               useData.capacityMMBTUValue = capacityMMBTUValue;
             }
-  
+
             return {
               id,
               zone_text,
@@ -1141,7 +1141,7 @@ export class TariffService {
             };
           },
         );
-  
+
         return {
           ...nE,
           booking_version_id: booking_version?.[0]?.id || null,
@@ -1157,7 +1157,7 @@ export class TariffService {
           userId,
         );
 
-        // console.log('allocationReportViewGet : ', allocationReportViewGet);
+      // console.log('allocationReportViewGet : ', allocationReportViewGet);
       const allocationReportViewGetPublic = allocationReportViewGet
         ?.filter((f: any) => {
           return (
@@ -1183,7 +1183,7 @@ export class TariffService {
         });
 
       console.log('allocationReportViewGetPublic : ', allocationReportViewGetPublic);
-  
+
       const allocationReportViewGetPublicNoFuel =
         allocationReportViewGetPublic?.filter(
           (f: any) => f?.customer_type !== 'Fuel',
@@ -1235,7 +1235,7 @@ export class TariffService {
       const finalTerm: any = Object.values(termGrouped)?.filter(
         (f: any) => f?.term_type_id !== null,
       ); // Comodity by shipper
-  
+
       // A : SUM((Point A (Exit) ค่าทั้งเดือน = 3100.3770 ~ 3100 ) + (Point B (Exit) ค่าทั้งเดือน = 3100.7000 ~ 3101 ) + (Point C (Exit) ค่าทั้งเดือน = 3100.7000 ~ 3101 )) -> 9302
       const groupDatas = (arr: any, keys: any) => {
         const nGrouped = {};
@@ -1252,7 +1252,7 @@ export class TariffService {
         const resultData = Object.values(nGrouped);
         return resultData;
       };
-  
+
       // ใช้ nominatedValue ตามพีบีมบอก | key ที่เหลือ allocatedValue, contractCapacity เผื่อเปลี่ยน
       const comodityByContractA = finalContract?.map((e: any) => {
         const { id, contract_code_id, contract, term_type_id, term_type, data } =
@@ -1280,17 +1280,17 @@ export class TariffService {
             tempDateArr: n?.['data'] || [],
           };
         });
-  
+
         const quantity = value?.reduce(
           (accumulator, currentValue) => accumulator + currentValue?.calc,
           0,
         );
-  
+
         const totalNotRound = value?.reduce(
           (accumulator, currentValue) => accumulator + currentValue?.calcNotRound,
           0,
         );
-  
+
         return {
           id: id || null,
           contract_code_id: contract_code_id || null,
@@ -1305,7 +1305,7 @@ export class TariffService {
       });
 
       console.log('comodityByContractA : ', comodityByContractA);
-  
+
       const comodityByShipperA = finalTerm?.map((e: any) => {
         const { id, contract, term_type_id, term_type, data } = e;
         const nom = groupDatas(data, 'point');
@@ -1330,17 +1330,17 @@ export class TariffService {
             tempDateArr: n?.['data'] || [],
           };
         });
-  
+
         const quantity = value?.reduce(
           (accumulator, currentValue) => accumulator + currentValue?.calc,
           0,
         );
-  
+
         const totalNotRound = value?.reduce(
           (accumulator, currentValue) => accumulator + currentValue?.calcNotRound,
           0,
         );
-  
+
         return {
           id: id || null,
           contract: contract || null,
@@ -1352,9 +1352,9 @@ export class TariffService {
           type: 'comodityByShipper',
         };
       });
-  
+
       const comodityA = [...comodityByContractA, ...comodityByShipperA];
-  
+
       // B : SUM( Gas Day 01-05-2025((Point A (Exit) sum ค่ารายวัน = 100.0121) + (Point B (Exit) sum ค่ารายวัน = 100.0226) + (Point C (Exit) sum ค่ารายวัน = 100.0226) ( -> 300.0573 ~ 300) ) + Gas Day วันต่อไป .... )
       const comodityByContractB = finalContract?.map((e: any) => {
         const { id, contract_code_id, contract, term_type_id, term_type, data } =
@@ -1384,12 +1384,12 @@ export class TariffService {
               tempDateArr: n?.['data'] || [],
             };
           });
-  
+
           const totalRoundRound = value?.reduce(
             (accumulator, currentValue) => accumulator + currentValue?.calc,
             0,
           );
-  
+
           const totalNotRound = value?.reduce(
             (accumulator, currentValue) =>
               accumulator + currentValue?.calcNotRound,
@@ -1402,7 +1402,7 @@ export class TariffService {
             totalNotRound: totalNotRound ?? 0,
           };
         });
-  
+
         const quantity = day?.reduce(
           (accumulator, currentValue) =>
             accumulator + currentValue?.totalRoundRound,
@@ -1413,7 +1413,7 @@ export class TariffService {
             accumulator + currentValue?.totalNotRound,
           0,
         );
-  
+
         return {
           id: id || null,
           contract_code_id: contract_code_id || null,
@@ -1426,7 +1426,7 @@ export class TariffService {
           type: 'comodityByContract',
         };
       });
-  
+
       const comodityByShipperB = finalTerm?.map((e: any) => {
         const { id, contract, term_type_id, term_type, data } = e;
         const dayGroup = groupDatas(data, 'gas_day');
@@ -1454,12 +1454,12 @@ export class TariffService {
               tempDateArr: n?.['data'] || [],
             };
           });
-  
+
           const totalRoundRound = value?.reduce(
             (accumulator, currentValue) => accumulator + currentValue?.calc,
             0,
           );
-  
+
           const totalNotRound = value?.reduce(
             (accumulator, currentValue) =>
               accumulator + currentValue?.calcNotRound,
@@ -1472,7 +1472,7 @@ export class TariffService {
             totalNotRound: totalNotRound ?? 0,
           };
         });
-  
+
         const quantity = day?.reduce(
           (accumulator, currentValue) =>
             accumulator + currentValue?.totalRoundRound,
@@ -1483,13 +1483,13 @@ export class TariffService {
             accumulator + currentValue?.totalNotRound,
           0,
         );
-  
+
         // const toleranceP =
         //       systemParameter?.find((f: any) => {
         //         const idSP = 44;
         //         return f?.system_parameter_id === idSP;
         //       })?.value || null;
-  
+
         return {
           id: id || null,
           contract: contract || null,
@@ -1501,11 +1501,11 @@ export class TariffService {
           type: 'comodityByShipper',
         };
       });
-  
+
       const comodityB = [...comodityByContractB, ...comodityByShipperB];
-  
+
       // balance report
-  
+
       const balancReport: any = await this.balancingService.balancReport(
         { start_date: monthStart, end_date: monthEnd, skip: 0, limit: 10000 },
         userId,
@@ -1526,13 +1526,13 @@ export class TariffService {
             values,
             ...nE
           } = e;
-  
+
           const shipperData =
             shipper_data?.filter(
               (f: any) => f?.shipper === shipperMaster?.id_name,
             ) || [];
           const shipperDataObj = shipperData.length > 0 ? shipperData[0] : null;
-  
+
           const findTag = (keyArr: any) => {
             const valTag = keyArr
               ?.map((ka: any) => {
@@ -1546,9 +1546,9 @@ export class TariffService {
               valTag?.length === 0
                 ? null
                 : valTag.reduce(
-                    (accumulator, currentValue) => accumulator + currentValue,
-                    0,
-                  );
+                  (accumulator, currentValue) => accumulator + currentValue,
+                  0,
+                );
             return cK;
           };
           const aip =
@@ -1557,7 +1557,7 @@ export class TariffService {
           const ain =
             shipperDataObj?.['values']?.find((f: any) => f?.tag === 'ain')
               ?.value || null;
-  
+
           const getFuel =
             Fuel?.find((f: any) => f?.gas_day === gas_day)?.values?.find(
               (f: any) => f?.tag === 'nominatedValue',
@@ -1594,7 +1594,7 @@ export class TariffService {
             //   )
             // )
             null;
-  
+
           const exitValue =
             findTag([
               'total_exit_east',
@@ -1627,7 +1627,7 @@ export class TariffService {
             //   )
             // )
             null;
-  
+
           const positive =
             aip !== null && toleranceP !== null && entryValue !== null
               ? aip - Number(toleranceP) - entryValue
@@ -1636,7 +1636,7 @@ export class TariffService {
             ain !== null && toleranceN !== null && entryValue !== null
               ? ain - Number(toleranceN) - entryValue
               : null;
-  
+
           return {
             gas_day,
             entry: entryValue,
@@ -1681,7 +1681,7 @@ export class TariffService {
             negative !== null ? (negative <= 0 ? 0 : negative) : null,
         };
       });
-  
+
       // a & b
       const imbalancesPenaltyPositive = {
         id: null,
@@ -1694,7 +1694,7 @@ export class TariffService {
           ?.reduce((accumulator, currentValue) => accumulator + currentValue, 0),
         data: positive,
       };
-  
+
       // a & b
       const imbalancesPenaltyNegative = {
         id: null,
@@ -1707,31 +1707,31 @@ export class TariffService {
           ?.reduce((accumulator, currentValue) => accumulator + currentValue, 0),
         data: negative,
       };
-  
+
       // AIP Positive
       // aip − Tolerance × Entry
       // เอาค่ามาจาก AIP ของเมนู Balance Report ตรง row ฟ้า shipper_data
       // Tolerance = DAM > System Parameter
       // Entry =  Total Entry ของ row สีฟ้า (sum ทุก zone รวมกัน)
-  
+
       // ถ้าค่าที่คำนวณ > 0 เป็นค่าเดิม
       // ถ้า <=0 ให้แสดงเป็น 0
-  
+
       // AIN Negative
       // ain − Tolerance × Entry
       // เอาค่ามาจาก AIP ของเมนู Balance Report ตรง row ฟ้า shipper_data
       // Tolerance = DAM > System Parameter
       // Entry =  Total Entry ของ row สีฟ้า (sum ทุก zone รวมกัน)
-  
+
       // ถ้าค่าที่คำนวณ > 0 เป็นค่าเดิม
       // ถ้า <=0 ให้แสดงเป็น 0
-  
+
       // return {
       //   // Fuel,
       //   imbalancesPenaltyPositive,
       //   imbalancesPenaltyNegative,
       // }
-  
+
       // allocationReport
       const allocationReport = await this.allocationService.allocationReport(
         {
@@ -1782,7 +1782,7 @@ export class TariffService {
       console.log('***allocationReportViewGetPublicOveruseEntry : ', allocationReportViewGetPublicOveruseEntry);
       console.log('***allocationReportViewGetPublicOveruseExit : ', allocationReportViewGetPublicOveruseExit);
 
-  
+
       const groupContractOveruse = (val: any) => {
         const contractGroupedOveruse = {};
         for (const curr of val) {
@@ -1801,18 +1801,18 @@ export class TariffService {
         const results: any = Object.values(contractGroupedOveruse)?.filter(
           (f: any) => f?.term_type_id !== null,
         );
-  
+
         return results;
       };
       // console.log('allocationReportViewGetPublicOveruseEntry : ', allocationReportViewGetPublicOveruseEntry);
-  
+
       const finalContractOveruseEntry = groupContractOveruse(
         allocationReportViewGetPublicOveruseEntry,
       );
       const finalContractOveruseExit = groupContractOveruse(
         allocationReportViewGetPublicOveruseExit,
       );
-  
+
       const groupOveruse = (val: any) => {
         const nGrouped = {};
         for (const curr of val) {
@@ -1832,7 +1832,7 @@ export class TariffService {
         const overuse = Object.values(nGrouped);
         return overuse;
       };
-  
+
       const overuseCalcTag = (arr: any, keys: any) => {
         return (
           arr
@@ -1843,7 +1843,7 @@ export class TariffService {
             ) ?? 0
         );
       };
-  
+
       const fnOveruse = (arrs: any) => {
         const resultData = arrs?.map((v: any) => {
           const { data: dataMain, ...nV } = v;
@@ -1861,27 +1861,27 @@ export class TariffService {
               tempDateArr: data,
             };
           });
-  
+
           const quantity =
             overuseUse?.reduce(
               (accumulator, currentValue) => accumulator + currentValue?.overuse,
               0,
             ) ?? 0;
-  
+
           return {
             ...nV,
             data: overuseUse || [],
             quantity: quantity ?? 0,
           };
         });
-  
+
         return resultData;
       };
       const contractOveruseEntry = fnOveruse(finalContractOveruseEntry);
       const contractOveruseExit = fnOveruse(finalContractOveruseExit);
       console.log('contractOveruseEntry : ', contractOveruseEntry);
       console.log('contractOveruseExit : ', contractOveruseExit);
-  
+
       const result = await this.prisma.$transaction(
         async (prisma) => {
           const tariffNumberCount =
@@ -1917,7 +1917,7 @@ export class TariffService {
               },
             },
           });
-  
+
           // 1 Capacity Charge
           const tariffCapacityCharge = contract_code_final?.flatMap((e: any) => {
             // แสดงเฉพาะค่า Entry รวมทุก area (booking)
@@ -1938,13 +1938,13 @@ export class TariffService {
               e?.term_type_id,
             );
             const fee = getLatestSystemParameterValue(systemParameter, [idSP]);
-  
+
             // Quantity x Fee | ทศนิยม 2 ตำแหน่ง
             const amount =
               fee !== null || quantity !== null
                 ? Number(quantity ?? 0) * Number(fee ?? 0)
                 : null;
-  
+
             const tariffChargeDataA = {
               tariff: {
                 connect: {
@@ -2047,9 +2047,9 @@ export class TariffService {
             };
             return [tariffChargeDataA, tariffChargeDataB];
           });
-  
+
           // -------
-  
+
           // 2 Commodity Charge
           const comodityDataA = comodityA?.map((e: any) => {
             const quantity = e?.quantity;
@@ -2060,15 +2060,15 @@ export class TariffService {
             const feeDefault = getLatestSystemParameterValue(systemParameter, [
               idSP,
             ]);
-  
+
             const fee = e?.type === "comodityByContract" ? feeDefault : comodityFeeShipper;
-  
+
             // Quantity x Fee | ทศนิยม 2 ตำแหน่ง
             const amount =
               fee !== null || quantity !== null
                 ? Number(quantity ?? 0) * Number(fee ?? 0)
                 : null;
-  
+
             return {
               tariff: {
                 connect: {
@@ -2132,15 +2132,15 @@ export class TariffService {
             const feeDefault = getLatestSystemParameterValue(systemParameter, [
               idSP,
             ]);
-  
+
             const fee = e?.type === "comodityByContract" ? feeDefault : comodityFeeShipper;
-  
+
             // Quantity x Fee | ทศนิยม 2 ตำแหน่ง
             const amount =
               fee !== null || quantity !== null
                 ? Number(quantity ?? 0) * Number(fee ?? 0)
                 : null;
-  
+
             return {
               tariff: {
                 connect: {
@@ -2195,21 +2195,21 @@ export class TariffService {
               },
             };
           });
-  
+
           // -------
-  
+
           // 3 Imbalances Penalty Charge (Positive)
           const imbalancesPenaltyPositiveA = [imbalancesPenaltyPositive]?.map(
             (e: any) => {
               const quantity = e?.quantity;
-  
+
               // Quantity x Fee | ทศนิยม 2 ตำแหน่ง
               const amount =
                 imbalancesPenaltyPositiveFee !== null || quantity !== null
                   ? Number(quantity ?? 0) *
-                    Number(imbalancesPenaltyPositiveFee ?? 0)
+                  Number(imbalancesPenaltyPositiveFee ?? 0)
                   : null;
-  
+
               return {
                 tariff: {
                   connect: {
@@ -2258,14 +2258,14 @@ export class TariffService {
           const imbalancesPenaltyPositiveB = [imbalancesPenaltyPositive]?.map(
             (e: any) => {
               const quantity = e?.quantity;
-  
+
               // Quantity x Fee | ทศนิยม 2 ตำแหน่ง
               const amount =
                 imbalancesPenaltyPositiveFee !== null || quantity !== null
                   ? Number(quantity ?? 0) *
-                    Number(imbalancesPenaltyPositiveFee ?? 0)
+                  Number(imbalancesPenaltyPositiveFee ?? 0)
                   : null;
-  
+
               return {
                 tariff: {
                   connect: {
@@ -2311,21 +2311,21 @@ export class TariffService {
               };
             },
           );
-  
+
           // -------
-  
+
           // 4 Imbalances Penalty Charge (Negative)
           const imbalancesPenaltyNegativeA = [imbalancesPenaltyNegative]?.map(
             (e: any) => {
               const quantity = e?.quantity;
-  
+
               // Quantity x Fee | ทศนิยม 2 ตำแหน่ง
               const amount =
                 imbalancesPenaltyNegativeFee !== null || quantity !== null
                   ? Number(quantity ?? 0) *
-                    Number(imbalancesPenaltyNegativeFee ?? 0)
+                  Number(imbalancesPenaltyNegativeFee ?? 0)
                   : null;
-  
+
               return {
                 tariff: {
                   connect: {
@@ -2374,14 +2374,14 @@ export class TariffService {
           const imbalancesPenaltyNegativeB = [imbalancesPenaltyNegative]?.map(
             (e: any) => {
               const quantity = e?.quantity;
-  
+
               // Quantity x Fee | ทศนิยม 2 ตำแหน่ง
               const amount =
                 imbalancesPenaltyNegativeFee !== null || quantity !== null
                   ? Number(quantity ?? 0) *
-                    Number(imbalancesPenaltyNegativeFee ?? 0)
+                  Number(imbalancesPenaltyNegativeFee ?? 0)
                   : null;
-  
+
               return {
                 tariff: {
                   connect: {
@@ -2427,9 +2427,9 @@ export class TariffService {
               };
             },
           );
-  
+
           // -------
-  
+
           // 5 Capacity Overuse Charge (Entry)
           const contractOveruseEntryA = contractOveruseEntry?.map((e: any) => {
             const quantity = e?.quantity;
@@ -2439,13 +2439,13 @@ export class TariffService {
                 e?.term_type_id,
               );
             const fee = getLatestSystemParameterValue(systemParameter, [idSP]);
-  
+
             // Quantity x Fee | ทศนิยม 2 ตำแหน่ง
             const amount =
               fee !== null || quantity !== null
                 ? Number(quantity ?? 0) * Number(fee ?? 0)
                 : null;
-  
+
             return {
               tariff: {
                 connect: {
@@ -2509,13 +2509,13 @@ export class TariffService {
                 e?.term_type_id,
               );
             const fee = getLatestSystemParameterValue(systemParameter, [idSP]);
-  
+
             // Quantity x Fee | ทศนิยม 2 ตำแหน่ง
             const amount =
               fee !== null || quantity !== null
                 ? Number(quantity ?? 0) * Number(fee ?? 0)
                 : null;
-  
+
             return {
               tariff: {
                 connect: {
@@ -2571,9 +2571,9 @@ export class TariffService {
               },
             };
           });
-  
+
           // -------
-  
+
           // 6 Capacity Overuse Charge (Exit)
           const contractOveruseEntryB = contractOveruseEntry?.map((e: any) => {
             const quantity = e?.quantity;
@@ -2583,13 +2583,13 @@ export class TariffService {
                 e?.term_type_id,
               );
             const fee = getLatestSystemParameterValue(systemParameter, [idSP]);
-  
+
             // Quantity x Fee | ทศนิยม 2 ตำแหน่ง
             const amount =
               fee !== null || quantity !== null
                 ? Number(quantity ?? 0) * Number(fee ?? 0)
                 : null;
-  
+
             return {
               tariff: {
                 connect: {
@@ -2653,13 +2653,13 @@ export class TariffService {
                 e?.term_type_id,
               );
             const fee = getLatestSystemParameterValue(systemParameter, [idSP]);
-  
+
             // Quantity x Fee | ทศนิยม 2 ตำแหน่ง
             const amount =
               fee !== null || quantity !== null
                 ? Number(quantity ?? 0) * Number(fee ?? 0)
                 : null;
-  
+
             return {
               tariff: {
                 connect: {
@@ -2715,19 +2715,19 @@ export class TariffService {
               },
             };
           });
-  
+
           // -------
-  
+
           // 7 Damage Charge
           const damageChageA = [null]?.map((e: any) => {
             const quantity = null;
-  
+
             // Quantity x Fee | ทศนิยม 2 ตำแหน่ง
             const amount =
               damageChargeFee !== null || quantity !== null
                 ? Number(quantity ?? 0) * Number(damageChargeFee ?? 0)
                 : null;
-  
+
             return {
               tariff: {
                 connect: {
@@ -2759,13 +2759,13 @@ export class TariffService {
           });
           const damageChageB = [null]?.map((e: any) => {
             const quantity = null;
-  
+
             // Quantity x Fee | ทศนิยม 2 ตำแหน่ง
             const amount =
               damageChargeFee !== null || quantity !== null
                 ? Number(quantity ?? 0) * Number(damageChargeFee ?? 0)
                 : null;
-  
+
             return {
               tariff: {
                 connect: {
@@ -2795,9 +2795,9 @@ export class TariffService {
               },
             };
           });
-  
+
           // -------
-  
+
           const chargeDatas = [
             ...tariffCapacityCharge,
             ...comodityDataA,
@@ -2813,14 +2813,14 @@ export class TariffService {
             ...damageChageA,
             ...damageChageB,
           ];
-  
+
           console.log('chargeDatas : ', chargeDatas);
           for (let i = 0; i < chargeDatas.length; i++) {
             await prisma.tariff_charge.create({
               data: chargeDatas[i],
             });
           }
-  
+
           return {
             tariffA,
             tariffB,
@@ -2833,18 +2833,18 @@ export class TariffService {
       );
       console.log('tariffData : ', tariffData);
 
-     
+
       await middleNotiInapp(
-            this.prisma,
-            'Tariff',
-            `Charge Calculation for shipper ${shipperMaster?.name || "-"} and ${dayjs(month_year, 'YYYY-MM-DD').format('MMMM')}/${dayjs(month_year, 'YYYY-MM-DD').format('YYYY')} has finished OK.`,
-            102, // Tafiff menus_id
-            1,
-          );
+        this.prisma,
+        'Tariff',
+        `Charge Calculation for shipper ${shipperMaster?.name || "-"} and ${dayjs(month_year, 'YYYY-MM-DD').format('MMMM')}/${dayjs(month_year, 'YYYY-MM-DD').format('YYYY')} has finished OK.`,
+        102, // Tafiff menus_id
+        1,
+      );
       return result;
 
     } catch (error) {
-       await middleNotiInapp(
+      await middleNotiInapp(
         this.prisma,
         'Tariff',
         `Charge Calculation for shipper ${shipperMaster?.name || "-"} and ${dayjs(month_year, 'YYYY-MM-DD').format('MMMM')}/${dayjs(month_year, 'YYYY-MM-DD').format('YYYY')} has failed.`,
@@ -3274,7 +3274,7 @@ export class TariffService {
         },
       },
     });
-    const userTypeId = group.user_type?.id;
+    const userTypeId = group?.user_type?.id;
     const groupId = group?.id;
 
     const todayStartMY =
@@ -3286,14 +3286,14 @@ export class TariffService {
       where: {
         ...(userTypeId === 3
           ? {
-              shipper_id: groupId,
-            }
+            shipper_id: groupId,
+          }
           : this.toArray(shipper_id).length > 0
-            && {
-              shipper_id:{
-                in: this.toArray(shipper_id)
-              }
-            }),
+          && {
+            shipper_id: {
+              in: this.toArray(shipper_id)
+            }
+          }),
         ...(todayStartMY && {
           month_year_charge: todayStartMY,
         }),
@@ -3369,14 +3369,14 @@ export class TariffService {
         //     : {}),
         ...(userTypeId === 3
           ? {
-              shipper_id: groupId,
-            }
+            shipper_id: groupId,
+          }
           : this.toArray(shipper_id).length > 0
-            && {
-              shipper_id:{
-                in: this.toArray(shipper_id)
-              }
-            }),
+          && {
+            shipper_id: {
+              in: this.toArray(shipper_id)
+            }
+          }),
         ...(todayStartMY && {
           month_year_charge: todayStartMY,
         }),
@@ -3419,143 +3419,143 @@ export class TariffService {
     });
     console.log('month_year_charge : ', month_year_charge);
     // try {
-      
-          const ck = await this.prisma.tariff_credit_debit_note.findFirst({
-            where: {
+
+    const ck = await this.prisma.tariff_credit_debit_note.findFirst({
+      where: {
+        cndn_id: cndn_id,
+      },
+    });
+    if (ck) {
+      throw new HttpException(
+        {
+          status: HttpStatus.BAD_REQUEST,
+          error: 'The CNDN ID is duplicated.',
+        },
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const result = await this.prisma.$transaction(
+      async (prisma) => {
+        const createTariffCredibitDebitNote =
+          await prisma.tariff_credit_debit_note.create({
+            data: {
+              shipper: {
+                connect: {
+                  id: Number(shipper_id),
+                },
+              },
+              month_year_charge: getTodayNowAdd7(month_year_charge).toDate(),
               cndn_id: cndn_id,
+              tariff_credit_debit_note_type: {
+                connect: {
+                  id: Number(tariff_credit_debit_note_type_id),
+                },
+              },
+              tariff_type_charge: {
+                connect: {
+                  id: Number(tariff_type_charge_id),
+                },
+              },
+              create_date: nowAt.toDate(),
+              create_date_num: nowAt.unix(),
+              create_by_account: {
+                connect: {
+                  id: Number(userId),
+                },
+              },
             },
           });
-          if (ck) {
-            throw new HttpException(
-              {
-                status: HttpStatus.BAD_REQUEST,
-                error: 'The CNDN ID is duplicated.',
-              },
-              HttpStatus.BAD_REQUEST,
-            );
-          }
-      
-          const result = await this.prisma.$transaction(
-            async (prisma) => {
-              const createTariffCredibitDebitNote =
-                await prisma.tariff_credit_debit_note.create({
-                  data: {
-                    shipper: {
-                      connect: {
-                        id: Number(shipper_id),
-                      },
-                    },
-                    month_year_charge: getTodayNowAdd7(month_year_charge).toDate(),
-                    cndn_id: cndn_id,
-                    tariff_credit_debit_note_type: {
-                      connect: {
-                        id: Number(tariff_credit_debit_note_type_id),
-                      },
-                    },
-                    tariff_type_charge: {
-                      connect: {
-                        id: Number(tariff_type_charge_id),
-                      },
-                    },
-                    create_date: nowAt.toDate(),
-                    create_date_num: nowAt.unix(),
-                    create_by_account: {
-                      connect: {
-                        id: Number(userId),
-                      },
-                    },
+
+        if (detail.length > 0) {
+          for (let i = 0; i < detail.length; i++) {
+            await prisma.tariff_credit_debit_note_detail.create({
+              data: {
+                tariff_credit_debit_note: {
+                  connect: {
+                    id: Number(createTariffCredibitDebitNote?.id),
                   },
-                });
-      
-              if (detail.length > 0) {
-                for (let i = 0; i < detail.length; i++) {
-                  await prisma.tariff_credit_debit_note_detail.create({
-                    data: {
-                      tariff_credit_debit_note: {
-                        connect: {
-                          id: Number(createTariffCredibitDebitNote?.id),
-                        },
-                      },
-                      term_type: {
-                        connect: {
-                          id: Number(detail[i]?.term_type),
-                        },
-                      },
-                      contract_code: {
-                        connect: {
-                          id: Number(detail[i]?.contract_code_id),
-                        },
-                      },
-                      quantity: detail[i]?.quantity || null,
-                      unit: detail[i]?.unit || null,
-                      fee: detail[i]?.fee || null,
-                      amount: detail[i]?.amount || null,
-      
-                      create_date: nowAt.toDate(),
-                      create_date_num: nowAt.unix(),
-                      create_by_account: {
-                        connect: {
-                          id: Number(userId),
-                        },
-                      },
-                    },
-                  });
-                }
-              }
-      
-              if (comments.length > 0) {
-                for (let i = 0; i < comments.length; i++) {
-                  await prisma.tariff_credit_debit_note_comment.create({
-                    data: {
-                      tariff_credit_debit_note: {
-                        connect: {
-                          id: Number(createTariffCredibitDebitNote?.id),
-                        },
-                      },
-                      comment: comments[i]?.comment || null,
-                      create_date: nowAt.toDate(),
-                      create_date_num: nowAt.unix(),
-                      create_by_account: {
-                        connect: {
-                          id: Number(userId),
-                        },
-                      },
-                    },
-                  });
-                }
-              }
-      
-              return createTariffCredibitDebitNote;
-            },
-            {
-              timeout: 60000, // เพิ่มเป็น 1 นาที
-              maxWait: 60000, // รอให้ transaction พร้อม
-            },
-          );
-      
-          const findOne = await this.findTariffCreditDebitNote(result?.id, userId);
-          const type =
-            tariff_credit_debit_note_type_id === 1 ? 'Credit Note' : 'Dedit Note';
-      
-          const message = `${type} was created for Shipper ${shipperName?.name || '-'} on ${getTodayNowAdd7(month_year_charge).format('MMM')}/${getTodayNowAdd7(month_year_charge).format('YYYY')} (CNDN ID: ${cndn_id})`;
-          console.log('message : ', message);
-          // await this.tariffNotiInapp(`Tariff Credit/Debit Note`, message);
-          await middleNotiInapp(
-            this.prisma,
-            'Tariff',
-            message,
-            102, // Tafiff menus_id
-            1,
-          );
-          // await middleNotiInapp(
-          //   this.prisma,
-          //   'Tariff',
-          //   `Charge Calculation for shipper ${shipperName?.name || "-"} and ${getTodayNowAdd7(getTodayNowAdd7).format('MMMM')}/${getTodayNowAdd7(getTodayNowAdd7).format('YYYY')} has finished OK.`,
-          //   102, // Tafiff menus_id
-          //   1,
-          // );
-      
-          return findOne;
+                },
+                term_type: {
+                  connect: {
+                    id: Number(detail[i]?.term_type),
+                  },
+                },
+                contract_code: {
+                  connect: {
+                    id: Number(detail[i]?.contract_code_id),
+                  },
+                },
+                quantity: detail[i]?.quantity || null,
+                unit: detail[i]?.unit || null,
+                fee: detail[i]?.fee || null,
+                amount: detail[i]?.amount || null,
+
+                create_date: nowAt.toDate(),
+                create_date_num: nowAt.unix(),
+                create_by_account: {
+                  connect: {
+                    id: Number(userId),
+                  },
+                },
+              },
+            });
+          }
+        }
+
+        if (comments.length > 0) {
+          for (let i = 0; i < comments.length; i++) {
+            await prisma.tariff_credit_debit_note_comment.create({
+              data: {
+                tariff_credit_debit_note: {
+                  connect: {
+                    id: Number(createTariffCredibitDebitNote?.id),
+                  },
+                },
+                comment: comments[i]?.comment || null,
+                create_date: nowAt.toDate(),
+                create_date_num: nowAt.unix(),
+                create_by_account: {
+                  connect: {
+                    id: Number(userId),
+                  },
+                },
+              },
+            });
+          }
+        }
+
+        return createTariffCredibitDebitNote;
+      },
+      {
+        timeout: 60000, // เพิ่มเป็น 1 นาที
+        maxWait: 60000, // รอให้ transaction พร้อม
+      },
+    );
+
+    const findOne = await this.findTariffCreditDebitNote(result?.id, userId);
+    const type =
+      tariff_credit_debit_note_type_id === 1 ? 'Credit Note' : 'Dedit Note';
+
+    const message = `${type} was created for Shipper ${shipperName?.name || '-'} on ${getTodayNowAdd7(month_year_charge).format('MMM')}/${getTodayNowAdd7(month_year_charge).format('YYYY')} (CNDN ID: ${cndn_id})`;
+    console.log('message : ', message);
+    // await this.tariffNotiInapp(`Tariff Credit/Debit Note`, message);
+    await middleNotiInapp(
+      this.prisma,
+      'Tariff',
+      message,
+      102, // Tafiff menus_id
+      1,
+    );
+    // await middleNotiInapp(
+    //   this.prisma,
+    //   'Tariff',
+    //   `Charge Calculation for shipper ${shipperName?.name || "-"} and ${getTodayNowAdd7(getTodayNowAdd7).format('MMMM')}/${getTodayNowAdd7(getTodayNowAdd7).format('YYYY')} has finished OK.`,
+    //   102, // Tafiff menus_id
+    //   1,
+    // );
+
+    return findOne;
     // } catch (error) {
     //   console.log('error : ', error);
     //   // await middleNotiInapp(
@@ -3570,7 +3570,7 @@ export class TariffService {
     // }
 
     // Tariff Charge Calculation for shipper {PTT} and {February/2025} has finished OK.
-    
+
 
   }
 
@@ -3783,7 +3783,7 @@ export class TariffService {
       await this.providerNotiInapp(type, message, emailArr);
     }
   }
- 
+
   async providerNotiInapp(type: any, message: any, email: any) {
     const data = JSON.stringify({
       extras: {

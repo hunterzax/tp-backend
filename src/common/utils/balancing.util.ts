@@ -63,7 +63,7 @@ export function groupAndFilterLatestData(resData: any[], baseReply: any[], accum
         });
       }
       const group = groupedMap.get(key);
-      
+
       // Keep the latest timestamp
       if (!group.latestTimestamp || compareTimestamps(timestamp, group.latestTimestamp) > 0) {
         group.latestTimestamp = timestamp;
@@ -95,7 +95,7 @@ export function groupAndFilterLatestData(resData: any[], baseReply: any[], accum
       }
 
       const group = groupedMap.get(key);
-      
+
       // Keep the latest insert_timestamp
       if (!group.latestTimestamp || compareTimestamps(insertTimestamp, group.latestTimestamp) > 0) {
         group.latestTimestamp = insertTimestamp;
@@ -105,27 +105,27 @@ export function groupAndFilterLatestData(resData: any[], baseReply: any[], accum
   }
 
   // Convert grouped data to the desired format
-  const heatingValueOFOIF : any = {}
+  const heatingValueOFOIF: any = {}
   meteringPointList.map((item: any) => {
-    if(item.hv_type_id == 2 && item.group?.id_name){
-      heatingValueOFOIF[`heatingValue_OFOIF_${item.group.id_name}`] = item.meterData?.heatingValue 
+    if (item.hv_type_id == 2 && item.group?.id_name) {
+      heatingValueOFOIF[`heatingValue_OFOIF_${item.group.id_name}`] = item.meterData?.heatingValue
     }
-    else{ //if(item.hv_type_id == 1) {
+    else { //if(item.hv_type_id == 1) {
       heatingValueOFOIF.heatingValue_OFOIF_system = item.meterData?.heatingValue
     }
-  }) 
+  })
 
   const result = Array.from(groupedMap.values()).map(group => {
     const resDataItem = group.resData;
     const baseReplyItem = group.baseReply;
     // const accumReplyItem = group.accumReply;
     const accumReplyInGasDay = accumReply.filter((item: any) => item.gasDay === group.gasDay);
-    const accumReplyItem = accumReplyInGasDay.length > 0 
+    const accumReplyItem = accumReplyInGasDay.length > 0
       ? accumReplyInGasDay.reduce((latest, current) => {
-          return compareTimestamps(current.insert_timestamp, latest.insert_timestamp) > 0 ? current : latest;
-        })
+        return compareTimestamps(current.insert_timestamp, latest.insert_timestamp) > 0 ? current : latest;
+      })
       : null;
-    
+
     // Create the result object based on the desired format
     return {
       gas_day_text_DDMMYY: getTodayNowYYYYMMDDDfaultAdd7(group.gasDay).format('DD/MM/YYYY'),
@@ -187,8 +187,8 @@ export function compareTimestamps(timestamp1: any, timestamp2: any): number {
     }
     if (typeof timestamp === 'string') {
 
-      const dayjsTimestamp = dayjs(timestamp,'YYYY-MM-DD HH:mm:ss');
-      if(dayjsTimestamp.isValid()){
+      const dayjsTimestamp = dayjs(timestamp, 'YYYY-MM-DD HH:mm:ss');
+      if (dayjsTimestamp.isValid()) {
         return dayjsTimestamp.valueOf();
       }
 
@@ -208,28 +208,28 @@ export function compareTimestamps(timestamp1: any, timestamp2: any): number {
 
   const val1 = getTimestampValue(timestamp1);
   const val2 = getTimestampValue(timestamp2);
-  
+
   return val1 - val2;
 }
 
 // export function formatDateDDMMYY(dateString: string): string {
 //   if (!dateString) return '';
-  
+
 //   try {
 //     const date = new Date(dateString);
 //     if (isNaN(date.getTime())) return '';
-    
+
 //     const day = date.getDate().toString().padStart(2, '0');
 //     const month = (date.getMonth() + 1).toString().padStart(2, '0');
 //     const year = date.getFullYear().toString().slice(-2);
-    
+
 //     return `${day}/${month}/${year}`;
 //   } catch (error) {
 //     return '';
 //   }
 // }
 
-export function getGasHourValue (gasHour: any): number{
+export function getGasHourValue(gasHour: any): number {
   if (!gasHour) return 0;
   if (typeof gasHour === 'number') {
     return gasHour;
@@ -258,17 +258,17 @@ export function compareGasHour(gasHour1: any, gasHour2: any): number {
 
   const val1 = getGasHourValue(gasHour1);
   const val2 = getGasHourValue(gasHour2);
-  
+
   return val1 - val2;
 }
 
-export async function findMinMaxExeDate(prisma: PrismaService, start_date: any, end_date: any){
-  try{
+export async function findMinMaxExeDate(prisma: PrismaService, start_date: any, end_date: any) {
+  try {
     const todayStartf = getTodayStartYYYYMMDDDfaultAdd7(start_date);
     const todayEndf = getTodayEndYYYYMMDDDfaultAdd7(end_date);
-  
+
     const executeEod = await prisma.execute_eod.findMany({
-      where:{
+      where: {
         AND: [
           {
             start_date_date: {
@@ -287,20 +287,25 @@ export async function findMinMaxExeDate(prisma: PrismaService, start_date: any, 
     })
     // console.log('executeEod : ', executeEod);
     // execute_timestamp
-    
-    const nexecuteEod = executeEod?.flatMap((e:any) => {
+
+    const nexecuteEod = executeEod?.flatMap((e: any) => {
       const { start_date_date, end_date_date } = e
       return [
         start_date_date,
         end_date_date,
       ]
-  
-    })?.filter((f:any) => !!f)
-  
+
+    })?.filter((f: any) => !!f)
+
     const parsed = nexecuteEod.map(d => dayjs(d)).filter(d => d.isValid());
-  
-    const minDateFromExe = dayjs.min(parsed)!;
-    const maxDateFromExe = dayjs.max(parsed)!;
+
+    if (parsed.length === 0) {
+      console.log('No valid dates found in executeEod');
+      return { minDate: null, maxDate: null };
+    }
+
+    const minDateFromExe = parsed.reduce((min, curr) => curr.isBefore(min) ? curr : min);
+    const maxDateFromExe = parsed.reduce((max, curr) => curr.isAfter(max) ? curr : max);
 
     const minDate = minDateFromExe ? dayjs.max([minDateFromExe, todayStartf]) : null;
     const maxDate = maxDateFromExe ? dayjs.min([maxDateFromExe, todayEndf]) : null;
@@ -313,7 +318,7 @@ export async function findMinMaxExeDate(prisma: PrismaService, start_date: any, 
       maxDate
     }
   }
-  catch(error){
+  catch (error) {
     console.log('findMinMaxExeDate error : ', error);
     return {
       minDate: null,
@@ -323,6 +328,6 @@ export async function findMinMaxExeDate(prisma: PrismaService, start_date: any, 
 }
 
 // Helper function to extract value by tag
-export function getValueByTag(thisHourData: any, tag: string){
+export function getValueByTag(thisHourData: any, tag: string) {
   return thisHourData?.values?.find((f: any) => f?.tag === tag)?.value ?? null
 };

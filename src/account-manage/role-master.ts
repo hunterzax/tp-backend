@@ -16,7 +16,7 @@ dayjs.extend(timezone);
 
 @Injectable()
 export class AccountManageRoleMasterService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   async roleMaster() {
     const roleMaster = await this.prisma.role.findMany({
@@ -79,8 +79,11 @@ export class AccountManageRoleMasterService {
   }
 
   async roleMasterDuplicate(ids: any, payload: any) {
+    if (ids === undefined || ids === null) {
+      throw new HttpException('Missing ids', HttpStatus.BAD_REQUEST);
+    }
     // try {
-    const { id, start_date, end_date, ...dataWithout } = payload;
+    const { id, start_date, end_date, ...dataWithout } = payload || {};
 
     const ckRole = await this.prisma.role.findFirst({
       where: {
@@ -148,6 +151,9 @@ export class AccountManageRoleMasterService {
 
   async roleMasterCreate(payload: any, userId: any) {
     // try {
+    if (!payload?.user_type_id) {
+      throw new HttpException('Missing user_type_id', HttpStatus.BAD_REQUEST);
+    }
     const { start_date, end_date, user_type_id, ...dataWithout } = payload;
 
     // user_type_id
@@ -317,8 +323,11 @@ export class AccountManageRoleMasterService {
   }
 
   async roleMasterEdit(id: any, payload: any, userId: any) {
+    if (id === undefined || id === null) {
+      throw new HttpException('Missing id', HttpStatus.BAD_REQUEST);
+    }
     // try {
-    const { start_date, end_date, ...dataWithout } = payload;
+    const { start_date, end_date, ...dataWithout } = payload || {};
 
     const ckRole = await this.prisma.role.findFirst({
       where: {

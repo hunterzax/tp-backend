@@ -19,6 +19,16 @@ export class AstosService {
     private readonly utils: AstosUtils,
   ) { }
 
+  private safeParseJSON(data: any, defaultValue: any = null) {
+    if (!data) return defaultValue;
+    try {
+      return typeof data === 'string' ? JSON.parse(data) : data;
+    } catch (e) {
+      console.error('JSON parse error:', e);
+      return defaultValue;
+    }
+  }
+
   // ===== NOTIC =====
   private async providerNotiInapp(type: string, message: string, email: string[]) {
     // basic safety: ensure configured endpoint uses http/https
@@ -123,13 +133,13 @@ export class AstosService {
     const dayEnd = getTodayStartAdd7(end_date).toDate();
     const rows = await this.repo.findContractsForEvidence(dayStart, dayEnd);
 
-    const data = rows.map((e: any) => {
-      const contract_point = e.booking_version?.[0]?.booking_row_json?.map((cp: any) => cp?.contract_point);
+    const data = (rows || []).map((e: any) => {
+      const contract_point = e?.booking_version?.[0]?.booking_row_json?.map((cp: any) => cp?.contract_point);
       return {
-        contract: e.contract_code,
-        shipper: e.group?.id_name,
-        start_date: getTodayNow(e.contract_start_date).format('YYYY-MM-DD'),
-        end_date: getTodayNow(e.contract_end_date).format('YYYY-MM-DD'),
+        contract: e?.contract_code,
+        shipper: e?.group?.id_name,
+        start_date: e?.contract_start_date ? getTodayNow(e.contract_start_date).format('YYYY-MM-DD') : null,
+        end_date: e?.contract_end_date ? getTodayNow(e.contract_end_date).format('YYYY-MM-DD') : null,
         contract_point,
       };
     });
@@ -146,7 +156,7 @@ export class AstosService {
     const rows = await this.repo.findContractsForEvidence(dayStart, dayEnd);
 
     const resultPerDay = (rows ?? []).flatMap((e: any) => {
-      const bookingFullJson = e.booking_version?.[0]?.booking_full_json?.[0];
+      const bookingFullJson = e?.booking_version?.[0]?.booking_full_json?.[0];
       if (!bookingFullJson?.data_temp) return [];
 
       const full = this.utils.safeParse(bookingFullJson.data_temp);
@@ -211,12 +221,12 @@ export class AstosService {
             : 0;
 
           flatOut.push({
-            contract: e.contract_code,
-            shipper: e.group?.id_name,
-            contract_point: r.contract_point,
-            area: r.area_text,
-            entry_exit: r.entry_exit_id === 1 ? 'ENTRY' : 'EXIT',
-            zone: r.zone_text,
+            contract: e?.contract_code,
+            shipper: e?.group?.id_name,
+            contract_point: r?.contract_point,
+            area: r?.area_text,
+            entry_exit: r?.entry_exit_id === 1 ? 'ENTRY' : 'EXIT',
+            zone: r?.zone_text,
             dates: dISO,
             value,
           });
@@ -338,20 +348,20 @@ export class AstosService {
           if (!colKey) continue;
 
           for (const row of rows) {
-            const unit = this.utils.toUpper(row['9']);
+            const unit = this.utils.toUpper(row?.['9']);
             if (unit !== 'MMBTU/D') { continue; }
 
-            const point = [row['3'], row['5']].map((v: any) => (v ?? '').toString().trim()).find((v: string) => v.length > 0);
+            const point = [row?.['3'], row?.['5']].map((v: any) => (v ?? '').toString().trim()).find((v: string) => v.length > 0);
             if (!point) continue;
-            const val = this.utils.asNumber(row[colKey]);
+            const val = this.utils.asNumber(row?.[colKey]);
             // console.log(`${ctr.contract_code} ${point}: ${val} from \"${colKey}\"`);
             if (val == null || Number.isNaN(val)) continue;
             const Value = isDaily ? this.utils.round3(val) : this.utils.round3(val / 24);
 
-            const allowed = contractCPs.get(ctr.contract_code) ?? new Set<string>();
+            const allowed = contractCPs.get(ctr?.contract_code) ?? new Set<string>();
             const nm = nomMap.get(point);
             const nt = nonTpaMap.get(point);
-            const zone = this.utils.toUpper(row['0']) ?? null;
+            const zone = this.utils.toUpper(row?.['0']) ?? null;
             if (nm) {
               const cp = (nm.cpList ?? []).find((x: string) => allowed.has(x)) ?? null;
               const entryExit = (nm.entry_exit ?? row['10'])?.toString().toUpperCase() ?? null;
@@ -510,36 +520,36 @@ export class AstosService {
         if (!isDaily && !weeklyColKey) continue;
 
         for (const row of rows) {
-          const unit = this.utils.toUpper(row['9']);
+          const unit = this.utils.toUpper(row?.['9']);
           if (unit !== 'MMBTU/D') { continue; }
 
           // point id or concept fallback
-          const point = [row['3'], row['5']].map((v: any) => (v ?? '').toString().trim()).find((v: string) => v.length > 0);
+          const point = [row?.['3'], row?.['5']].map((v: any) => (v ?? '').toString().trim()).find((v: string) => v.length > 0);
           if (!point) continue;
 
           // classify NOM → NONTPA → CONCEPT
           let base: any | null = null;
           const nm = nomMap.get(point);
           const nt = nonTpaMap.get(point);
-          const zone = this.utils.toUpper(row['0']) ?? null;
+          const zone = this.utils.toUpper(row?.['0']) ?? null;
           if (nm) {
-            const allowed = contractCPs.get(ctr.contract_code) ?? new Set<string>();
+            const allowed = contractCPs.get(ctr?.contract_code) ?? new Set<string>();
             const cp = (nm.cpList ?? []).find((x: string) => allowed.has(x)) ?? null;
-            const entryExit = (nm.entry_exit ?? row['10'])?.toString().toUpperCase() ?? null;
+            const entryExit = (nm.entry_exit ?? row?.['10'])?.toString().toUpperCase() ?? null;
             if (!cp) { continue; }
             base = {
               point, point_type: 'NOM', customer_type: nm.customer_type ?? null,
               relation_point: cp, relation_point_type: cp ? 'CONTRACT' : null,
-              area: nm.area ?? (row['2'] ?? null), zone: nm.zone ?? (row['0'] ?? null),
+              area: nm.area ?? (row?.['2'] ?? null), zone: nm.zone ?? (row?.['0'] ?? null),
               entry_exit: entryExit
             };
           }
           else if (nt) {
-            const entryExit = (nt.entry_exit ?? row['10'])?.toString().toUpperCase() ?? null;
+            const entryExit = (nt.entry_exit ?? row?.['10'])?.toString().toUpperCase() ?? null;
             base = {
               point, point_type: 'NONTPA', customer_type: null,
               relation_point: nt.base_point, relation_point_type: 'NOM',
-              area: nt.area ?? (row['2'] ?? null), zone: nt.zone ?? (this.utils.toUpper(row['0']) ?? null),
+              area: nt.area ?? (row?.['2'] ?? null), zone: nt.zone ?? (this.utils.toUpper(row?.['0']) ?? null),
               entry_exit: entryExit
             };
           }
@@ -547,7 +557,7 @@ export class AstosService {
             base = {
               point, point_type: 'CONCEPT', customer_type: null,
               relation_point: null, relation_point_type: null,
-              area: row['2'] ?? null, zone: zone,
+              area: row?.['2'] ?? null, zone: zone,
               entry_exit: null
             };
           }

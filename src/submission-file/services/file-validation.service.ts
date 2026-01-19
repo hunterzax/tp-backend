@@ -2,8 +2,18 @@ import { Injectable, BadRequestException, HttpException, HttpStatus } from '@nes
 
 @Injectable()
 export class FileValidationService {
-  
+
+  private safeParseJSON(jsonString: string): any {
+    try {
+      return JSON.parse(jsonString);
+    } catch (error) {
+      console.error('Error parsing JSON:', error);
+      return []; // Return empty array as fallback for findData
+    }
+  }
+
   /**
+
    * Validate file type - only allow Excel files
    * @param file - Uploaded file object
    * @throws BadRequestException if file type is invalid
@@ -24,7 +34,7 @@ export class FileValidationService {
    */
   validateFileSize(file: any): void {
     const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-    
+
     if (file.buffer.length > MAX_FILE_SIZE) {
       throw new BadRequestException('File size over limit. Maximum allowed size is 10MB.');
     }
@@ -66,7 +76,7 @@ export class FileValidationService {
    * @throws HttpException if file template doesn't match
    */
   validateFileStructure(jsonDataMultiSheet: string, expectedTabType: string): number {
-    const findData = JSON.parse(jsonDataMultiSheet);
+    const findData = this.safeParseJSON(jsonDataMultiSheet);
 
     // Determine nomination type from sheet names
     const checkType = findData.reduce((acc: string | null, f: any) => {
@@ -109,7 +119,7 @@ export class FileValidationService {
     this.validateFileType(file);
     this.validateFileBuffer(file);
     this.validateFileSize(file);
-    
+
     return this.validateFileStructure(jsonDataMultiSheet, expectedTabType);
   }
 }

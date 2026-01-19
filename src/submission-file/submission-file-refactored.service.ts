@@ -226,6 +226,23 @@ export class SubmissionFileRefactoredService {
   ) { }
 
   /**
+   * Safely parses a JSON string into an object.
+   * Prevents CWE-502 (Unsafe JSON Parsing) by handling errors gracefully.
+   *
+   * @param jsonString - The JSON string to parse
+   * @returns The parsed object or null if parsing fails or input is invalid
+   */
+  private safeParseJSON(jsonString: any): any {
+    if (typeof jsonString !== 'string') return jsonString;
+    try {
+      return JSON.parse(jsonString);
+    } catch (e) {
+      console.error('Error parsing JSON:', e);
+      return null;
+    }
+  }
+
+  /**
    * ===== FILE VALIDATION METHODS =====
    * Core validation functions for different file types and structures
    */
@@ -307,7 +324,7 @@ export class SubmissionFileRefactoredService {
 
   // ก่อน deadline
 
-  ckDateInfoNomDailyAndWeeklyNew( 
+  ckDateInfoNomDailyAndWeeklyNew(
     nowAts: any,
     startDateExConv: any,
     nominationDeadlineSubmission: any,
@@ -569,24 +586,24 @@ export class SubmissionFileRefactoredService {
   //   return fixedNumber.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
   // }
 
-    // เติมทศนิยม 3 ตำแหน่ง new
+  // เติมทศนิยม 3 ตำแหน่ง new
   formatNumberThreeDecimal(number: any) {
-      // คืนค่าตามเดิมถ้าไม่ใช่ตัวเลข ไม่ปัดเศษ
-      const n = Number(number);
-      if (!Number.isFinite(n)) return number;
+    // คืนค่าตามเดิมถ้าไม่ใช่ตัวเลข ไม่ปัดเศษ
+    const n = Number(number);
+    if (!Number.isFinite(n)) return number;
 
-      const sign = n < 0 ? '-' : '';
-      const abs = Math.abs(n);
+    const sign = n < 0 ? '-' : '';
+    const abs = Math.abs(n);
 
-      // ตัดทศนิยมให้เหลือ 3 ตำแหน่ง (ไม่ปัด)
-      const truncated = Math.floor(abs * 1000) / 1000;
+    // ตัดทศนิยมให้เหลือ 3 ตำแหน่ง (ไม่ปัด)
+    const truncated = Math.floor(abs * 1000) / 1000;
 
-      // แยกส่วนจำนวนเต็ม/ทศนิยมแล้วจัดรูปแบบ
-      const [i, d = ''] = truncated.toString().split('.');
-      const intWithComma = i?.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-      const dec = d.padEnd(3, '0'); // ให้ครบ 3 หลักเสมอ
+    // แยกส่วนจำนวนเต็ม/ทศนิยมแล้วจัดรูปแบบ
+    const [i, d = ''] = truncated.toString().split('.');
+    const intWithComma = i?.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    const dec = d.padEnd(3, '0'); // ให้ครบ 3 หลักเสมอ
 
-      return `${sign}${intWithComma}.${dec}`;
+    return `${sign}${intWithComma}.${dec}`;
   }
 
   /**
@@ -694,8 +711,8 @@ export class SubmissionFileRefactoredService {
     console.log(`sheet1?.data[1][1] : `, sheet1?.data[1][1]);
     if (!!checkType && !!sheet2) {
       if (
-        contractCode?.contract_code !== sheet1?.data[1][1] &&
-        contractCode?.group?.id_name !== sheet1?.data[1][0]
+        contractCode?.contract_code !== sheet1?.data?.[1]?.[1] &&
+        contractCode?.group?.id_name !== sheet1?.data?.[1]?.[0]
       ) {
         throw new HttpException(
           {
@@ -705,7 +722,7 @@ export class SubmissionFileRefactoredService {
           },
           HttpStatus.BAD_REQUEST,
         );
-      } else if (contractCode?.contract_code !== sheet1?.data[1][1]) {
+      } else if (contractCode?.contract_code !== sheet1?.data?.[1]?.[1]) {
         throw new HttpException(
           {
             status: HttpStatus.BAD_REQUEST,
@@ -714,7 +731,7 @@ export class SubmissionFileRefactoredService {
           },
           HttpStatus.BAD_REQUEST,
         );
-      } else if (contractCode?.group?.id_name !== sheet1?.data[1][0]) {
+      } else if (contractCode?.group?.id_name !== sheet1?.data?.[1]?.[0]) {
         throw new HttpException(
           {
             status: HttpStatus.BAD_REQUEST,
@@ -727,7 +744,7 @@ export class SubmissionFileRefactoredService {
         // check หัว
         // 0-13 14++++
         const isEqual = headNom.every(
-          (val, index) => val === sheet1?.data[2][index],
+          (val, index) => val === sheet1?.data?.[2]?.[index],
         );
 
         if (!isEqual) {
@@ -742,7 +759,7 @@ export class SubmissionFileRefactoredService {
           );
         }
         const isEqualSheet2 = headNomSheet2.every(
-          (val, index) => val === sheet2?.data[0][index],
+          (val, index) => val === sheet2?.data?.[0]?.[index],
         );
 
         if (!isEqualSheet2) {
@@ -778,7 +795,7 @@ export class SubmissionFileRefactoredService {
             1,
           );
 
-          const ckDateHead = this.validateDataDaily(sheet1?.data[2]);
+          const ckDateHead = this.validateDataDaily(sheet1?.data?.[2]);
           if (!ckDateHead) {
             throw new HttpException(
               {
@@ -794,15 +811,15 @@ export class SubmissionFileRefactoredService {
             ...sheet1,
             data: [
               [],
-              this.uploadTemplateForShipperService.objToArr(sheet1?.data[0]),
-              this.uploadTemplateForShipperService.objToArr(sheet1?.data[1]),
+              this.uploadTemplateForShipperService.objToArr(sheet1?.data?.[0]),
+              this.uploadTemplateForShipperService.objToArr(sheet1?.data?.[1]),
               [
                 ...this.uploadTemplateForShipperService.objToArr(
-                  sheet1?.data[2],
+                  sheet1?.data?.[2],
                 ),
                 // ...daily,
               ],
-              ...sheet1?.data
+              ...(sheet1?.data || [])
                 .slice(3)
                 .map((e: any) =>
                   this.uploadTemplateForShipperService.objToArr(e),
@@ -830,10 +847,10 @@ export class SubmissionFileRefactoredService {
               [],
               [
                 ...this.uploadTemplateForShipperService.truncateArrayHeadSheet2(
-                  this.uploadTemplateForShipperService.objToArr(sheet2.data[0]),
+                  this.uploadTemplateForShipperService.objToArr(sheet2?.data?.[0]),
                 ),
               ],
-              ...sheet2?.data
+              ...(sheet2?.data || [])
                 .slice(1)
                 .map((e: any) =>
                   this.uploadTemplateForShipperService.truncateArrayHeadSheet2(
@@ -844,7 +861,7 @@ export class SubmissionFileRefactoredService {
           };
           sheet3 = { ...sheet3, data: headNomSheet3 };
 
-          for (let i = 0; i < sheet1?.data.length; i++) {
+          for (let i = 0; i < (sheet1?.data || []).length; i++) {
             const zoneCk = sheet1?.data[i][0] || null;
             const supplyDemandCk = sheet1?.data[i][1] || null;
             const areaCk = sheet1?.data[i][2] || null;
@@ -858,32 +875,32 @@ export class SubmissionFileRefactoredService {
             const entryExitCk = sheet1?.data[i][10] || null;
             const wiCk = sheet1?.data[i][11] || null;
             const hvCk = sheet1?.data[i][12] || null;
-            const sgCk = sheet1?.data[i][13] || null;
-            const hr1Ck = sheet1?.data[i][14] || null;
-            const hr2Ck = sheet1?.data[i][15] || null;
-            const hr3Ck = sheet1?.data[i][16] || null;
-            const hr4Ck = sheet1?.data[i][17] || null;
-            const hr5Ck = sheet1?.data[i][18] || null;
-            const hr6Ck = sheet1?.data[i][19] || null;
-            const hr7Ck = sheet1?.data[i][20] || null;
-            const hr8Ck = sheet1?.data[i][21] || null;
-            const hr9Ck = sheet1?.data[i][22] || null;
-            const hr10Ck = sheet1?.data[i][23] || null;
-            const hr11Ck = sheet1?.data[i][24] || null;
-            const hr12Ck = sheet1?.data[i][25] || null;
-            const hr13Ck = sheet1?.data[i][26] || null;
-            const hr14Ck = sheet1?.data[i][27] || null;
-            const hr15Ck = sheet1?.data[i][28] || null;
-            const hr16Ck = sheet1?.data[i][29] || null;
-            const hr17Ck = sheet1?.data[i][30] || null;
-            const hr18Ck = sheet1?.data[i][31] || null;
-            const hr19Ck = sheet1?.data[i][32] || null;
-            const hr20Ck = sheet1?.data[i][33] || null;
-            const hr21Ck = sheet1?.data[i][34] || null;
-            const hr22Ck = sheet1?.data[i][35] || null;
-            const hr23Ck = sheet1?.data[i][36] || null;
-            const hr24Ck = sheet1?.data[i][37] || null;
-            const totalCk = sheet1?.data[i][38] || null;
+            const sgCk = sheet1?.data?.[i]?.[13] || null;
+            const hr1Ck = sheet1?.data?.[i]?.[14] || null;
+            const hr2Ck = sheet1?.data?.[i]?.[15] || null;
+            const hr3Ck = sheet1?.data?.[i]?.[16] || null;
+            const hr4Ck = sheet1?.data?.[i]?.[17] || null;
+            const hr5Ck = sheet1?.data?.[i]?.[18] || null;
+            const hr6Ck = sheet1?.data?.[i]?.[19] || null;
+            const hr7Ck = sheet1?.data?.[i]?.[20] || null;
+            const hr8Ck = sheet1?.data?.[i]?.[21] || null;
+            const hr9Ck = sheet1?.data?.[i]?.[22] || null;
+            const hr10Ck = sheet1?.data?.[i]?.[23] || null;
+            const hr11Ck = sheet1?.data?.[i]?.[24] || null;
+            const hr12Ck = sheet1?.data?.[i]?.[25] || null;
+            const hr13Ck = sheet1?.data?.[i]?.[26] || null;
+            const hr14Ck = sheet1?.data?.[i]?.[27] || null;
+            const hr15Ck = sheet1?.data?.[i]?.[28] || null;
+            const hr16Ck = sheet1?.data?.[i]?.[29] || null;
+            const hr17Ck = sheet1?.data?.[i]?.[30] || null;
+            const hr18Ck = sheet1?.data?.[i]?.[31] || null;
+            const hr19Ck = sheet1?.data?.[i]?.[32] || null;
+            const hr20Ck = sheet1?.data?.[i]?.[33] || null;
+            const hr21Ck = sheet1?.data?.[i]?.[34] || null;
+            const hr22Ck = sheet1?.data?.[i]?.[35] || null;
+            const hr23Ck = sheet1?.data?.[i]?.[36] || null;
+            const hr24Ck = sheet1?.data?.[i]?.[37] || null;
+            const totalCk = sheet1?.data?.[i]?.[38] || null;
             // console.log('i : ', i);
             // console.log('zoneCk : ', zoneCk);
             // console.log('supplyDemandCk : ', supplyDemandCk);
@@ -920,7 +937,7 @@ export class SubmissionFileRefactoredService {
 
               fullDataRow.push({
                 ix: i,
-                row: sheet1?.data[i],
+                row: sheet1?.data?.[i],
               });
 
               const checkNominationPoint = nominationPoint?.find((fnp: any) => {
@@ -949,28 +966,28 @@ export class SubmissionFileRefactoredService {
                     for (
                       let ifb = 0;
                       ifb <
-                      (contractCode?.booking_version[0]?.booking_row_json || [])
+                      (contractCode?.booking_version?.[0]?.booking_row_json || [])
                         .length;
                       ifb++
                     ) {
                       const findPoint =
-                        checkNonTPA?.nomination_point?.contract_point_list.find(
+                        checkNonTPA?.nomination_point?.contract_point_list?.find(
                           (inb: any) => {
                             return (
                               inb?.contract_point ===
-                              contractCode?.booking_version[0]
-                                ?.booking_row_json[ifb]?.contract_point
+                              contractCode?.booking_version?.[0]
+                                ?.booking_row_json?.[ifb]?.contract_point
                             );
                           },
                         );
                       if (findPoint) {
                         if (
                           findPoint?.area?.name ===
-                            checkNonTPA?.nomination_point?.area?.name &&
+                          checkNonTPA?.nomination_point?.area?.name &&
                           findPoint?.zone?.name ===
-                            checkNonTPA?.nomination_point?.zone?.name &&
+                          checkNonTPA?.nomination_point?.zone?.name &&
                           findPoint?.entry_exit?.name ===
-                            checkNonTPA?.nomination_point?.entry_exit?.name
+                          checkNonTPA?.nomination_point?.entry_exit?.name
                         ) {
                           checkNom = true;
                         }
@@ -1050,11 +1067,11 @@ export class SubmissionFileRefactoredService {
                       // console.log('findPoint : ', findPoint);
                       if (
                         findPoint?.area?.name ===
-                          checkNominationPoint?.area?.name &&
+                        checkNominationPoint?.area?.name &&
                         findPoint?.zone?.name ===
-                          checkNominationPoint?.zone?.name &&
+                        checkNominationPoint?.zone?.name &&
                         findPoint?.entry_exit?.name ===
-                          checkNominationPoint?.entry_exit?.name
+                        checkNominationPoint?.entry_exit?.name
                       ) {
                         checkNom = true;
                       }
@@ -1071,8 +1088,8 @@ export class SubmissionFileRefactoredService {
                     console.log('4');
                     // ไม่ตรงเงื่อนไขใน nomination deadline
                     console.log(
-                      'contractCode?.booking_version[0]?.booking_row_json : ',
-                      contractCode?.booking_version[0]?.booking_row_json,
+                      'contractCode?.booking_version?.[0]?.booking_row_json : ',
+                      contractCode?.booking_version?.[0]?.booking_row_json,
                     );
                     console.log(
                       'checkNominationPoint?.area?.name : ',
@@ -1095,8 +1112,8 @@ export class SubmissionFileRefactoredService {
                       checkNominationPoint,
                     );
                     console.log(
-                      '(contractCode?.booking_version[0]?.booking_row_json || []) : ',
-                      contractCode?.booking_version[0]?.booking_row_json || [],
+                      '(contractCode?.booking_version?.[0]?.booking_row_json || []) : ',
+                      contractCode?.booking_version?.[0]?.booking_row_json || [],
                     );
 
                     console.log('3 Nomination Point is incorrect.');
@@ -1173,13 +1190,13 @@ export class SubmissionFileRefactoredService {
                   }
                   caseData?.columnPointIdConcept.push({
                     ix: i,
-                    row: sheet1?.data[i],
+                    row: sheet1?.data?.[i],
                   });
                 } else {
                   // console.log(`i : `, i);
                   caseData?.columnOther.push({
                     ix: i,
-                    row: sheet1?.data[i],
+                    row: sheet1?.data?.[i],
                   });
                 }
               }
@@ -1235,15 +1252,15 @@ export class SubmissionFileRefactoredService {
             ...sheet1,
             data: [
               [],
-              this.uploadTemplateForShipperService.objToArr(sheet1?.data[0]),
-              this.uploadTemplateForShipperService.objToArr(sheet1?.data[1]),
+              this.uploadTemplateForShipperService.objToArr(sheet1?.data?.[0]),
+              this.uploadTemplateForShipperService.objToArr(sheet1?.data?.[1]),
               [
                 ...this.uploadTemplateForShipperService.objToArr(
-                  sheet1?.data[2],
+                  sheet1?.data?.[2],
                 ),
                 // ...weekly,
               ],
-              ...sheet1?.data
+              ...(sheet1?.data || [])
                 .slice(3)
                 .map((e: any) =>
                   this.uploadTemplateForShipperService.objToArr(e),
@@ -1273,10 +1290,10 @@ export class SubmissionFileRefactoredService {
               [],
               [
                 ...this.uploadTemplateForShipperService.truncateArrayHeadSheet2(
-                  this.uploadTemplateForShipperService.objToArr(sheet2.data[0]),
+                  this.uploadTemplateForShipperService.objToArr(sheet2?.data?.[0]),
                 ),
               ],
-              ...sheet2?.data
+              ...(sheet2?.data || [])
                 .slice(1)
                 .map((e: any) =>
                   this.uploadTemplateForShipperService.truncateArrayHeadSheet2(
@@ -1287,7 +1304,7 @@ export class SubmissionFileRefactoredService {
           };
           sheet3 = { ...sheet3, data: headNomSheet3 };
 
-          for (let i = 0; i < sheet1?.data.length; i++) {
+          for (let i = 0; i < (sheet1?.data || []).length; i++) {
             const zoneCk = sheet1?.data[i][0] || null;
             const supplyDemandCk = sheet1?.data[i][1] || null;
             const areaCk = sheet1?.data[i][2] || null;
@@ -1301,14 +1318,14 @@ export class SubmissionFileRefactoredService {
             const entryExitCk = sheet1?.data[i][10] || null;
             const wiCk = sheet1?.data[i][11] || null;
             const hvCk = sheet1?.data[i][12] || null;
-            const sgCk = sheet1?.data[i][13] || null;
-            const day1Ck = sheet1?.data[i][14] || null;
-            const day2Ck = sheet1?.data[i][15] || null;
-            const day3Ck = sheet1?.data[i][16] || null;
-            const day4Ck = sheet1?.data[i][17] || null;
-            const day5Ck = sheet1?.data[i][18] || null;
-            const day6Ck = sheet1?.data[i][19] || null;
-            const day7Ck = sheet1?.data[i][20] || null;
+            const sgCk = sheet1?.data?.[i]?.[13] || null;
+            const day1Ck = sheet1?.data?.[i]?.[14] || null;
+            const day2Ck = sheet1?.data?.[i]?.[15] || null;
+            const day3Ck = sheet1?.data?.[i]?.[16] || null;
+            const day4Ck = sheet1?.data?.[i]?.[17] || null;
+            const day5Ck = sheet1?.data?.[i]?.[18] || null;
+            const day6Ck = sheet1?.data?.[i]?.[19] || null;
+            const day7Ck = sheet1?.data?.[i]?.[20] || null;
 
             // old เก็บไว้
             if (i > 3) {
@@ -1326,7 +1343,7 @@ export class SubmissionFileRefactoredService {
 
               fullDataRow.push({
                 ix: i,
-                row: sheet1?.data[i],
+                row: sheet1?.data?.[i],
               });
 
               const checkNominationPoint = nominationPoint?.find((fnp: any) => {
@@ -1353,28 +1370,28 @@ export class SubmissionFileRefactoredService {
                     for (
                       let ifb = 0;
                       ifb <
-                      (contractCode?.booking_version[0]?.booking_row_json || [])
+                      (contractCode?.booking_version?.[0]?.booking_row_json || [])
                         .length;
                       ifb++
                     ) {
                       const findPoint =
-                        checkNonTPA?.nomination_point?.contract_point_list.find(
+                        checkNonTPA?.nomination_point?.contract_point_list?.find(
                           (inb: any) => {
                             return (
                               inb?.contract_point ===
-                              contractCode?.booking_version[0]
-                                ?.booking_row_json[ifb]?.contract_point
+                              contractCode?.booking_version?.[0]
+                                ?.booking_row_json?.[ifb]?.contract_point
                             );
                           },
                         );
                       if (findPoint) {
                         if (
                           findPoint?.area?.name ===
-                            checkNonTPA?.nomination_point?.area?.name &&
+                          checkNonTPA?.nomination_point?.area?.name &&
                           findPoint?.zone?.name ===
-                            checkNonTPA?.nomination_point?.zone?.name &&
+                          checkNonTPA?.nomination_point?.zone?.name &&
                           findPoint?.entry_exit?.name ===
-                            checkNonTPA?.nomination_point?.entry_exit?.name
+                          checkNonTPA?.nomination_point?.entry_exit?.name
                         ) {
                           checkNom = true;
                         }
@@ -1383,14 +1400,14 @@ export class SubmissionFileRefactoredService {
                     if (checkNom) {
                       caseData?.columnType.push({
                         ix: i,
-                        row: sheet1?.data[i],
+                        row: sheet1?.data?.[i],
                       });
                     } else {
                       console.log('-');
                       throw new HttpException(
                         {
                           status: HttpStatus.FORBIDDEN,
-                          error: `${checkNonTPA?.nomination_point?.nomination_point || 'Nomination Point'} is not found in file for ${sheet1?.data[i][3]}`,
+                          error: `${checkNonTPA?.nomination_point?.nomination_point || 'Nomination Point'} is not found in file for ${sheet1?.data?.[i]?.[3]}`,
                         },
                         HttpStatus.FORBIDDEN,
                       );
@@ -1400,7 +1417,7 @@ export class SubmissionFileRefactoredService {
                     throw new HttpException(
                       {
                         status: HttpStatus.FORBIDDEN,
-                        error: `${checkNonTPA?.nomination_point?.nomination_point || 'Nomination Point'} is not found in file for ${sheet1?.data[i][3]}`,
+                        error: `${checkNonTPA?.nomination_point?.nomination_point || 'Nomination Point'} is not found in file for ${sheet1?.data?.[i]?.[3]}`,
                       },
                       HttpStatus.FORBIDDEN,
                     );
@@ -1410,8 +1427,7 @@ export class SubmissionFileRefactoredService {
                   throw new HttpException(
                     {
                       status: HttpStatus.FORBIDDEN,
-                      // error: `${checkNonTPA?.nomination_point?.nomination_point || "Nomination Point"} is not found in file for ${sheet1?.data[i][3]}`,
-                      error: `${sheet1?.data[i][3]} is  not activated on Gas Day in the file.`,
+                      error: `${sheet1?.data?.[i]?.[3]} is  not activated on Gas Day in the file.`,
                     },
                     HttpStatus.FORBIDDEN,
                   );
@@ -1446,11 +1462,11 @@ export class SubmissionFileRefactoredService {
                     if (findPoint) {
                       if (
                         findPoint?.area?.name ===
-                          checkNominationPoint?.area?.name &&
+                        checkNominationPoint?.area?.name &&
                         findPoint?.zone?.name ===
-                          checkNominationPoint?.zone?.name &&
+                        checkNominationPoint?.zone?.name &&
                         findPoint?.entry_exit?.name ===
-                          checkNominationPoint?.entry_exit?.name
+                        checkNominationPoint?.entry_exit?.name
                       ) {
                         checkNom = true;
                       }
@@ -1461,7 +1477,7 @@ export class SubmissionFileRefactoredService {
                     // non ปกติ
                     caseData?.columnPointId.push({
                       ix: i,
-                      row: sheet1?.data[i],
+                      row: sheet1?.data?.[i],
                     });
                   } else {
                     console.log('-3');
@@ -1478,8 +1494,8 @@ export class SubmissionFileRefactoredService {
                     throw new HttpException(
                       {
                         status: HttpStatus.FORBIDDEN,
-                        // error: `${sheet1?.data[i][3]} is activated for ${startDateEx} Click to continune`,
-                        // error: `${areaCk}, ${zoneCk}, or ${supdemCk} for ${sheet1?.data[i][3]}  is incorrected`,
+                        // error: `${sheet1?.data?.[i]?.[3]} is activated for ${startDateEx} Click to continune`,
+                        // error: `${areaCk}, ${zoneCk}, or ${supdemCk} for ${sheet1?.data?.[i]?.[3]}  is incorrected`,
                         error: `Nomination Point is incorrect.`, // https://app.clickup.com/t/86etzcgzh
                       },
                       HttpStatus.FORBIDDEN,
@@ -1491,8 +1507,7 @@ export class SubmissionFileRefactoredService {
                   throw new HttpException(
                     {
                       status: HttpStatus.FORBIDDEN,
-                      // error: `${sheet1?.data[i][3]} is activated for ${startDateEx} Click to continune`,
-                      error: `${areaCk}, ${zoneCk}, or ${supdemCk} for ${sheet1?.data[i][3]}  is incorrected`,
+                      error: `${areaCk}, ${zoneCk}, or ${supdemCk} for ${sheet1?.data?.[i]?.[3]}  is incorrected`,
                     },
                     HttpStatus.FORBIDDEN,
                   );
@@ -1535,12 +1550,12 @@ export class SubmissionFileRefactoredService {
                   }
                   caseData?.columnPointIdConcept.push({
                     ix: i,
-                    row: sheet1?.data[i],
+                    row: sheet1?.data?.[i],
                   });
                 } else {
                   caseData?.columnOther.push({
                     ix: i,
-                    row: sheet1?.data[i],
+                    row: sheet1?.data?.[i],
                   });
                 }
               }
@@ -1564,7 +1579,7 @@ export class SubmissionFileRefactoredService {
               if (ckContractPoint) {
                 getsValueSheet2.push({
                   ix: i,
-                  row: sheet1?.data[i],
+                  row: sheet1?.data?.[i],
                 });
               }
             }
@@ -1623,25 +1638,25 @@ export class SubmissionFileRefactoredService {
     // ===== STEP 27: BOOKING DATA PROCESSING =====
     console.log('********* start *********');
 
-    const bookingFullJson = JSON.parse(
-      contractCode?.booking_version[0]?.booking_full_json[0]?.data_temp,
+    const bookingFullJson = this.safeParseJSON(
+      contractCode?.booking_version?.[0]?.booking_full_json?.[0]?.data_temp,
     );
     const headerEntryCDBMMBTUD =
-      bookingFullJson?.headerEntry['Capacity Daily Booking (MMBTU/d)'];
-    delete headerEntryCDBMMBTUD['key'];
+      bookingFullJson?.headerEntry?.['Capacity Daily Booking (MMBTU/d)'] || {};
+    if (headerEntryCDBMMBTUD['key']) delete headerEntryCDBMMBTUD['key'];
     const headerExitCDBMMBTUD =
-      bookingFullJson?.headerExit['Capacity Daily Booking (MMBTU/d)'];
-    delete headerExitCDBMMBTUD['key'];
+      bookingFullJson?.headerExit?.['Capacity Daily Booking (MMBTU/d)'] || {};
+    if (headerExitCDBMMBTUD['key']) delete headerExitCDBMMBTUD['key'];
 
     const headerEntryCDBMMBTUH =
-      bookingFullJson?.headerEntry['Maximum Hour Booking (MMBTU/h)'];
-    delete headerEntryCDBMMBTUH['key'];
+      bookingFullJson?.headerEntry?.['Maximum Hour Booking (MMBTU/h)'] || {};
+    if (headerEntryCDBMMBTUH['key']) delete headerEntryCDBMMBTUH['key'];
     const headerExitCDBMMBTUH =
-      bookingFullJson?.headerExit['Maximum Hour Booking (MMBTU/h)'];
-    delete headerExitCDBMMBTUH['key'];
+      bookingFullJson?.headerExit?.['Maximum Hour Booking (MMBTU/h)'] || {};
+    if (headerExitCDBMMBTUH['key']) delete headerExitCDBMMBTUH['key'];
 
-    const entryValue = bookingFullJson?.entryValue;
-    const exitValue = bookingFullJson?.exitValue;
+    const entryValue = bookingFullJson?.entryValue || [];
+    const exitValue = bookingFullJson?.exitValue || [];
     const filePeriodMode = contractCode?.file_period_mode;
     const zoneQualityMaster = await this.prisma.zone.findMany({
       where: {
@@ -1739,7 +1754,7 @@ export class SubmissionFileRefactoredService {
                 : null; // new
             valueCapaPerDay =
               find[resultEntryExitUsePerDay] === '0' ||
-              !!find[resultEntryExitUsePerDay]
+                !!find[resultEntryExitUsePerDay]
                 ? find[resultEntryExitUsePerDay]
                 : null; // new
 
@@ -1816,14 +1831,14 @@ export class SubmissionFileRefactoredService {
                 // overMaximumHourCapacityRight = true; // ตั้งค่าว่าเกินขีดจำกัด
                 const finds = warningLogHrTemp?.find((f: any) => {
                   return (
-                    f?.nomination_point === e['row'][3] &&
+                    f?.nomination_point === e?.['row']?.[3] &&
                     f?.hr === index - 14 + 1 &&
                     f?.contractPoint ===
-                      checkNominationPoint?.contract_point_list.find(
-                        (cl: any) => {
-                          return cl?.contract_point === find['0'];
-                        },
-                      )?.contract_point
+                    checkNominationPoint?.contract_point_list?.find(
+                      (cl: any) => {
+                        return cl?.contract_point === find?.['0'];
+                      },
+                    )?.contract_point
                   );
                 });
                 if (finds) {
@@ -1842,7 +1857,7 @@ export class SubmissionFileRefactoredService {
                   });
                 } else {
                   warningLogHrTemp.push({
-                    nomination_point: e['row'][3],
+                    nomination_point: e?.['row']?.[3],
                     hr: index - 14 + 1,
                     contractPoint:
                       checkNominationPoint?.contract_point_list.find(
@@ -1873,20 +1888,20 @@ export class SubmissionFileRefactoredService {
             // }
 
             const findZone = zoneQualityMaster.find((f: any) => {
-              return f?.name === e['row'][0] && f?.entry_exit_id === 1;
+              return f?.name === e?.['row']?.[0] && f?.entry_exit_id === 1;
             });
             console.log('-findZone : ', findZone);
             console.log(
               '-zone_master_quality : ',
-              findZone?.zone_master_quality[0],
+              findZone?.zone_master_quality?.[0],
             );
 
             // WI
             if (
               Number(e['row'][11]) <
-                Number(findZone?.zone_master_quality[0]?.v2_wobbe_index_min) ||
+              Number(findZone?.zone_master_quality[0]?.v2_wobbe_index_min) ||
               Number(e['row'][11]) >
-                Number(findZone?.zone_master_quality[0]?.v2_wobbe_index_max)
+              Number(findZone?.zone_master_quality[0]?.v2_wobbe_index_max)
             ) {
               e['row'][11] !== null &&
                 e['row'][11] !== '' &&
@@ -1897,55 +1912,55 @@ export class SubmissionFileRefactoredService {
             }
             // HV
             if (
-              Number(e['row'][12]) <
-                Number(
-                  findZone?.zone_master_quality[0]?.v2_sat_heating_value_min,
-                ) ||
-              Number(e['row'][12]) >
-                Number(
-                  findZone?.zone_master_quality[0]?.v2_sat_heating_value_max,
-                )
+              Number(e?.['row']?.[12]) <
+              Number(
+                findZone?.zone_master_quality?.[0]?.v2_sat_heating_value_min,
+              ) ||
+              Number(e?.['row']?.[12]) >
+              Number(
+                findZone?.zone_master_quality?.[0]?.v2_sat_heating_value_max,
+              )
             ) {
-              e['row'][12] !== null &&
-                e['row'][12] !== '' &&
-                e['row'][12] !== undefined &&
+              e?.['row']?.[12] !== null &&
+                e?.['row']?.[12] !== '' &&
+                e?.['row']?.[12] !== undefined &&
                 sheet1Quality.push(
-                  `For nomination point ${e['row'][3]}, HV value (${Number(e['row'][12])}) is out of zone limits (${Number(findZone?.zone_master_quality[0]?.v2_sat_heating_value_min)} to ${Number(findZone?.zone_master_quality[0]?.v2_sat_heating_value_max)})`,
+                  `For nomination point ${e?.['row']?.[3]}, HV value (${Number(e?.['row']?.[12])}) is out of zone limits (${Number(findZone?.zone_master_quality?.[0]?.v2_sat_heating_value_min)} to ${Number(findZone?.zone_master_quality?.[0]?.v2_sat_heating_value_max)})`,
                 );
             }
-          } else if (e['row'][10] === 'Exit' && e['row'][9] === 'MMBTU/D') {
+          } else if (e?.['row']?.[10] === 'Exit' && e?.['row']?.[9] === 'MMBTU/D') {
             const checkNominationPoint = nominationPoint?.find((fnp: any) => {
-              return fnp?.nomination_point === e['row'][3];
+              return fnp?.nomination_point === e?.['row']?.[3];
             });
             const find = exitValue.find((f: any) => {
               return (
-                f['0'] ===
-                checkNominationPoint?.contract_point_list.find((cl: any) => {
-                  return cl?.contract_point === f['0'];
+                f?.['0'] ===
+                checkNominationPoint?.contract_point_list?.find((cl: any) => {
+                  return cl?.contract_point === f?.['0'];
                 })?.contract_point
               );
             });
             // const find = exitValue.find((f:any) => { return f['0'] ===  e['row'][3] })
             // valueCapa = !!find && !!resultEntryExitUse && find[resultEntryExitUse] || 0
             valueCapa =
-              find[resultEntryExitUse] === '0' || !!find[resultEntryExitUse]
-                ? find[resultEntryExitUse]
+              find?.[resultEntryExitUse] === '0' || !!find?.[resultEntryExitUse]
+                ? find?.[resultEntryExitUse]
                 : null; // new
             valueCapaPerDay =
-              find[resultEntryExitUsePerDay] === '0' ||
-              !!find[resultEntryExitUsePerDay]
-                ? find[resultEntryExitUsePerDay]
+              find?.[resultEntryExitUsePerDay] === '0' ||
+                !!find?.[resultEntryExitUsePerDay]
+                ? find?.[resultEntryExitUsePerDay]
                 : null; // new
             // ตรวจสอบค่าความจุในช่วงเวลา 24 ชั่วโมง (index 14 ถึง 37)
             Array.from({ length: 24 }, (_, i) => i + 14).forEach((index) => {
               const currentCapacity =
-                e['row'][index] === '0' ||
-                (!!e['row'][index] &&
-                  Number(e['row'][index]?.trim()?.replace(/,/g, ''))) ||
+                e?.['row']?.[index] === '0' ||
+                (!!e?.['row']?.[index] &&
+                  Number(e?.['row']?.[index]?.trim()?.replace(/,/g, ''))) ||
                 null; //new
               const rIndex =
-                e['row'][index] === '0' || !!e['row'][index]
-                  ? e['row'][index]
+                e?.['row']?.[index] === '0' || !!e?.['row']?.[index]
+                  ? e?.['row']?.[index]
                   : null;
               if (valueCapa === null && !!rIndex) {
                 console.log('Blank');
@@ -2004,14 +2019,14 @@ export class SubmissionFileRefactoredService {
                 // overMaximumHourCapacityRight = true; // ตั้งค่าว่าเกินขีดจำกัด
                 const finds = warningLogHrTemp?.find((f: any) => {
                   return (
-                    f?.nomination_point === e['row'][3] &&
+                    f?.nomination_point === e?.['row']?.[3] &&
                     f?.hr === index - 14 + 1 &&
                     f?.contractPoint ===
-                      checkNominationPoint?.contract_point_list.find(
-                        (cl: any) => {
-                          return cl?.contract_point === find['0'];
-                        },
-                      )?.contract_point
+                    checkNominationPoint?.contract_point_list?.find(
+                      (cl: any) => {
+                        return cl?.contract_point === find?.['0'];
+                      },
+                    )?.contract_point
                   );
                 });
                 if (finds) {
@@ -2030,7 +2045,7 @@ export class SubmissionFileRefactoredService {
                   });
                 } else {
                   warningLogHrTemp.push({
-                    nomination_point: e['row'][3],
+                    nomination_point: e?.['row']?.[3],
                     hr: index - 14 + 1,
                     contractPoint:
                       checkNominationPoint?.contract_point_list.find(
@@ -2056,45 +2071,45 @@ export class SubmissionFileRefactoredService {
             //   overuseQuantity = true
             //   warningLogDay.push(`Nominated Total energy ${sumValuesDaily && this.formatNumberThreeDecimal(sumValuesDaily) || 0} exceeds contracted value ${Number(valueCapaPerDay)} for contract point ${(checkNominationPoint?.contract_point_list.find((cl: any) => { return cl?.contract_point === find['0'] }))?.contract_point || "-"} and gas day ${startDateEx}`);
             // }
-            const findZone = zoneQualityMaster.find((f: any) => {
-              return f?.name === e['row'][0] && f?.entry_exit_id === 2;
+            const findZone = zoneQualityMaster?.find((f: any) => {
+              return f?.name === e?.['row']?.[0] && f?.entry_exit_id === 2;
             });
             console.log('-findZone : ', findZone);
             console.log(
               '-zone_master_quality : ',
-              findZone?.zone_master_quality[0],
+              findZone?.zone_master_quality?.[0],
             );
 
             // WI
             if (
-              Number(e['row'][11]) <
-                Number(findZone?.zone_master_quality[0]?.v2_wobbe_index_min) ||
-              Number(e['row'][11]) >
-                Number(findZone?.zone_master_quality[0]?.v2_wobbe_index_max)
+              Number(e?.['row']?.[11]) <
+              Number(findZone?.zone_master_quality?.[0]?.v2_wobbe_index_min) ||
+              Number(e?.['row']?.[11]) >
+              Number(findZone?.zone_master_quality?.[0]?.v2_wobbe_index_max)
             ) {
-              e['row'][11] !== null &&
-                e['row'][11] !== '' &&
-                e['row'][11] !== undefined &&
+              e?.['row']?.[11] !== null &&
+                e?.['row']?.[11] !== '' &&
+                e?.['row']?.[11] !== undefined &&
                 sheet1Quality.push(
-                  `For nomination point ${e['row'][3]}, WI value (${Number(e['row'][11])}) is out of zone limits (${Number(findZone?.zone_master_quality[0]?.v2_wobbe_index_min)} to ${Number(findZone?.zone_master_quality[0]?.v2_wobbe_index_max)})`,
+                  `For nomination point ${e?.['row']?.[3]}, WI value (${Number(e?.['row']?.[11])}) is out of zone limits (${Number(findZone?.zone_master_quality?.[0]?.v2_wobbe_index_min)} to ${Number(findZone?.zone_master_quality?.[0]?.v2_wobbe_index_max)})`,
                 );
             }
             // HV
             if (
-              Number(e['row'][12]) <
-                Number(
-                  findZone?.zone_master_quality[0]?.v2_sat_heating_value_min,
-                ) ||
-              Number(e['row'][12]) >
-                Number(
-                  findZone?.zone_master_quality[0]?.v2_sat_heating_value_max,
-                )
+              Number(e?.['row']?.[12]) <
+              Number(
+                findZone?.zone_master_quality?.[0]?.v2_sat_heating_value_min,
+              ) ||
+              Number(e?.['row']?.[12]) >
+              Number(
+                findZone?.zone_master_quality?.[0]?.v2_sat_heating_value_max,
+              )
             ) {
-              e['row'][12] !== null &&
-                e['row'][12] !== '' &&
-                e['row'][12] !== undefined &&
+              e?.['row']?.[12] !== null &&
+                e?.['row']?.[12] !== '' &&
+                e?.['row']?.[12] !== undefined &&
                 sheet1Quality.push(
-                  `For nomination point ${e['row'][3]}, HV value (${Number(e['row'][12])}) is out of zone limits (${Number(findZone?.zone_master_quality[0]?.v2_sat_heating_value_min)} to ${Number(findZone?.zone_master_quality[0]?.v2_sat_heating_value_max)})`,
+                  `For nomination point ${e?.['row']?.[3]}, HV value (${Number(e?.['row']?.[12])}) is out of zone limits (${Number(findZone?.zone_master_quality?.[0]?.v2_sat_heating_value_min)} to ${Number(findZone?.zone_master_quality?.[0]?.v2_sat_heating_value_max)})`,
                 );
             }
           }
@@ -2144,15 +2159,15 @@ export class SubmissionFileRefactoredService {
           const overMaximumHourCapacityRight = null;
           let valueCapa = 0;
           let valueCapaPerDay = 0;
-          if (e['row'][10] === 'Entry' && e['row'][9] === 'MMBTU/D') {
+          if (e?.['row']?.[10] === 'Entry' && e?.['row']?.[9] === 'MMBTU/D') {
             const checkNominationPoint = nominationPoint?.find((fnp: any) => {
-              return fnp?.nomination_point === e['row'][3];
+              return fnp?.nomination_point === e?.['row']?.[3];
             });
-            const find = entryValue.find((f: any) => {
+            const find = entryValue?.find((f: any) => {
               return (
-                f['0'] ===
-                checkNominationPoint?.contract_point_list.find((cl: any) => {
-                  return cl?.contract_point === f['0'];
+                f?.['0'] ===
+                checkNominationPoint?.contract_point_list?.find((cl: any) => {
+                  return cl?.contract_point === f?.['0'];
                 })?.contract_point
               );
             });
@@ -2179,24 +2194,24 @@ export class SubmissionFileRefactoredService {
             //     '22': '0.229167'
             //   }
             valueCapa =
-              find[resultEntryExitUse] === '0' || !!find[resultEntryExitUse]
+              find?.[resultEntryExitUse] === '0' || !!find?.[resultEntryExitUse]
                 ? find[resultEntryExitUse]
                 : null; // new
             valueCapaPerDay =
-              find[resultEntryExitUsePerDay] === '0' ||
-              !!find[resultEntryExitUsePerDay]
+              find?.[resultEntryExitUsePerDay] === '0' ||
+                !!find?.[resultEntryExitUsePerDay]
                 ? find[resultEntryExitUsePerDay]
                 : null; // new
 
             Array.from({ length: 24 }, (_, i) => i + 14).forEach((index) => {
               const currentCapacity =
-                e['row'][index] === '0' ||
-                (!!e['row'][index] &&
-                  Number(e['row'][index]?.trim()?.replace(/,/g, ''))) ||
+                e?.['row']?.[index] === '0' ||
+                (!!e?.['row']?.[index] &&
+                  Number(e?.['row']?.[index]?.trim()?.replace(/,/g, ''))) ||
                 null; //new
               const rIndex =
-                e['row'][index] === '0' || !!e['row'][index]
-                  ? e['row'][index]
+                e?.['row']?.[index] === '0' || !!e?.['row']?.[index]
+                  ? e?.['row']?.[index]
                   : null;
               if (valueCapa === null && !!rIndex) {
                 console.log('Blank');
@@ -2209,7 +2224,7 @@ export class SubmissionFileRefactoredService {
                 );
               }
 
-              if (e['row'][index]) {
+              if (e?.['row']?.[index]) {
                 checkEmtry[cI][index] = true;
               }
 
@@ -2221,14 +2236,14 @@ export class SubmissionFileRefactoredService {
               ) {
                 const finds = warningLogHrTemp?.find((f: any) => {
                   return (
-                    f?.nomination_point === e['row'][3] &&
+                    f?.nomination_point === e?.['row']?.[3] &&
                     f?.hr === index - 14 + 1 &&
                     f?.contractPoint ===
-                      checkNominationPoint?.contract_point_list.find(
-                        (cl: any) => {
-                          return cl?.contract_point === find['0'];
-                        },
-                      )?.contract_point
+                    checkNominationPoint?.contract_point_list?.find(
+                      (cl: any) => {
+                        return cl?.contract_point === find?.['0'];
+                      },
+                    )?.contract_point
                   );
                 });
                 if (finds) {
@@ -2247,12 +2262,12 @@ export class SubmissionFileRefactoredService {
                   });
                 } else {
                   warningLogHrTemp.push({
-                    nomination_point: e['row'][3],
+                    nomination_point: e?.['row']?.[3],
                     hr: index - 14 + 1,
                     contractPoint:
-                      checkNominationPoint?.contract_point_list.find(
+                      checkNominationPoint?.contract_point_list?.find(
                         (cl: any) => {
-                          return cl?.contract_point === find['0'];
+                          return cl?.contract_point === find?.['0'];
                         },
                       )?.contract_point,
                     value: Number(valueCapa),
@@ -2264,12 +2279,12 @@ export class SubmissionFileRefactoredService {
             });
 
             const findZone = zoneQualityMaster.find((f: any) => {
-              return f?.name === e['row'][0] && f?.entry_exit_id === 1;
+              return f?.name === e?.['row']?.[0] && f?.entry_exit_id === 1;
             });
             console.log('-findZone : ', findZone);
             console.log(
               '-zone_master_quality : ',
-              findZone?.zone_master_quality[0],
+              findZone?.zone_master_quality?.[0],
             );
             //  console.log('findZone : ', findZone);
             //  console.log('zone_master_quality : ', findZone?.zone_master_quality[0]);
@@ -2277,9 +2292,9 @@ export class SubmissionFileRefactoredService {
             // WI
             if (
               Number(e['row'][11]) <
-                Number(findZone?.zone_master_quality[0]?.v2_wobbe_index_min) ||
+              Number(findZone?.zone_master_quality[0]?.v2_wobbe_index_min) ||
               Number(e['row'][11]) >
-                Number(findZone?.zone_master_quality[0]?.v2_wobbe_index_max)
+              Number(findZone?.zone_master_quality[0]?.v2_wobbe_index_max)
             ) {
               e['row'][11] !== null &&
                 e['row'][11] !== '' &&
@@ -2291,19 +2306,19 @@ export class SubmissionFileRefactoredService {
             // HV
             if (
               Number(e['row'][12]) <
-                Number(
-                  findZone?.zone_master_quality[0]?.v2_sat_heating_value_min,
-                ) ||
+              Number(
+                findZone?.zone_master_quality[0]?.v2_sat_heating_value_min,
+              ) ||
               Number(e['row'][12]) >
-                Number(
-                  findZone?.zone_master_quality[0]?.v2_sat_heating_value_max,
-                )
+              Number(
+                findZone?.zone_master_quality[0]?.v2_sat_heating_value_max,
+              )
             ) {
-              e['row'][12] !== null &&
-                e['row'][12] !== '' &&
-                e['row'][12] !== undefined &&
+              e?.['row']?.[12] !== null &&
+                e?.['row']?.[12] !== '' &&
+                e?.['row']?.[12] !== undefined &&
                 sheet1Quality.push(
-                  `For nomination point ${e['row'][3]}, HV value (${Number(e['row'][12])}) is out of zone limits (${Number(findZone?.zone_master_quality[0]?.v2_sat_heating_value_min)} to ${Number(findZone?.zone_master_quality[0]?.v2_sat_heating_value_max)})`,
+                  `For nomination point ${e?.['row']?.[3]}, HV value (${Number(e?.['row']?.[12])}) is out of zone limits (${Number(findZone?.zone_master_quality?.[0]?.v2_sat_heating_value_min)} to ${Number(findZone?.zone_master_quality?.[0]?.v2_sat_heating_value_max)})`,
                 );
             }
           } else if (e['row'][10] === 'Exit' && e['row'][9] === 'MMBTU/D') {
@@ -2320,23 +2335,23 @@ export class SubmissionFileRefactoredService {
             });
 
             valueCapa =
-              find[resultEntryExitUse] === '0' || !!find[resultEntryExitUse]
+              find?.[resultEntryExitUse] === '0' || !!find?.[resultEntryExitUse]
                 ? find[resultEntryExitUse]
                 : null; // new
             valueCapaPerDay =
-              find[resultEntryExitUsePerDay] === '0' ||
-              !!find[resultEntryExitUsePerDay]
+              find?.[resultEntryExitUsePerDay] === '0' ||
+                !!find?.[resultEntryExitUsePerDay]
                 ? find[resultEntryExitUsePerDay]
                 : null; // new
             Array.from({ length: 24 }, (_, i) => i + 14).forEach((index) => {
               const currentCapacity =
-                e['row'][index] === '0' ||
-                (!!e['row'][index] &&
-                  Number(e['row'][index]?.trim()?.replace(/,/g, ''))) ||
+                e?.['row']?.[index] === '0' ||
+                (!!e?.['row']?.[index] &&
+                  Number(e?.['row']?.[index]?.trim()?.replace(/,/g, ''))) ||
                 null; //new
               const rIndex =
-                e['row'][index] === '0' || !!e['row'][index]
-                  ? e['row'][index]
+                e?.['row']?.[index] === '0' || !!e?.['row']?.[index]
+                  ? e?.['row']?.[index]
                   : null;
               if (valueCapa === null && !!rIndex) {
                 console.log('Blank');
@@ -2365,11 +2380,11 @@ export class SubmissionFileRefactoredService {
                     f?.nomination_point === e['row'][3] &&
                     f?.hr === index - 14 + 1 &&
                     f?.contractPoint ===
-                      checkNominationPoint?.contract_point_list.find(
-                        (cl: any) => {
-                          return cl?.contract_point === find['0'];
-                        },
-                      )?.contract_point
+                    checkNominationPoint?.contract_point_list.find(
+                      (cl: any) => {
+                        return cl?.contract_point === find['0'];
+                      },
+                    )?.contract_point
                   );
                 });
                 if (finds) {
@@ -2388,12 +2403,12 @@ export class SubmissionFileRefactoredService {
                   });
                 } else {
                   warningLogHrTemp.push({
-                    nomination_point: e['row'][3],
+                    nomination_point: e?.['row']?.[3],
                     hr: index - 14 + 1,
                     contractPoint:
-                      checkNominationPoint?.contract_point_list.find(
+                      checkNominationPoint?.contract_point_list?.find(
                         (cl: any) => {
-                          return cl?.contract_point === find['0'];
+                          return cl?.contract_point === find?.['0'];
                         },
                       )?.contract_point,
                     value: Number(valueCapa),
@@ -2404,21 +2419,21 @@ export class SubmissionFileRefactoredService {
               }
             });
 
-            const findZone = zoneQualityMaster.find((f: any) => {
-              return f?.name === e['row'][0] && f?.entry_exit_id === 2;
+            const findZone = zoneQualityMaster?.find((f: any) => {
+              return f?.name === e?.['row']?.[0] && f?.entry_exit_id === 2;
             });
             console.log('-findZone : ', findZone);
             console.log(
               '-zone_master_quality : ',
-              findZone?.zone_master_quality[0],
+              findZone?.zone_master_quality?.[0],
             );
 
             // WI
             if (
               Number(e['row'][11]) <
-                Number(findZone?.zone_master_quality[0]?.v2_wobbe_index_min) ||
+              Number(findZone?.zone_master_quality[0]?.v2_wobbe_index_min) ||
               Number(e['row'][11]) >
-                Number(findZone?.zone_master_quality[0]?.v2_wobbe_index_max)
+              Number(findZone?.zone_master_quality[0]?.v2_wobbe_index_max)
             ) {
               e['row'][11] !== null &&
                 e['row'][11] !== '' &&
@@ -2430,13 +2445,13 @@ export class SubmissionFileRefactoredService {
             // HV
             if (
               Number(e['row'][12]) <
-                Number(
-                  findZone?.zone_master_quality[0]?.v2_sat_heating_value_min,
-                ) ||
+              Number(
+                findZone?.zone_master_quality[0]?.v2_sat_heating_value_min,
+              ) ||
               Number(e['row'][12]) >
-                Number(
-                  findZone?.zone_master_quality[0]?.v2_sat_heating_value_max,
-                )
+              Number(
+                findZone?.zone_master_quality[0]?.v2_sat_heating_value_max,
+              )
             ) {
               e['row'][12] !== null &&
                 e['row'][12] !== '' &&
@@ -2488,16 +2503,16 @@ export class SubmissionFileRefactoredService {
             });
 
             Array.from({ length: 7 }, (_, i) => i + 14).forEach((index) => {
-              if (e['row'][index]) {
+              if (e?.['row']?.[index]) {
                 checkEmtry[cI][index] = true;
               }
 
               const currentCapacity =
-                e['row'][index] === '0' ||
-                (!!e['row'][index] &&
-                  Number(e['row'][index]?.trim()?.replace(/,/g, ''))) ||
+                e?.['row']?.[index] === '0' ||
+                (!!e?.['row']?.[index] &&
+                  Number(e?.['row']?.[index]?.trim()?.replace(/,/g, ''))) ||
                 null; //new
-              const headDayUse = headDay[index];
+              const headDayUse = headDay?.[index];
               const headDayUseConv = getTodayNowDDMMYYYYDfaultAdd7(headDayUse);
               const resultEntryExitUse = this.findExactMatchingKeyDDMMYYYY(
                 headDayUseConv,
@@ -2509,8 +2524,8 @@ export class SubmissionFileRefactoredService {
               console.log('✅ Key ที่ตรงกัน:', resultEntryExitUse);
               // valueCapa = (!!find && !!resultEntryExitUse) && find[resultEntryExitUse] || 0
               valueCapa =
-                find[resultEntryExitUse] === '0' || !!find[resultEntryExitUse]
-                  ? find[resultEntryExitUse]
+                find?.[resultEntryExitUse] === '0' || !!find?.[resultEntryExitUse]
+                  ? find?.[resultEntryExitUse]
                   : null; // new
               valueCapaArr.push({ date: headDayUse, value: Number(valueCapa) });
 
@@ -2554,21 +2569,21 @@ export class SubmissionFileRefactoredService {
 
               // ถ้าค่าปัจจุบันเกินขีดจำกัด
 
-               if (
+              if (
                 currentCapacity !== null &&
                 !!valueCapa
               ) {
                 // overMaximumHourCapacityRight = true; // ตั้งค่าว่าเกินขีดจำกัด
                 const finds = warningLogDayWeekTemp?.find((f: any) => {
                   return (
-                    f?.nomination_point === e['row'][3] &&
+                    f?.nomination_point === e?.['row']?.[3] &&
                     f?.headDayUse === headDayUse &&
                     f?.contractPoint ===
-                      checkNominationPoint?.contract_point_list.find(
-                        (cl: any) => {
-                          return cl?.contract_point === find['0'];
-                        },
-                      )?.contract_point
+                    checkNominationPoint?.contract_point_list?.find(
+                      (cl: any) => {
+                        return cl?.contract_point === find?.['0'];
+                      },
+                    )?.contract_point
                   );
                 });
                 if (finds) {
@@ -2587,12 +2602,12 @@ export class SubmissionFileRefactoredService {
                   });
                 } else {
                   warningLogDayWeekTemp.push({
-                    nomination_point: e['row'][3],
+                    nomination_point: e?.['row']?.[3],
                     headDayUse: headDayUse,
                     contractPoint:
-                      checkNominationPoint?.contract_point_list.find(
+                      checkNominationPoint?.contract_point_list?.find(
                         (cl: any) => {
-                          return cl?.contract_point === find['0'];
+                          return cl?.contract_point === find?.['0'];
                         },
                       )?.contract_point,
                     value: Number(valueCapa),
@@ -2618,47 +2633,47 @@ export class SubmissionFileRefactoredService {
               //   );
               // }
             });
-            const findZone = zoneQualityMaster.find((f: any) => {
-              return f?.name === e['row'][0] && f?.entry_exit_id === 1;
+            const findZone = zoneQualityMaster?.find((f: any) => {
+              return f?.name === e?.['row']?.[0] && f?.entry_exit_id === 1;
             });
             console.log('-findZone : ', findZone);
             console.log(
               '-zone_master_quality : ',
-              findZone?.zone_master_quality[0],
+              findZone?.zone_master_quality?.[0],
             );
             //  console.log('findZone : ', findZone);
             //  console.log('zone_master_quality : ', findZone?.zone_master_quality[0]);
 
             // WI
             if (
-              Number(e['row'][11]) <
-                Number(findZone?.zone_master_quality[0]?.v2_wobbe_index_min) ||
-              Number(e['row'][11]) >
-                Number(findZone?.zone_master_quality[0]?.v2_wobbe_index_max)
+              Number(e?.['row']?.[11]) <
+              Number(findZone?.zone_master_quality?.[0]?.v2_wobbe_index_min) ||
+              Number(e?.['row']?.[11]) >
+              Number(findZone?.zone_master_quality?.[0]?.v2_wobbe_index_max)
             ) {
-              e['row'][11] !== null &&
-                e['row'][11] !== '' &&
-                e['row'][11] !== undefined &&
+              e?.['row']?.[11] !== null &&
+                e?.['row']?.[11] !== '' &&
+                e?.['row']?.[11] !== undefined &&
                 sheet1Quality.push(
-                  `For nomination point ${e['row'][3]}, WI value (${Number(e['row'][11])}) is out of zone limits (${Number(findZone?.zone_master_quality[0]?.v2_wobbe_index_min)} to ${Number(findZone?.zone_master_quality[0]?.v2_wobbe_index_max)})`,
+                  `For nomination point ${e?.['row']?.[3]}, WI value (${Number(e?.['row']?.[11])}) is out of zone limits (${Number(findZone?.zone_master_quality?.[0]?.v2_wobbe_index_min)} to ${Number(findZone?.zone_master_quality?.[0]?.v2_wobbe_index_max)})`,
                 );
             }
             // HV
             if (
-              Number(e['row'][12]) <
-                Number(
-                  findZone?.zone_master_quality[0]?.v2_sat_heating_value_min,
-                ) ||
-              Number(e['row'][12]) >
-                Number(
-                  findZone?.zone_master_quality[0]?.v2_sat_heating_value_max,
-                )
+              Number(e?.['row']?.[12]) <
+              Number(
+                findZone?.zone_master_quality?.[0]?.v2_sat_heating_value_min,
+              ) ||
+              Number(e?.['row']?.[12]) >
+              Number(
+                findZone?.zone_master_quality?.[0]?.v2_sat_heating_value_max,
+              )
             ) {
-              e['row'][12] !== null &&
-                e['row'][12] !== '' &&
-                e['row'][12] !== undefined &&
+              e?.['row']?.[12] !== null &&
+                e?.['row']?.[12] !== '' &&
+                e?.['row']?.[12] !== undefined &&
                 sheet1Quality.push(
-                  `For nomination point ${e['row'][3]}, HV value (${Number(e['row'][12])}) is out of zone limits (${Number(findZone?.zone_master_quality[0]?.v2_sat_heating_value_min)} to ${Number(findZone?.zone_master_quality[0]?.v2_sat_heating_value_max)})`,
+                  `For nomination point ${e?.['row']?.[3]}, HV value (${Number(e?.['row']?.[12])}) is out of zone limits (${Number(findZone?.zone_master_quality?.[0]?.v2_sat_heating_value_min)} to ${Number(findZone?.zone_master_quality?.[0]?.v2_sat_heating_value_max)})`,
                 );
             }
           } else if (e['row'][10] === 'Exit' && e['row'][9] === 'MMBTU/D') {
@@ -2675,16 +2690,16 @@ export class SubmissionFileRefactoredService {
             });
 
             Array.from({ length: 7 }, (_, i) => i + 14).forEach((index) => {
-              if (e['row'][index]) {
+              if (e?.['row']?.[index]) {
                 checkEmtry[cI][index] = true;
               }
 
               const currentCapacity =
-                e['row'][index] === '0' ||
-                (!!e['row'][index] &&
-                  Number(e['row'][index]?.trim()?.replace(/,/g, ''))) ||
+                e?.['row']?.[index] === '0' ||
+                (!!e?.['row']?.[index] &&
+                  Number(e?.['row']?.[index]?.trim()?.replace(/,/g, ''))) ||
                 null; //new
-              const headDayUse = headDay[index];
+              const headDayUse = headDay?.[index];
               const headDayUseConv = getTodayNowDDMMYYYYDfaultAdd7(headDayUse);
               const resultEntryExitUse = this.findExactMatchingKeyDDMMYYYY(
                 headDayUseConv,
@@ -2695,8 +2710,8 @@ export class SubmissionFileRefactoredService {
               }
               console.log('✅ Key ที่ตรงกัน:', resultEntryExitUse);
               valueCapa =
-                find[resultEntryExitUse] === '0' || !!find[resultEntryExitUse]
-                  ? find[resultEntryExitUse]
+                find?.[resultEntryExitUse] === '0' || !!find?.[resultEntryExitUse]
+                  ? find?.[resultEntryExitUse]
                   : null; // new
               valueCapaArr.push({ date: headDayUse, value: Number(valueCapa) });
 
@@ -2715,21 +2730,21 @@ export class SubmissionFileRefactoredService {
                 );
               }
 
-               if (
+              if (
                 currentCapacity !== null &&
                 !!valueCapa
               ) {
                 // overMaximumHourCapacityRight = true; // ตั้งค่าว่าเกินขีดจำกัด
                 const finds = warningLogDayWeekTemp?.find((f: any) => {
                   return (
-                    f?.nomination_point === e['row'][3] &&
+                    f?.nomination_point === e?.['row']?.[3] &&
                     f?.headDayUse === headDayUse &&
                     f?.contractPoint ===
-                      checkNominationPoint?.contract_point_list.find(
-                        (cl: any) => {
-                          return cl?.contract_point === find['0'];
-                        },
-                      )?.contract_point
+                    checkNominationPoint?.contract_point_list?.find(
+                      (cl: any) => {
+                        return cl?.contract_point === find?.['0'];
+                      },
+                    )?.contract_point
                   );
                 });
                 if (finds) {
@@ -2748,12 +2763,12 @@ export class SubmissionFileRefactoredService {
                   });
                 } else {
                   warningLogDayWeekTemp.push({
-                    nomination_point: e['row'][3],
+                    nomination_point: e?.['row']?.[3],
                     headDayUse: headDayUse,
                     contractPoint:
-                      checkNominationPoint?.contract_point_list.find(
+                      checkNominationPoint?.contract_point_list?.find(
                         (cl: any) => {
-                          return cl?.contract_point === find['0'];
+                          return cl?.contract_point === find?.['0'];
                         },
                       )?.contract_point,
                     value: Number(valueCapa),
@@ -2779,16 +2794,16 @@ export class SubmissionFileRefactoredService {
               // }
             });
 
-            const findZone = zoneQualityMaster.find((f: any) => {
-              return f?.name === e['row'][0] && f?.entry_exit_id === 2;
+            const findZone = zoneQualityMaster?.find((f: any) => {
+              return f?.name === e?.['row']?.[0] && f?.entry_exit_id === 2;
             });
 
             // WI
             if (
               Number(e['row'][11]) <
-                Number(findZone?.zone_master_quality[0]?.v2_wobbe_index_min) ||
+              Number(findZone?.zone_master_quality[0]?.v2_wobbe_index_min) ||
               Number(e['row'][11]) >
-                Number(findZone?.zone_master_quality[0]?.v2_wobbe_index_max)
+              Number(findZone?.zone_master_quality[0]?.v2_wobbe_index_max)
             ) {
               e['row'][11] !== null &&
                 e['row'][11] !== '' &&
@@ -2800,13 +2815,13 @@ export class SubmissionFileRefactoredService {
             // HV
             if (
               Number(e['row'][12]) <
-                Number(
-                  findZone?.zone_master_quality[0]?.v2_sat_heating_value_min,
-                ) ||
+              Number(
+                findZone?.zone_master_quality[0]?.v2_sat_heating_value_min,
+              ) ||
               Number(e['row'][12]) >
-                Number(
-                  findZone?.zone_master_quality[0]?.v2_sat_heating_value_max,
-                )
+              Number(
+                findZone?.zone_master_quality[0]?.v2_sat_heating_value_max,
+              )
             ) {
               e['row'][12] !== null &&
                 e['row'][12] !== '' &&
@@ -2823,11 +2838,11 @@ export class SubmissionFileRefactoredService {
             overuseQuantity: overuseQuantity,
             overMaximumHourCapacityRight: overMaximumHourCapacityRight,
             bookValue: valueCapaArr,
-            unit: e['row'][9],
-            entryExitText: e['row'][10],
-            zoneText: e['row'][0],
-            areaText: e['row'][2],
-            contractPointText: e['row'][3],
+            unit: e?.['row']?.[9],
+            entryExitText: e?.['row']?.[10],
+            zoneText: e?.['row']?.[0],
+            areaText: e?.['row']?.[2],
+            contractPointText: e?.['row']?.[3],
           };
         });
       } else {
@@ -2839,30 +2854,30 @@ export class SubmissionFileRefactoredService {
           const overMaximumHourCapacityRight = null;
           let valueCapa = 0;
           const valueCapaArr = [];
-          if (e['row'][10] === 'Entry' && e['row'][9] === 'MMBTU/D') {
+          if (e?.['row']?.[10] === 'Entry' && e?.['row']?.[9] === 'MMBTU/D') {
             const checkNominationPoint = nominationPoint?.find((fnp: any) => {
-              return fnp?.nomination_point === e['row'][3];
+              return fnp?.nomination_point === e?.['row']?.[3];
             });
             const find = entryValue.find((f: any) => {
               return (
-                f['0'] ===
-                checkNominationPoint?.contract_point_list.find((cl: any) => {
-                  return cl?.contract_point === f['0'];
+                f?.['0'] ===
+                checkNominationPoint?.contract_point_list?.find((cl: any) => {
+                  return cl?.contract_point === f?.['0'];
                 })?.contract_point
               );
             });
 
             Array.from({ length: 7 }, (_, i) => i + 14).forEach((index) => {
-              if (e['row'][index]) {
+              if (e?.['row']?.[index]) {
                 checkEmtry[cI][index] = true;
               }
 
               const currentCapacity =
-                e['row'][index] === '0' ||
-                (!!e['row'][index] &&
-                  Number(e['row'][index]?.trim()?.replace(/,/g, ''))) ||
+                e?.['row']?.[index] === '0' ||
+                (!!e?.['row']?.[index] &&
+                  Number(e?.['row']?.[index]?.trim()?.replace(/,/g, ''))) ||
                 null; //new
-              const headDayUse = headDay[index];
+              const headDayUse = headDay?.[index];
               const headDayUseConv = getTodayNowDDMMYYYYDfaultAdd7(headDayUse);
               const resultEntryExitUse = this.findMatchingKeyMMYYYY(
                 headDayUseConv,
@@ -2873,15 +2888,15 @@ export class SubmissionFileRefactoredService {
               }
 
               valueCapa =
-                find[resultEntryExitUse] === '0' || !!find[resultEntryExitUse]
-                  ? find[resultEntryExitUse]
+                find?.[resultEntryExitUse] === '0' || !!find?.[resultEntryExitUse]
+                  ? find?.[resultEntryExitUse]
                   : null; // new
 
               valueCapaArr.push({ date: headDayUse, value: Number(valueCapa) });
 
               const rIndex =
-                e['row'][index] === '0' || !!e['row'][index]
-                  ? e['row'][index]
+                e?.['row']?.[index] === '0' || !!e?.['row']?.[index]
+                  ? e?.['row']?.[index]
                   : null;
               if (valueCapa === null && !!rIndex) {
                 console.log('Blank');
@@ -2894,7 +2909,7 @@ export class SubmissionFileRefactoredService {
                 );
               }
 
-               if (
+              if (
                 currentCapacity !== null &&
                 !!valueCapa
               ) {
@@ -2904,11 +2919,11 @@ export class SubmissionFileRefactoredService {
                     f?.nomination_point === e['row'][3] &&
                     f?.headDayUse === headDayUse &&
                     f?.contractPoint ===
-                      checkNominationPoint?.contract_point_list.find(
-                        (cl: any) => {
-                          return cl?.contract_point === find['0'];
-                        },
-                      )?.contract_point
+                    checkNominationPoint?.contract_point_list.find(
+                      (cl: any) => {
+                        return cl?.contract_point === find['0'];
+                      },
+                    )?.contract_point
                   );
                 });
                 if (finds) {
@@ -2959,66 +2974,66 @@ export class SubmissionFileRefactoredService {
               // }
             });
 
-            const findZone = zoneQualityMaster.find((f: any) => {
-              return f?.name === e['row'][0] && f?.entry_exit_id === 1;
+            const findZone = zoneQualityMaster?.find((f: any) => {
+              return f?.name === e?.['row']?.[0] && f?.entry_exit_id === 1;
             });
 
             // WI
             if (
-              Number(e['row'][11]) <
-                Number(findZone?.zone_master_quality[0]?.v2_wobbe_index_min) ||
-              Number(e['row'][11]) >
-                Number(findZone?.zone_master_quality[0]?.v2_wobbe_index_max)
+              Number(e?.['row']?.[11]) <
+              Number(findZone?.zone_master_quality?.[0]?.v2_wobbe_index_min) ||
+              Number(e?.['row']?.[11]) >
+              Number(findZone?.zone_master_quality?.[0]?.v2_wobbe_index_max)
             ) {
-              e['row'][11] !== null &&
-                e['row'][11] !== '' &&
-                e['row'][11] !== undefined &&
+              e?.['row']?.[11] !== null &&
+                e?.['row']?.[11] !== '' &&
+                e?.['row']?.[11] !== undefined &&
                 sheet1Quality.push(
-                  `For nomination point ${e['row'][3]}, WI value (${Number(e['row'][11])}) is out of zone limits (${Number(findZone?.zone_master_quality[0]?.v2_wobbe_index_min)} to ${Number(findZone?.zone_master_quality[0]?.v2_wobbe_index_max)})`,
+                  `For nomination point ${e?.['row']?.[3]}, WI value (${Number(e?.['row']?.[11])}) is out of zone limits (${Number(findZone?.zone_master_quality?.[0]?.v2_wobbe_index_min)} to ${Number(findZone?.zone_master_quality?.[0]?.v2_wobbe_index_max)})`,
                 );
             }
             // HV
             if (
-              Number(e['row'][12]) <
-                Number(
-                  findZone?.zone_master_quality[0]?.v2_sat_heating_value_min,
-                ) ||
-              Number(e['row'][12]) >
-                Number(
-                  findZone?.zone_master_quality[0]?.v2_sat_heating_value_max,
-                )
+              Number(e?.['row']?.[12]) <
+              Number(
+                findZone?.zone_master_quality?.[0]?.v2_sat_heating_value_min,
+              ) ||
+              Number(e?.['row']?.[12]) >
+              Number(
+                findZone?.zone_master_quality?.[0]?.v2_sat_heating_value_max,
+              )
             ) {
-              e['row'][12] !== null &&
-                e['row'][12] !== '' &&
-                e['row'][12] !== undefined &&
+              e?.['row']?.[12] !== null &&
+                e?.['row']?.[12] !== '' &&
+                e?.['row']?.[12] !== undefined &&
                 sheet1Quality.push(
-                  `For nomination point ${e['row'][3]}, HV value (${Number(e['row'][12])}) is out of zone limits (${Number(findZone?.zone_master_quality[0]?.v2_sat_heating_value_min)} to ${Number(findZone?.zone_master_quality[0]?.v2_sat_heating_value_max)})`,
+                  `For nomination point ${e?.['row']?.[3]}, HV value (${Number(e?.['row']?.[12])}) is out of zone limits (${Number(findZone?.zone_master_quality?.[0]?.v2_sat_heating_value_min)} to ${Number(findZone?.zone_master_quality?.[0]?.v2_sat_heating_value_max)})`,
                 );
             }
-          } else if (e['row'][10] === 'Exit' && e['row'][9] === 'MMBTU/D') {
+          } else if (e?.['row']?.[10] === 'Exit' && e?.['row']?.[9] === 'MMBTU/D') {
             const checkNominationPoint = nominationPoint?.find((fnp: any) => {
-              return fnp?.nomination_point === e['row'][3];
+              return fnp?.nomination_point === e?.['row']?.[3];
             });
-            const find = exitValue.find((f: any) => {
+            const find = exitValue?.find((f: any) => {
               return (
-                f['0'] ===
-                checkNominationPoint?.contract_point_list.find((cl: any) => {
-                  return cl?.contract_point === f['0'];
+                f?.['0'] ===
+                checkNominationPoint?.contract_point_list?.find((cl: any) => {
+                  return cl?.contract_point === f?.['0'];
                 })?.contract_point
               );
             });
 
             Array.from({ length: 7 }, (_, i) => i + 14).forEach((index) => {
-              if (e['row'][index]) {
+              if (e?.['row']?.[index]) {
                 checkEmtry[cI][index] = true;
               }
 
               const currentCapacity =
-                e['row'][index] === '0' ||
-                (!!e['row'][index] &&
-                  Number(e['row'][index]?.trim()?.replace(/,/g, ''))) ||
+                e?.['row']?.[index] === '0' ||
+                (!!e?.['row']?.[index] &&
+                  Number(e?.['row']?.[index]?.trim()?.replace(/,/g, ''))) ||
                 null; //new
-              const headDayUse = headDay[index];
+              const headDayUse = headDay?.[index];
               const headDayUseConv = getTodayNowDDMMYYYYDfaultAdd7(headDayUse);
               const resultEntryExitUse = this.findMatchingKeyMMYYYY(
                 headDayUseConv,
@@ -3028,14 +3043,14 @@ export class SubmissionFileRefactoredService {
                 weekBook = false;
               }
               valueCapa =
-                find[resultEntryExitUse] === '0' || !!find[resultEntryExitUse]
-                  ? find[resultEntryExitUse]
+                find?.[resultEntryExitUse] === '0' || !!find?.[resultEntryExitUse]
+                  ? find?.[resultEntryExitUse]
                   : null; // new
               valueCapaArr.push({ date: headDayUse, value: Number(valueCapa) });
 
               const rIndex =
-                e['row'][index] === '0' || !!e['row'][index]
-                  ? e['row'][index]
+                e?.['row']?.[index] === '0' || !!e?.['row']?.[index]
+                  ? e?.['row']?.[index]
                   : null;
               if (valueCapa === null && !!rIndex) {
                 console.log('Blank');
@@ -3048,21 +3063,21 @@ export class SubmissionFileRefactoredService {
                 );
               }
 
-               if (
+              if (
                 currentCapacity !== null &&
                 !!valueCapa
               ) {
                 // overMaximumHourCapacityRight = true; // ตั้งค่าว่าเกินขีดจำกัด
                 const finds = warningLogDayWeekTemp?.find((f: any) => {
                   return (
-                    f?.nomination_point === e['row'][3] &&
+                    f?.nomination_point === e?.['row']?.[3] &&
                     f?.headDayUse === headDayUse &&
                     f?.contractPoint ===
-                      checkNominationPoint?.contract_point_list.find(
-                        (cl: any) => {
-                          return cl?.contract_point === find['0'];
-                        },
-                      )?.contract_point
+                    checkNominationPoint?.contract_point_list?.find(
+                      (cl: any) => {
+                        return cl?.contract_point === find?.['0'];
+                      },
+                    )?.contract_point
                   );
                 });
                 if (finds) {
@@ -3081,12 +3096,12 @@ export class SubmissionFileRefactoredService {
                   });
                 } else {
                   warningLogDayWeekTemp.push({
-                    nomination_point: e['row'][3],
+                    nomination_point: e?.['row']?.[3],
                     headDayUse: headDayUse,
                     contractPoint:
-                      checkNominationPoint?.contract_point_list.find(
+                      checkNominationPoint?.contract_point_list?.find(
                         (cl: any) => {
-                          return cl?.contract_point === find['0'];
+                          return cl?.contract_point === find?.['0'];
                         },
                       )?.contract_point,
                     value: Number(valueCapa),
@@ -3113,40 +3128,40 @@ export class SubmissionFileRefactoredService {
               // }
             });
 
-            const findZone = zoneQualityMaster.find((f: any) => {
-              return f?.name === e['row'][0] && f?.entry_exit_id === 2;
+            const findZone = zoneQualityMaster?.find((f: any) => {
+              return f?.name === e?.['row']?.[0] && f?.entry_exit_id === 2;
             });
 
             // WI
             if (
-              Number(e['row'][11]) <
-                Number(findZone?.zone_master_quality[0]?.v2_wobbe_index_min) ||
-              Number(e['row'][11]) >
-                Number(findZone?.zone_master_quality[0]?.v2_wobbe_index_max)
+              Number(e?.['row']?.[11]) <
+              Number(findZone?.zone_master_quality?.[0]?.v2_wobbe_index_min) ||
+              Number(e?.['row']?.[11]) >
+              Number(findZone?.zone_master_quality?.[0]?.v2_wobbe_index_max)
             ) {
-              e['row'][11] !== null &&
-                e['row'][11] !== '' &&
-                e['row'][11] !== undefined &&
+              e?.['row']?.[11] !== null &&
+                e?.['row']?.[11] !== '' &&
+                e?.['row']?.[11] !== undefined &&
                 sheet1Quality.push(
-                  `For nomination point ${e['row'][3]}, WI value (${Number(e['row'][11])}) is out of zone limits (${Number(findZone?.zone_master_quality[0]?.v2_wobbe_index_min)} to ${Number(findZone?.zone_master_quality[0]?.v2_wobbe_index_max)})`,
+                  `For nomination point ${e?.['row']?.[3]}, WI value (${Number(e?.['row']?.[11])}) is out of zone limits (${Number(findZone?.zone_master_quality?.[0]?.v2_wobbe_index_min)} to ${Number(findZone?.zone_master_quality?.[0]?.v2_wobbe_index_max)})`,
                 );
             }
             // HV
             if (
-              Number(e['row'][12]) <
-                Number(
-                  findZone?.zone_master_quality[0]?.v2_sat_heating_value_min,
-                ) ||
-              Number(e['row'][12]) >
-                Number(
-                  findZone?.zone_master_quality[0]?.v2_sat_heating_value_max,
-                )
+              Number(e?.['row']?.[12]) <
+              Number(
+                findZone?.zone_master_quality?.[0]?.v2_sat_heating_value_min,
+              ) ||
+              Number(e?.['row']?.[12]) >
+              Number(
+                findZone?.zone_master_quality?.[0]?.v2_sat_heating_value_max,
+              )
             ) {
-              e['row'][12] !== null &&
-                e['row'][12] !== '' &&
-                e['row'][12] !== undefined &&
+              e?.['row']?.[12] !== null &&
+                e?.['row']?.[12] !== '' &&
+                e?.['row']?.[12] !== undefined &&
                 sheet1Quality.push(
-                  `For nomination point ${e['row'][3]}, HV value (${Number(e['row'][12])}) is out of zone limits (${Number(findZone?.zone_master_quality[0]?.v2_sat_heating_value_min)} to ${Number(findZone?.zone_master_quality[0]?.v2_sat_heating_value_max)})`,
+                  `For nomination point ${e?.['row']?.[3]}, HV value (${Number(e?.['row']?.[12])}) is out of zone limits (${Number(findZone?.zone_master_quality?.[0]?.v2_sat_heating_value_min)} to ${Number(findZone?.zone_master_quality?.[0]?.v2_sat_heating_value_max)})`,
                 );
             }
           }
@@ -3156,11 +3171,11 @@ export class SubmissionFileRefactoredService {
             overuseQuantity: overuseQuantity,
             overMaximumHourCapacityRight: overMaximumHourCapacityRight,
             bookValue: valueCapaArr,
-            unit: e['row'][9],
-            entryExitText: e['row'][10],
-            zoneText: e['row'][0],
-            areaText: e['row'][2],
-            contractPointText: e['row'][3],
+            unit: e?.['row']?.[9],
+            entryExitText: e?.['row']?.[10],
+            zoneText: e?.['row']?.[0],
+            areaText: e?.['row']?.[2],
+            contractPointText: e?.['row']?.[3],
           };
         });
       }
@@ -3229,11 +3244,11 @@ export class SubmissionFileRefactoredService {
       const energyValues = groupedBywarningLogTotalTemp[ig]?.data?.reduce(
         (accumulator, currentValue) =>
           accumulator +
-            currentValue?.data?.reduce(
-              (accumulator, currentValue) =>
-                accumulator + currentValue?.energy || 0,
-              0,
-            ) || 0,
+          currentValue?.data?.reduce(
+            (accumulator, currentValue) =>
+              accumulator + currentValue?.energy || 0,
+            0,
+          ) || 0,
         0,
       );
 
@@ -3251,22 +3266,22 @@ export class SubmissionFileRefactoredService {
 
     // weekly total
 
-   
+
     const groupedBywarningLogHrWeeklyTemp: any = Object.values(
       warningLogDayWeekTemp && Array.isArray(warningLogDayWeekTemp)
         ? warningLogDayWeekTemp.reduce((acc, item) => {
-            const key = `${item?.headDayUse}|${item?.contractPoint}|${item?.value}`;
-            if (!acc[key]) {
-              acc[key] = {
-                headDayUse: item.headDayUse,
-                contractPoint: item.contractPoint,
-                value: item.value,
-                data: [],
-              };
-            }
-            acc[key].data.push(item);
-            return acc;
-          }, {})
+          const key = `${item?.headDayUse}|${item?.contractPoint}|${item?.value}`;
+          if (!acc[key]) {
+            acc[key] = {
+              headDayUse: item.headDayUse,
+              contractPoint: item.contractPoint,
+              value: item.value,
+              data: [],
+            };
+          }
+          acc[key].data.push(item);
+          return acc;
+        }, {})
         : {},
     );
     // console.log('--- groupedBywarningLogHrWeeklyTemp : ', groupedBywarningLogHrWeeklyTemp);
@@ -3276,7 +3291,7 @@ export class SubmissionFileRefactoredService {
         (accumulator, currentValue) => accumulator + currentValue?.energy || 0,
         0,
       );
-    
+
       if (Number(energyValues) > Number(groupedBywarningLogHrWeeklyTemp[ig]?.value)) {
         warningLogDayWeek.push(
           `Nominated Total energy ${(this.formatNumberThreeDecimal(parseToNumber(energyValues))) || 0} exceeds contracted value ${this.formatNumberThreeDecimal(parseToNumber(groupedBywarningLogHrWeeklyTemp[ig]?.value))} for contract point ${groupedBywarningLogHrWeeklyTemp[ig]?.contractPoint
@@ -3284,13 +3299,13 @@ export class SubmissionFileRefactoredService {
         );
       }
     }
-      // warningLogDayWeekTemp
+    // warningLogDayWeekTemp
 
 
     // https://app.clickup.com/t/86etrq2b6
 
     if (
-      checkEmtry?.filter((f: any) => f === true).length === getsValue.length
+      (checkEmtry?.filter((f: any) => f === true)?.length ?? 0) === (getsValue?.length ?? 0)
     ) {
       throw new HttpException(
         {
@@ -3302,8 +3317,8 @@ export class SubmissionFileRefactoredService {
     }
 
     // sheet 2 check
-    const indexSheetLastValue = sheet2.data.findIndex((row: any) =>
-      row.includes('*'),
+    const indexSheetLastValue = sheet2?.data?.findIndex((row: any) =>
+      row?.includes('*'),
     );
     const fullShee2Data = [];
     for (let i = 0; i < sheet2?.data.length; i++) {
@@ -3600,27 +3615,27 @@ export class SubmissionFileRefactoredService {
       const nonTpaData = nominationFullJson?.typeDoc?.columnType?.map(
         (e: any) => e?.row,
       );
-      for (let i = 0; i < nonTpaData.length; i++) {
-        const nTpa = nonTpaData[i][3];
-        const findNom = nonTpa?.find((f: any) => {
+      for (let i = 0; i < nonTpaData?.length; i++) {
+        const nTpa = nonTpaData?.[i]?.[3];
+        const findNom = nonTpaData?.[i]?.find((f: any) => {
           return f?.non_tpa_point_name === nTpa;
         });
         const findNomName = findNom?.nomination_point?.nomination_point || null;
         const findNomData = nominationData?.find((f: any) => {
-          return f[3] === findNomName && f[9] === 'MMBTU/D';
+          return f?.[3] === findNomName && f?.[9] === 'MMBTU/D';
         });
         if (findNomData) {
-          console.log('1--- nontpa : ', nonTpaData[i]?.[38]);
+          console.log('1--- nontpa : ', nonTpaData?.[i]?.[38]);
           console.log('1--- findNomData : ', findNomData?.[38]);
           if (
-            !!nonTpaData[i]?.[38] &&
+            !!nonTpaData?.[i]?.[38] &&
             !!findNomData?.[38] &&
-            Number(nonTpaData[i]?.[38]) > Number(findNomData?.[38])
+            Number(nonTpaData?.[i]?.[38]) > Number(findNomData?.[i]?.[38])
           ) {
             throw new HttpException(
               {
                 status: HttpStatus.BAD_REQUEST,
-                error: `${findNomData[3]} must be greater than or equl ${nonTpaData[i][3]}`,
+                error: `${findNomData?.[3]} must be greater than or equl ${nonTpaData?.[i]?.[3]}`,
               },
               HttpStatus.BAD_REQUEST,
             );
@@ -3629,7 +3644,7 @@ export class SubmissionFileRefactoredService {
           throw new HttpException(
             {
               status: HttpStatus.BAD_REQUEST,
-              error: `${findNomData[3]} must be greater than or equl ${nonTpaData[i][3]}`,
+              error: `${findNomData?.[3]} must be greater than or equl ${nonTpaData?.[i]?.[3]}`,
             },
             HttpStatus.BAD_REQUEST,
           );
@@ -3643,103 +3658,103 @@ export class SubmissionFileRefactoredService {
       const nonTpaData = nominationFullJson?.typeDoc?.columnType?.map(
         (e: any) => e?.row,
       );
-      for (let i = 0; i < nonTpaData.length; i++) {
-        const nTpa = nonTpaData[i][3];
-        const findNom = nonTpa?.find((f: any) => {
+      for (let i = 0; i < nonTpaData?.length; i++) {
+        const nTpa = nonTpaData?.[i]?.[3];
+        const findNom = nonTpaData?.[i]?.find((f: any) => {
           return f?.non_tpa_point_name === nTpa;
         });
         const findNomName = findNom?.nomination_point?.nomination_point || null;
         const findNomData = nominationData?.find((f: any) => {
-          return f[3] === findNomName;
+          return f?.[3] === findNomName;
         });
         if (findNomData) {
           if (
-            !!nonTpaData[i]?.[14] &&
+            !!nonTpaData?.[i]?.[14] &&
             !!findNomData?.[14] &&
-            Number(nonTpaData[i]?.[14]) > Number(findNomData?.[14])
+            Number(nonTpaData?.[i]?.[14]) > Number(findNomData?.[14])
           ) {
             throw new HttpException(
               {
                 status: HttpStatus.BAD_REQUEST,
-                error: `${findNomData[3]} must be greater than or equl ${nonTpaData[i][3]}`,
+                error: `${findNomData?.[3]} must be greater than or equl ${nonTpaData?.[i]?.[3]}`,
               },
               HttpStatus.BAD_REQUEST,
             );
           }
           if (
-            !!nonTpaData[i]?.[15] &&
+            !!nonTpaData?.[i]?.[15] &&
             !!findNomData?.[15] &&
-            Number(nonTpaData[i]?.[15]) > Number(findNomData?.[15])
+            Number(nonTpaData?.[i]?.[15]) > Number(findNomData?.[15])
           ) {
             throw new HttpException(
               {
                 status: HttpStatus.BAD_REQUEST,
-                error: `${findNomData[3]} must be greater than or equl ${nonTpaData[i][3]}`,
+                error: `${findNomData?.[3]} must be greater than or equl ${nonTpaData?.[i]?.[3]}`,
               },
               HttpStatus.BAD_REQUEST,
             );
           }
           if (
-            !!nonTpaData[i]?.[16] &&
+            !!nonTpaData?.[i]?.[16] &&
             !!findNomData?.[16] &&
-            Number(nonTpaData[i]?.[16]) > Number(findNomData?.[16])
+            Number(nonTpaData?.[i]?.[16]) > Number(findNomData?.[16])
           ) {
             throw new HttpException(
               {
                 status: HttpStatus.BAD_REQUEST,
-                error: `${findNomData[3]} must be greater than or equl ${nonTpaData[i][3]}`,
+                error: `${findNomData?.[3]} must be greater than or equl ${nonTpaData?.[i]?.[3]}`,
               },
               HttpStatus.BAD_REQUEST,
             );
           }
           if (
-            !!nonTpaData[i]?.[17] &&
+            !!nonTpaData?.[i]?.[17] &&
             !!findNomData?.[17] &&
-            Number(nonTpaData[i]?.[17]) > Number(findNomData?.[17])
+            Number(nonTpaData?.[i]?.[17]) > Number(findNomData?.[17])
           ) {
             throw new HttpException(
               {
                 status: HttpStatus.BAD_REQUEST,
-                error: `${findNomData[3]} must be greater than or equl ${nonTpaData[i][3]}`,
+                error: `${findNomData?.[3]} must be greater than or equl ${nonTpaData?.[i]?.[3]}`,
               },
               HttpStatus.BAD_REQUEST,
             );
           }
           if (
-            !!nonTpaData[i]?.[18] &&
+            !!nonTpaData?.[i]?.[18] &&
             !!findNomData?.[18] &&
-            Number(nonTpaData[i]?.[18]) > Number(findNomData?.[18])
+            Number(nonTpaData?.[i]?.[18]) > Number(findNomData?.[18])
           ) {
             throw new HttpException(
               {
                 status: HttpStatus.BAD_REQUEST,
-                error: `${findNomData[3]} must be greater than or equl ${nonTpaData[i][3]}`,
+                error: `${findNomData?.[3]} must be greater than or equl ${nonTpaData?.[i]?.[3]}`,
               },
               HttpStatus.BAD_REQUEST,
             );
           }
           if (
-            !!nonTpaData[i]?.[19] &&
+            !!nonTpaData?.[i]?.[19] &&
             !!findNomData?.[19] &&
-            Number(nonTpaData[i]?.[19]) > Number(findNomData?.[19])
+            Number(nonTpaData?.[i]?.[19]) > Number(findNomData?.[19])
           ) {
             throw new HttpException(
               {
                 status: HttpStatus.BAD_REQUEST,
-                error: `${findNomData[3]} must be greater than or equl ${nonTpaData[i][3]}`,
+                error: `${findNomData?.[3]} must be greater than or equl ${nonTpaData?.[i]?.[3]}`,
               },
               HttpStatus.BAD_REQUEST,
             );
           }
           if (
-            !!nonTpaData[i]?.[20] &&
+            !!nonTpaData?.[i]?.[20] &&
             !!findNomData?.[20] &&
-            Number(nonTpaData[i]?.[20]) > Number(findNomData?.[20])
+            Number(nonTpaData?.[i]?.[20]) > Number(findNomData?.[20])
           ) {
             throw new HttpException(
               {
                 status: HttpStatus.BAD_REQUEST,
-                error: `${findNomData[3]} must be greater than or equl ${nonTpaData[i][3]}`,
+                error: `${findNomData?.[3]} must be greater than or equl ${nonTpaData?.[i]?.[3]}`,
               },
               HttpStatus.BAD_REQUEST,
             );
@@ -3748,7 +3763,7 @@ export class SubmissionFileRefactoredService {
           throw new HttpException(
             {
               status: HttpStatus.BAD_REQUEST,
-              error: `${findNomData[3]} must be greater than or equl ${nonTpaData[i][3]}`,
+              error: `${findNomData?.[3]} must be greater than or equl ${nonTpaData?.[i]?.[3]}`,
             },
             HttpStatus.BAD_REQUEST,
           );
@@ -3764,7 +3779,7 @@ export class SubmissionFileRefactoredService {
         'YYYY-MM-DD',
       );
       const excelStart = dayjs(
-        nominationFullJson?.shiperInfo['2']['START DATE'],
+        nominationFullJson?.shiperInfo?.['2']?.['START DATE'],
         'DD/MM/YYYY',
       ).format('YYYY-MM-DD');
       const isExcelStartBeforeContract = dayjs(excelStart).isBefore(
@@ -3794,7 +3809,7 @@ export class SubmissionFileRefactoredService {
                 id: finalData?.renom ? 1 : 2,
               },
             },
-            entry_quality: finalData?.sheet1Quality.length > 0 ? true : null,
+            entry_quality: (finalData?.sheet1Quality?.length ?? 0) > 0 ? true : null,
             overuse_quantity: finalData?.overuseQuantity,
             over_maximum_hour_capacity_right:
               finalData?.overMaximumHourCapacityRight,
@@ -4041,7 +4056,7 @@ export class SubmissionFileRefactoredService {
       const queryShipperNominationFile =
         await this.prisma.query_shipper_nomination_file.create({
           data: {
-            entry_quality: finalData?.sheet1Quality.length > 0 ? true : null,
+            entry_quality: (finalData?.sheet1Quality?.length ?? 0) > 0 ? true : null,
             overuse_quantity: finalData?.overuseQuantity,
             over_maximum_hour_capacity_right:
               finalData?.overMaximumHourCapacityRight,

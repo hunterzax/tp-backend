@@ -18,7 +18,7 @@ dayjs.extend(timezone);
 
 @Injectable()
 export class ParameterUserGuideService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   userGuideRoleAll() {
     const todayStart = getTodayStartAdd7().toDate();
@@ -111,7 +111,7 @@ export class ParameterUserGuideService {
   userGuideOnce(id: any) {
     return this.prisma.user_guide.findUnique({
       where: {
-        id: Number(id),
+        id: (id !== undefined && id !== null) ? Number(id) : -1,
       },
       include: {
         user_guide_match: {
@@ -144,6 +144,9 @@ export class ParameterUserGuideService {
   }
 
   async userGuideCreate(payload: any, userId: any) {
+    if (!payload) {
+      throw new HttpException('Payload is required', HttpStatus.BAD_REQUEST);
+    }
     const { role, ...dataWithout } = payload;
 
     // document_name
@@ -172,13 +175,13 @@ export class ParameterUserGuideService {
         create_date_num: getTodayNowAdd7().unix(),
         create_by_account: {
           connect: {
-            id: Number(userId), // Prisma จะใช้ connect แทนการใช้ create_by โดยตรง
+            id: (userId !== undefined && userId !== null) ? Number(userId) : -1, // Prisma จะใช้ connect แทนการใช้ create_by โดยตรง
           },
         },
       },
     });
 
-    if (role.length > 0) {
+    if (role?.length > 0) {
       await this.prisma.user_guide_match.createMany({
         data: role?.map((e: any) => {
           return { user_guide_id: userGuideCreate?.id, role_id: e?.id };
@@ -190,13 +193,16 @@ export class ParameterUserGuideService {
   }
 
   async userGuideEdit(payload: any, userId: any, id: any) {
+    if (!payload) {
+      throw new HttpException('Payload is required', HttpStatus.BAD_REQUEST);
+    }
     const { role, ...dataWithout } = payload;
 
     const ckName = await this.prisma.user_guide.findFirst({
       where: {
         document_name: dataWithout?.document_name,
         id: {
-          not: Number(id),
+          not: (id !== undefined && id !== null) ? Number(id) : -1,
         },
       },
     });
@@ -213,7 +219,7 @@ export class ParameterUserGuideService {
 
     const userGuideEdit = await this.prisma.user_guide.update({
       where: {
-        id: Number(id),
+        id: (id !== undefined && id !== null) ? Number(id) : -1,
       },
       data: {
         ...dataWithout,
@@ -221,7 +227,7 @@ export class ParameterUserGuideService {
         update_date: getTodayNowAdd7().toDate(),
         update_by_account: {
           connect: {
-            id: Number(userId),
+            id: (userId !== undefined && userId !== null) ? Number(userId) : -1,
           },
         },
         update_date_num: getTodayNowAdd7().unix(),
@@ -229,10 +235,10 @@ export class ParameterUserGuideService {
     });
 
     await this.prisma.user_guide_match.deleteMany({
-      where: { user_guide_id: Number(id) },
+      where: { user_guide_id: (id !== undefined && id !== null) ? Number(id) : -1 },
     });
 
-    if (role.length > 0) {
+    if (role?.length > 0) {
       await this.prisma.user_guide_match.createMany({
         data: role?.map((e: any) => {
           return { user_guide_id: userGuideEdit?.id, role_id: e?.id };
