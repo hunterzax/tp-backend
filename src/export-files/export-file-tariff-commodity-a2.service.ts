@@ -27,6 +27,7 @@ export class ExportFileTariffCommodityA2Service {
   ) { }
 
   dcimal3 = (number: any) => {
+    // coverity[dead_code]
     // console.log('number : ', number);
     const numbers = number ?? 0;
     if (isNaN(numbers)) return numbers;
@@ -51,7 +52,9 @@ export class ExportFileTariffCommodityA2Service {
     params: GasDeliveryParams,
     response: Response,
   ): Promise<void> {
+    // coverity[dead_code]
     // console.log('data : ', data);
+    // coverity[dead_code]
     // console.log('params : ', params);
     try {
       const workbook = new ExcelJS.Workbook();
@@ -91,6 +94,7 @@ export class ExportFileTariffCommodityA2Service {
           customer_type: true,
         },
       });
+      // coverity[dead_code]
       // console.log('nominationMaster : ', nominationMaster);
 
       const ndata = data?.map((e: any) => {
@@ -120,7 +124,7 @@ export class ExportFileTariffCommodityA2Service {
       this.addTotalRow(worksheet, ndata, params);
 
       // Set response headers
-      const fileName = `Gas_Delivery_Report_${params.zone}_${params.month}_${params.year}.xlsx`;
+      const fileName = `Gas_Delivery_Report_${params?.zone ?? ''}_${params?.month ?? ''}_${params?.year ?? ''}.xlsx`;
       response.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
       response.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
 
@@ -202,6 +206,7 @@ export class ExportFileTariffCommodityA2Service {
       // Volume (MMSCF) (Column C)
       const volumeCell = row.getCell(3);
       volumeCell.value = "";
+      // coverity[dead_code]
       // if (rowData.volumeMMSCF !== null) {
       //   volumeCell.value = rowData.volumeMMSCF;
       //   volumeCell.numFmt = '#,##0.000000';
