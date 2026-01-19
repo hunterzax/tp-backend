@@ -51,8 +51,8 @@ export class ExportFileTariffCommodityA2Service {
     params: GasDeliveryParams,
     response: Response,
   ): Promise<void> {
-    console.log('data : ', data);
-    console.log('params : ', params);
+    // console.log('data : ', data);
+    // console.log('params : ', params);
     try {
       const workbook = new ExcelJS.Workbook();
       const worksheet = workbook.addWorksheet('Gas Delivery Report');
@@ -114,10 +114,10 @@ export class ExportFileTariffCommodityA2Service {
       this.addTableHeader(worksheet);
 
       // Data Rows
-      this.addDataRows(worksheet, ndata);
+      this.addDataRows(worksheet, ndata, params);
 
       // Total Row
-      this.addTotalRow(worksheet, ndata);
+      this.addTotalRow(worksheet, ndata, params);
 
       // Set response headers
       const fileName = `Gas_Delivery_Report_${params.zone}_${params.month}_${params.year}.xlsx`;
@@ -135,14 +135,11 @@ export class ExportFileTariffCommodityA2Service {
   private addHeaderSection(worksheet: ExcelJS.Worksheet, params: GasDeliveryParams): void {
     // Title
     const titleCell = worksheet.getCell('A1');
-    // titleCell.value = `Gas Delivery Report for ${params.zone}`;
-    titleCell.value = `Gas Delivery Report for Zone 3`;
-    // titleCell.font = { bold: true, size: 14 };
+    titleCell.value = `Gas Delivery Report for ${params?.zone ?? ''}`;
     titleCell.alignment = { horizontal: 'left' };
 
     const titleCell2 = worksheet.getCell('A2');
-    titleCell2.value = `Month ${params.month} Year ${params.year}`;
-    // titleCell2.font = { bold: true, size: 14 };
+    titleCell2.value = `Month ${params?.month ?? ''} Year ${params?.year ?? ''}`;
     titleCell2.alignment = { horizontal: 'left' };
 
     // Merge cells for title
@@ -186,7 +183,7 @@ export class ExportFileTariffCommodityA2Service {
     headerRow.height = 25;
   }
 
-  private addDataRows(worksheet: ExcelJS.Worksheet, data: GasDeliveryData[]): void {
+  private addDataRows(worksheet: ExcelJS.Worksheet, data: GasDeliveryData[], params: GasDeliveryParams): void {
     data.forEach((rowData: any, index) => {
       const row = worksheet.getRow(index + 5); // Start from row 5 (after header)
 
@@ -242,7 +239,7 @@ export class ExportFileTariffCommodityA2Service {
 
       // Zone (Column G)
       const zoneCell = row.getCell(7);
-      zoneCell.value = "Zone 3";
+      zoneCell.value = params?.zone ?? "";
       // zoneCell.value = rowData.zone;
       zoneCell.alignment = { horizontal: 'center' };
       zoneCell.border = this.getBorderStyle();
@@ -251,7 +248,7 @@ export class ExportFileTariffCommodityA2Service {
     });
   }
 
-  private addTotalRow(worksheet: ExcelJS.Worksheet, data: any[]): void {
+  private addTotalRow(worksheet: ExcelJS.Worksheet, data: any[], params: GasDeliveryParams): void {
     const totalRowIndex = data.length + 5; // After data rows
     const totalRow = worksheet.getRow(totalRowIndex);
 
@@ -262,7 +259,7 @@ export class ExportFileTariffCommodityA2Service {
     // Total label (Column A)
     const totalLabelCell = totalRow.getCell(1);
     // totalLabelCell.value = `รวมปริมาณก๊าซ ${data[0]?.zone || 'Zone'}`;
-    totalLabelCell.value = `รวมปริมาณก๊าซ Zone 3`;
+    totalLabelCell.value = `รวมปริมาณก๊าซ ${params?.zone ?? ""}`;
     totalLabelCell.font = { bold: true };
     totalLabelCell.alignment = { horizontal: 'left' };
     totalLabelCell.border = this.getBorderStyle();
