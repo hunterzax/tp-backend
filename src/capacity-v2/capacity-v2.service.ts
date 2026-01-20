@@ -445,7 +445,7 @@ export class CapacityV2Service {
                 // sum += parseFloat(entry[entryKey]?.replace(/,/g, '')) || 0;
                 sum =
                   Math.round(
-                    (sum + Number(entry[entryKey]?.replace(/,/g, '')) || 0) *
+                    (sum + Number(String(entry[entryKey] || '').replace(/,/g, '')) || 0) *
                     1000,
                   ) / 1000;
                 //  const num = parseFloat(entry[entryKey]?.replace(/,/g, '')) || 0;
@@ -479,7 +479,7 @@ export class CapacityV2Service {
                 // sum += Number(exit[exitKey]?.replace(/,/g, '')) || 0;
                 sum =
                   Math.round(
-                    (sum + Number(exit[exitKey]?.replace(/,/g, '')) || 0) *
+                    (sum + Number(String(exit[exitKey] || '').replace(/,/g, '')) || 0) *
                     1000,
                   ) / 1000;
                 // sum += Math.round(parseFloat(exit[exitKey]) * factor) / factor || 0;
@@ -502,7 +502,7 @@ export class CapacityV2Service {
         const { key: entryKey, sum: calculatedSum, headerKey } = entryItem;
         // const expectedSum = parseFloat(sumEntries[entryKey]) || 0;
         const expectedSum =
-          Number(sumEntries[entryKey]?.replace(/,/g, '')) || 0;
+          Number(String(sumEntries[entryKey] || '').replace(/,/g, '')) || 0;
 
         // const decimalPart = calculatedSum.toString().split('.')[1]; // ดึงทศนิยมมาเช็ค
         // let newNum = !!decimalPart && decimalPart.length > 3 ? Number(calculatedSum).toFixed(3) : calculatedSum
@@ -530,7 +530,7 @@ export class CapacityV2Service {
       checkValueSum.exit[key].forEach((exitItem) => {
         const { key: exitKey, sum: calculatedSum, headerKey } = exitItem;
         // const expectedSum = parseFloat(sumExits[exitKey]) || 0;
-        const expectedSum = Number(sumExits[exitKey]?.replace(/,/g, '')) || 0;
+        const expectedSum = Number(String(sumExits[exitKey] || '').replace(/,/g, '')) || 0;
 
         // const decimalPart = calculatedSum.toString().split('.')[1]; // ดึงทศนิยมมาเช็ค
         // let newNum = !!decimalPart && decimalPart.length > 3 ? Number(calculatedSum).toFixed(3) : calculatedSum

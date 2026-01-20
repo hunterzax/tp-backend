@@ -292,7 +292,7 @@ export class EventService {
       where: {
         account_manage: {
           some: {
-            account_id: Number(userId),
+            account_id: Number(userId || 0),
           },
         },
       },
@@ -446,8 +446,8 @@ export class EventService {
     // const page_ = Number(offset);
     // const limit_ = Number(limit);
     // const offset_ = page_ * limit_;
-    const limit_ = Number(limit);
-    const offset_ = Number(offset);
+    const limit_ = Number(limit || 10);
+    const offset_ = Number(offset || 0);
 
     const group = await this.prisma.group.findFirst({
       where: {
@@ -773,8 +773,18 @@ export class EventService {
           },
         },
       });
-      const userTypeId = group.user_type?.id;
+      const userTypeId = group?.user_type?.id;
       const groupId = group?.id;
+
+      if (!group) {
+        throw new HttpException(
+          {
+            status: HttpStatus.BAD_REQUEST,
+            error: 'Group not found for user',
+          },
+          HttpStatus.BAD_REQUEST,
+        );
+      }
 
       if (userTypeId === 3) {
         throw new HttpException(

@@ -149,7 +149,7 @@ export class BulletinBoardService {
       where: {
         account_manage: {
           some: {
-            account_id: Number(id),
+            account_id: Number(id || 0),
           },
         },
         // user_type_id: 3
@@ -173,7 +173,7 @@ export class BulletinBoardService {
   }
 
   async createExcelTemplateOld(payload: any, groupInfo: any, userId: any) {
-    let { startDate, endDateDate, ContractCode, type } = payload;
+    let { startDate, endDateDate, ContractCode, type } = payload || {};
     const todayStart = getTodayStartAdd7().toDate();
     const todayEnd = getTodayEndAdd7().toDate();
 
@@ -186,7 +186,7 @@ export class BulletinBoardService {
 
     const bookingTemplate = await this.prisma.booking_template.findFirst({
       where: {
-        term_type_id: Number(type),
+        term_type_id: Number(type || 0),
         AND: [
           {
             start_date: {
@@ -1018,7 +1018,7 @@ export class BulletinBoardService {
   }
 
   async createExcelTemplateNew(payload: any, groupInfo: any, userId: any) {
-    let { startDate, endDateDate, ContractCode, type } = payload;
+    let { startDate, endDateDate, ContractCode, type } = payload || {};
     const todayStart = getTodayStartAdd7().toDate();
     const todayEnd = getTodayEndAdd7().toDate();
     const sDate = startDate
@@ -1030,7 +1030,7 @@ export class BulletinBoardService {
 
     const bookingTemplate = await this.prisma.booking_template.findFirst({
       where: {
-        term_type_id: Number(type),
+        term_type_id: Number(type || 0),
         AND: [
           {
             start_date: {
@@ -1491,7 +1491,7 @@ export class BulletinBoardService {
   }
 
   async createExcelTemplateNewV2(payload: any, groupInfo: any, userId: any) {
-    let { startDate, endDateDate, ContractCode, type } = payload;
+    let { startDate, endDateDate, ContractCode, type } = payload || {};
     const todayStart = getTodayStartAdd7().toDate();
     const todayEnd = getTodayEndAdd7().toDate();
     const sDate = startDate
@@ -1508,7 +1508,7 @@ export class BulletinBoardService {
 
     const bookingTemplate = await this.prisma.booking_template.findFirst({
       where: {
-        term_type_id: Number(type),
+        term_type_id: Number(type || 0),
         AND: [
           {
             start_date: {

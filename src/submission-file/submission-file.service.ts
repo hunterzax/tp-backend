@@ -433,7 +433,7 @@ export class SubmissionFileService {
       where: {
         account_manage: {
           some: {
-            account_id: Number(userId),
+            account_id: Number(userId || 0),
           },
         },
       },
@@ -671,9 +671,9 @@ export class SubmissionFileService {
     const checkTemplate =
       await this.prisma.upload_template_for_shipper.findFirst({
         where: {
-          group_id: Number(shipper_id), //33
-          contract_code_id: Number(contract_code_id), //82
-          nomination_type_id: Number(nomination_type_id), //1
+          group_id: Number(shipper_id || 0), //33
+          contract_code_id: Number(contract_code_id || 0), //82
+          nomination_type_id: Number(nomination_type_id || 0), //1
           AND: [
             {
               OR: [{ del_flag: false }, { del_flag: null }],
@@ -704,10 +704,10 @@ export class SubmissionFileService {
           },
         },
         // status_capacity_request_management_process_id: 2,
-        id: Number(contract_code_id),
+        id: Number(contract_code_id || 0),
         OR: [
           {
-            ref_contract_code_by_main_id: Number(contract_code_id),
+            ref_contract_code_by_main_id: Number(contract_code_id || 0),
           },
         ],
       },
@@ -776,7 +776,7 @@ export class SubmissionFileService {
         where: {
           process_type_id: 1,
           user_type_id: gAuserType?.user_type_id,
-          nomination_type_id: Number(nomination_type_id),
+          nomination_type_id: Number(nomination_type_id || 0),
           AND: [
             {
               start_date: {
@@ -806,7 +806,7 @@ export class SubmissionFileService {
         where: {
           process_type_id: 3,
           user_type_id: gAuserType?.user_type_id,
-          nomination_type_id: Number(nomination_type_id),
+          nomination_type_id: Number(nomination_type_id || 0),
           AND: [
             {
               start_date: {
@@ -1157,7 +1157,7 @@ export class SubmissionFileService {
         }
 
         if (checkType === 'Daily Nomination') {
-          if (Number(nomination_type_id) !== 1) {
+          if (Number(nomination_type_id || 0) !== 1) {
             console.log('6');
             throw new HttpException(
               {
@@ -1608,7 +1608,7 @@ export class SubmissionFileService {
             }
           }
         } else {
-          if (Number(nomination_type_id) !== 2) {
+          if (Number(nomination_type_id || 0) !== 2) {
             console.log('7');
             throw new HttpException(
               {
@@ -2145,7 +2145,7 @@ export class SubmissionFileService {
               const currentCapacity =
                 e?.['row']?.[index] === '0' ||
                 (!!e?.['row']?.[index] &&
-                  Number(e?.['row']?.[index]?.trim()?.replace(/,/g, ''))) ||
+                  Number(e?.['row']?.[index]?.trim()?.replace(/,/g, '') || 0)) ||
                 null; //new
               const rIndex =
                 e?.['row']?.[index] === '0' || !!e?.['row']?.[index]
@@ -2202,7 +2202,7 @@ export class SubmissionFileService {
 
               // ถ้าค่าปัจจุบันเกินขีดจำกัด
               // console.log('currentCapacity : ', currentCapacity);
-              // console.log('valueCapa : ', Number(valueCapa));
+              // console.log('valueCapa : ', Number(valueCapa || 0));
               if (
                 currentCapacity !== null &&
                 !!valueCapa &&
@@ -2229,7 +2229,7 @@ export class SubmissionFileService {
                       finds?.contractPoint === neHR?.contractPoint &&
                       finds?.nomination_point === ehr?.nomination_point
                     ) {
-                      neHR.energy = +Number(currentCapacity);
+                      neHR.energy = +Number(currentCapacity || 0);
                     }
                     return {
                       ...neHR,
@@ -2245,14 +2245,14 @@ export class SubmissionFileService {
                           return cl?.contract_point === find['0'];
                         },
                       )?.contract_point,
-                    value: Number(valueCapa),
-                    valueDay: Number(valueCapaPerDay),
+                    value: Number(valueCapa || 0),
+                    valueDay: Number(valueCapaPerDay || 0),
                     energy: currentCapacity,
                   });
                 }
               }
 
-              // if (currentCapacity !== null && Number(currentCapacity) > Number(valueCapa)) {
+              // if (currentCapacity !== null && Number(currentCapacity || 0) > Number(valueCapa || 0)) {
               //   overMaximumHourCapacityRight = true; // ตั้งค่าว่าเกินขีดจำกัด
               //   warningLogHr.push(`Nominated max energy ${currentCapacity} exceeds contracted value ${Number(valueCapa)} for contract point ${(checkNominationPoint?.contract_point_list.find((cl: any) => { return cl?.contract_point === find['0'] }))?.contract_point || "-"} and hour ${index - 14 + 1}`);
               // }
@@ -2261,7 +2261,7 @@ export class SubmissionFileService {
             //   return sum + (Number(e['row'][index]?.trim()?.replace(/,/g, '')) || 0); // บวกค่า ถ้าเป็น undefined ให้ใช้ 0
             // }, 0);
 
-            // if (sumValuesDaily > Number(valueCapa)) {
+            // if (sumValuesDaily > Number(valueCapa || 0)) {
             //   overuseQuantity = true
             //   // warningLogDay.push(`Nominated energy ${sumValuesDaily && this.formatNumberThreeDecimal(sumValuesDaily) || 0} exceeds contracted value ${Number(valueCapa)} for contract point ${e['row'][3]} and gas day ${startDateEx}`);
             //   warningLogDay.push(`Nominated Total energy ${sumValuesDaily && this.formatNumberThreeDecimal(sumValuesDaily) || 0} exceeds contracted value ${Number(valueCapaPerDay)} for contract point ${(checkNominationPoint?.contract_point_list.find((cl: any) => { return cl?.contract_point === find['0'] }))?.contract_point} and gas day ${startDateEx}`);
@@ -2278,16 +2278,16 @@ export class SubmissionFileService {
 
             // WI
             if (
-              Number(e['row'][11]) <
-              Number(findZone?.zone_master_quality?.[0]?.v2_wobbe_index_min) ||
-              Number(e['row'][11]) >
-              Number(findZone?.zone_master_quality?.[0]?.v2_wobbe_index_max)
+              Number(e['row'][11] || 0) <
+              Number(findZone?.zone_master_quality?.[0]?.v2_wobbe_index_min || 0) ||
+              Number(e['row'][11] || 0) >
+              Number(findZone?.zone_master_quality?.[0]?.v2_wobbe_index_max || 0)
             ) {
               e['row'][11] !== null &&
                 e['row'][11] !== '' &&
                 e['row'][11] !== undefined &&
                 sheet1Quality.push(
-                  `For nomination point ${e['row'][3]}, WI value (${Number(e['row'][11])}) is out of zone limits (${Number(findZone?.zone_master_quality?.[0]?.v2_wobbe_index_min)} to ${Number(findZone?.zone_master_quality?.[0]?.v2_wobbe_index_max)})`,
+                  `For nomination point ${e['row'][3]}, WI value (${Number(e['row'][11] || 0)}) is out of zone limits (${Number(findZone?.zone_master_quality?.[0]?.v2_wobbe_index_min || 0)} to ${Number(findZone?.zone_master_quality?.[0]?.v2_wobbe_index_max || 0)})`,
                 );
             }
             // HV

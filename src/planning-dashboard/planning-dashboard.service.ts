@@ -178,7 +178,7 @@ export class PlanningDashboardService {
     const areaDb = await this.prisma.area.findMany({
       where: {
         name: {
-          in: areaArr
+          in: areaArr || []
         }
       },
       select: {
@@ -312,7 +312,7 @@ export class PlanningDashboardService {
     const areaDb = await this.prisma.area.findMany({
       where: {
         name: {
-          in: areaArr
+          in: areaArr || []
         }
       },
       select: {
@@ -446,7 +446,7 @@ export class PlanningDashboardService {
     const areaDb = await this.prisma.area.findMany({
       where: {
         name: {
-          in: areaArr
+          in: areaArr || []
         }
       },
       select: {

@@ -223,7 +223,7 @@ export class UploadTemplateForShipperService {
       ...(!!reqUser?.user?.sub && {
         create_by_account: {
           connect: {
-            id: Number(reqUser?.user?.sub), // Prisma จะใช้ connect แทนการใช้ create_by โดยตรง
+            id: Number(reqUser?.user?.sub || 0), // Prisma จะใช้ connect แทนการใช้ create_by โดยตรง
           },
         },
       }),
@@ -320,7 +320,7 @@ export class UploadTemplateForShipperService {
   async findOnce(id: any) {
     const resData = await this.prisma.upload_template_for_shipper.findFirst({
       where: {
-        id: Number(id),
+        id: Number(id || 0),
         AND: [
           {
             OR: [{ del_flag: false }, { del_flag: null }],
@@ -684,9 +684,9 @@ export class UploadTemplateForShipperService {
     const checkTemplate =
       await this.prisma.upload_template_for_shipper.findFirst({
         where: {
-          group_id: Number(shipper_id),
-          contract_code_id: Number(contract_code_id),
-          nomination_type_id: Number(nomination_type_id),
+          group_id: Number(shipper_id || 0),
+          contract_code_id: Number(contract_code_id || 0),
+          nomination_type_id: Number(nomination_type_id || 0),
         },
       });
     let sheet1 = findData.find((f: any) => {
@@ -702,8 +702,8 @@ export class UploadTemplateForShipperService {
     if (!!checkType && !!sheet2) {
       const contractCode = await this.prisma.contract_code.findFirst({
         where: {
-          id: Number(contract_code_id),
-          group_id: Number(shipper_id),
+          id: Number(contract_code_id || 0),
+          group_id: Number(shipper_id || 0),
           // contract_code: sheet1?.data[1][1],
           // group:{
           //   name: sheet1?.data[1][0]
@@ -780,7 +780,7 @@ export class UploadTemplateForShipperService {
         }
 
         if (checkType === 'Daily Nomination') {
-          if (Number(nomination_type_id) !== 1) {
+          if (Number(nomination_type_id || 0) !== 1) {
             throw new HttpException(
               {
                 status: HttpStatus.BAD_REQUEST,
@@ -822,7 +822,7 @@ export class UploadTemplateForShipperService {
           };
           sheet3 = { ...sheet3, data: headNomSheet3 };
         } else {
-          if (Number(nomination_type_id) !== 2) {
+          if (Number(nomination_type_id || 0) !== 2) {
             throw new HttpException(
               {
                 status: HttpStatus.BAD_REQUEST,
@@ -912,14 +912,14 @@ export class UploadTemplateForShipperService {
       const uploadTemplateId =
         await this.prisma.upload_template_for_shipper.findFirst({
           where: {
-            nomination_type_id: Number(nomination_type_id),
-            contract_code_id: Number(contract_code_id),
-            group_id: Number(shipper_id),
+            nomination_type_id: Number(nomination_type_id || 0),
+            contract_code_id: Number(contract_code_id || 0),
+            group_id: Number(shipper_id || 0),
           },
         });
       const update = await this.prisma.upload_template_for_shipper.updateMany({
         where: {
-          id: Number(uploadTemplateId?.id),
+          id: Number(uploadTemplateId?.id || 0),
         },
         data: {
           update_date: dayjs(
@@ -928,10 +928,10 @@ export class UploadTemplateForShipperService {
             .tz('Asia/Bangkok')
             .toDate(),
           update_date_num: Math.floor(Date.now() / 1000),
-          update_by: Number(userId),
+          update_by: Number(userId || 0),
           // update_by_account: {
           //   connect: {
-          //     id: Number(userId), // Prisma จะใช้ connect แทนการใช้ create_by โดยตรง
+          //     id: Number(userId || 0), // Prisma จะใช้ connect แทนการใช้ create_by โดยตรง
           //   },
           // },
         },
@@ -943,7 +943,7 @@ export class UploadTemplateForShipperService {
               ...(!!uploadTemplateId?.id && {
                 upload_template_for_shipper: {
                   connect: {
-                    id: Number(uploadTemplateId?.id),
+                    id: Number(uploadTemplateId?.id || 0),
                   },
                 },
               }),
@@ -957,7 +957,7 @@ export class UploadTemplateForShipperService {
               create_date_num: Math.floor(Date.now() / 1000),
               create_by_account: {
                 connect: {
-                  id: Number(userId), // Prisma จะใช้ connect แทนการใช้ create_by โดยตรง
+                  id: Number(userId || 0), // Prisma จะใช้ connect แทนการใช้ create_by โดยตรง
                 },
               },
             },
@@ -970,7 +970,7 @@ export class UploadTemplateForShipperService {
               ...(!!uploadTemplateId?.id && {
                 upload_template_for_shipper: {
                   connect: {
-                    id: Number(uploadTemplateId?.id),
+                    id: Number(uploadTemplateId?.id || 0),
                   },
                 },
               }),
@@ -984,7 +984,7 @@ export class UploadTemplateForShipperService {
               create_date_num: Math.floor(Date.now() / 1000),
               create_by_account: {
                 connect: {
-                  id: Number(userId), // Prisma จะใช้ connect แทนการใช้ create_by โดยตรง
+                  id: Number(userId || 0), // Prisma จะใช้ connect แทนการใช้ create_by โดยตรง
                 },
               },
             },
@@ -1000,21 +1000,21 @@ export class UploadTemplateForShipperService {
           ...(!!shipper_id && {
             group: {
               connect: {
-                id: Number(shipper_id),
+                id: Number(shipper_id || 0),
               },
             },
           }),
           ...(!!contract_code_id && {
             contract_code: {
               connect: {
-                id: Number(contract_code_id),
+                id: Number(contract_code_id || 0),
               },
             },
           }),
           ...(!!nomination_type_id && {
             nomination_type: {
               connect: {
-                id: Number(nomination_type_id),
+                id: Number(nomination_type_id || 0),
               },
             },
           }),
@@ -1027,7 +1027,7 @@ export class UploadTemplateForShipperService {
           create_date_num: Math.floor(Date.now() / 1000),
           create_by_account: {
             connect: {
-              id: Number(userId), // Prisma จะใช้ connect แทนการใช้ create_by โดยตรง
+              id: Number(userId || 0), // Prisma จะใช้ connect แทนการใช้ create_by โดยตรง
             },
           },
         },
@@ -1039,7 +1039,7 @@ export class UploadTemplateForShipperService {
               ...(!!create?.id && {
                 upload_template_for_shipper: {
                   connect: {
-                    id: Number(create?.id),
+                    id: Number(create?.id || 0),
                   },
                 },
               }),
@@ -1053,7 +1053,7 @@ export class UploadTemplateForShipperService {
               create_date_num: Math.floor(Date.now() / 1000),
               create_by_account: {
                 connect: {
-                  id: Number(userId), // Prisma จะใช้ connect แทนการใช้ create_by โดยตรง
+                  id: Number(userId || 0), // Prisma จะใช้ connect แทนการใช้ create_by โดยตรง
                 },
               },
             },
@@ -1066,7 +1066,7 @@ export class UploadTemplateForShipperService {
               ...(!!create?.id && {
                 upload_template_for_shipper: {
                   connect: {
-                    id: Number(create?.id),
+                    id: Number(create?.id || 0),
                   },
                 },
               }),
@@ -1080,7 +1080,7 @@ export class UploadTemplateForShipperService {
               create_date_num: Math.floor(Date.now() / 1000),
               create_by_account: {
                 connect: {
-                  id: Number(userId), // Prisma จะใช้ connect แทนการใช้ create_by โดยตรง
+                  id: Number(userId || 0), // Prisma จะใช้ connect แทนการใช้ create_by โดยตรง
                 },
               },
             },
@@ -1106,9 +1106,9 @@ export class UploadTemplateForShipperService {
     const checkTemplate =
       await this.prisma.upload_template_for_shipper.findFirst({
         where: {
-          group_id: Number(shipper_id),
-          contract_code_id: Number(contract_code_id),
-          nomination_type_id: Number(nomination_type_id),
+          group_id: Number(shipper_id || 0),
+          contract_code_id: Number(contract_code_id || 0),
+          nomination_type_id: Number(nomination_type_id || 0),
           AND: [
             {
               OR: [{ del_flag: false }, { del_flag: null }],
@@ -1139,8 +1139,8 @@ export class UploadTemplateForShipperService {
       if (!!checkType && !!sheet2) {
         const contractCode = await this.prisma.contract_code.findFirst({
           where: {
-            id: Number(contract_code_id),
-            group_id: Number(shipper_id),
+            id: Number(contract_code_id || 0),
+            group_id: Number(shipper_id || 0),
             // contract_code: sheet1?.data[1][1],
             // group:{
             //   name: sheet1?.data[1][0]
@@ -1223,7 +1223,7 @@ export class UploadTemplateForShipperService {
           }
 
           if (checkType === 'Daily Nomination') {
-            if (Number(nomination_type_id) !== 1) {
+            if (Number(nomination_type_id || 0) !== 1) {
               throw new HttpException(
                 {
                   status: HttpStatus.BAD_REQUEST,
@@ -1271,7 +1271,7 @@ export class UploadTemplateForShipperService {
             };
             sheet3 = { ...sheet3, data: headNomSheet3 };
           } else {
-            if (Number(nomination_type_id) !== 2) {
+            if (Number(nomination_type_id || 0) !== 2) {
               throw new HttpException(
                 {
                   status: HttpStatus.BAD_REQUEST,
@@ -1366,9 +1366,9 @@ export class UploadTemplateForShipperService {
       const uploadTemplateId =
         await this.prisma.upload_template_for_shipper.findFirst({
           where: {
-            nomination_type_id: Number(nomination_type_id),
-            contract_code_id: Number(contract_code_id),
-            group_id: Number(shipper_id),
+            nomination_type_id: Number(nomination_type_id || 0),
+            contract_code_id: Number(contract_code_id || 0),
+            group_id: Number(shipper_id || 0),
 
             AND: [
               {
@@ -1380,12 +1380,12 @@ export class UploadTemplateForShipperService {
 
       const update = await this.prisma.upload_template_for_shipper.updateMany({
         where: {
-          id: Number(uploadTemplateId?.id),
+          id: Number(uploadTemplateId?.id || 0),
         },
         data: {
           update_date: getTodayNowAdd7().toDate(),
           update_date_num: getTodayNowAdd7().unix(),
-          update_by: Number(userId),
+          update_by: Number(userId || 0),
           // update_by_account: {
           //   connect: {
           //     id: Number(userId), // Prisma จะใช้ connect แทนการใช้ create_by โดยตรง
@@ -1404,7 +1404,7 @@ export class UploadTemplateForShipperService {
                 ...(!!uploadTemplateId?.id && {
                   upload_template_for_shipper: {
                     connect: {
-                      id: Number(uploadTemplateId?.id),
+                      id: Number(uploadTemplateId?.id || 0),
                     },
                   },
                 }),
@@ -1413,7 +1413,7 @@ export class UploadTemplateForShipperService {
                 create_date_num: getTodayNowAdd7().unix(),
                 create_by_account: {
                   connect: {
-                    id: Number(userId), // Prisma จะใช้ connect แทนการใช้ create_by โดยตรง
+                    id: Number(userId || 0), // Prisma จะใช้ connect แทนการใช้ create_by โดยตรง
                   },
                 },
               },
@@ -1424,7 +1424,7 @@ export class UploadTemplateForShipperService {
               ...(!!uploadTemplateId?.id && {
                 upload_template_for_shipper: {
                   connect: {
-                    id: Number(uploadTemplateId?.id),
+                    id: Number(uploadTemplateId?.id || 0),
                   },
                 },
               }),
@@ -1802,7 +1802,7 @@ export class UploadTemplateForShipperService {
   }
 
   async genExcelTemplate(payload: any) {
-    const { contract_code_id, types } = payload;
+    const { contract_code_id, types } = payload || {};
     const todayStart = getTodayStartAdd7().toDate();
     const todayEnd = getTodayEndAdd7().toDate();
     const typeOfNomination =
@@ -1813,7 +1813,7 @@ export class UploadTemplateForShipperService {
           : 'error type';
 
     const contractCode = await this.prisma.contract_code.findFirst({
-      where: { id: Number(contract_code_id) },
+      where: { id: Number(contract_code_id || 0) },
       include: {
         booking_version: {
           include: {
@@ -1848,7 +1848,7 @@ export class UploadTemplateForShipperService {
         ],
         limit_concept_point: {
           some: {
-            group_id: Number(contractCode?.group?.id),
+            group_id: Number(contractCode?.group?.id || 0),
           },
         },
       },
@@ -1864,7 +1864,7 @@ export class UploadTemplateForShipperService {
 
     const filteredConceptPoint = conceptPoint.filter((cp) =>
       cp.limit_concept_point.some(
-        (lcp) => lcp.group.id === Number(contractCode?.group?.id),
+        (lcp) => lcp.group.id === Number(contractCode?.group?.id || 0),
       ),
     );
 

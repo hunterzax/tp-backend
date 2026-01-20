@@ -9,7 +9,7 @@ export type User = any;
 
 @Injectable()
 export class AuthService {
-  private failedAttempts: Map<string, { count: number; lockUntil: number }> = new Map();
+  private failedAttempts = new Map<string, { count: number; lockUntil: number }>();
   private readonly maxAttempts = 10; // attempts
   private readonly windowMs = 15 * 60 * 1000; // 15 minutes
   private readonly lockMs = 15 * 60 * 1000; // lockout duration

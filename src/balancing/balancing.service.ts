@@ -124,7 +124,7 @@ export class BalancingService {
       if (resEviden?.status === 200 && !!resEviden?.data) {
         if (Array.isArray(resEviden.data) && resEviden.data.length > 0) {
           let total_record = undefined;
-          resEviden.data.map((resEvidenData: any) => {
+          resEviden.data.forEach((resEvidenData: any) => {
             if (
               resEvidenData?.data &&
               Array.isArray(resEvidenData.data) &&
@@ -9011,7 +9011,7 @@ export class BalancingService {
       lasted_version,
       tab,
       shipper,
-    } = payload;
+    } = payload || {};
     // const mode = tab || null;
 
     // const datesArray = Array.from({ length: 3 }).map((_, i) =>
@@ -10554,7 +10554,7 @@ export class BalancingService {
     const allMonthly =
       await this.prisma.balancing_monthly_report_approved.findFirst({
         where: {
-          id: Number(id),
+          id: Number(id || 0),
         },
       });
     if (!allMonthly) {
@@ -10584,7 +10584,7 @@ export class BalancingService {
       shipper_id,
       execute_timestamp,
       lasted_version,
-    } = payload;
+    } = payload || {};
 
     let totalRecord: number | undefined = undefined;
     await this.evidenApiCenter(

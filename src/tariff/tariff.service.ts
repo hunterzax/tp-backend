@@ -115,7 +115,7 @@ export class TariffService {
       ...(!!reqUser?.user?.sub && {
         create_by_account: {
           connect: {
-            id: Number(reqUser?.user?.sub),
+            id: Number(reqUser?.user?.sub || 0),
           },
         },
       }),
@@ -185,7 +185,7 @@ export class TariffService {
   }
 
   async tariffChargeReportFindId(payload: any, userId: any) {
-    const { month_year_charge, shipper_id } = payload;
+    const { month_year_charge, shipper_id } = payload || {};
 
     const base =
       month_year_charge && dayjs(month_year_charge).tz('Asia/Bangkok');
@@ -196,7 +196,7 @@ export class TariffService {
     const results = await this.prisma.tariff.findMany({
       where: {
         ...(shipper_id && {
-          shipper_id: Number(shipper_id),
+          shipper_id: Number(shipper_id || 0),
         }),
         ...(month_year_charge && {
           month_year_charge: {
@@ -221,7 +221,7 @@ export class TariffService {
   }
 
   async chargeEdit(id: any, payload: any, userId: any) {
-    const { quantity_operator, amount_operator } = payload;
+    const { quantity_operator, amount_operator } = payload || {};
 
     const nowAt = getTodayNowAdd7();
 
@@ -229,7 +229,7 @@ export class TariffService {
       async (prisma) => {
         const result = await prisma.tariff_charge.update({
           where: {
-            id: Number(id),
+            id: Number(id || 0),
           },
           data: {
             quantity_operator: quantity_operator || null,
@@ -238,7 +238,7 @@ export class TariffService {
             update_date_num: nowAt.unix(),
             update_by_account: {
               connect: {
-                id: Number(userId),
+                id: Number(userId || 0),
               },
             },
           },
@@ -274,7 +274,7 @@ export class TariffService {
 
     const resultCkSelf = await this.prisma.tariff.findFirst({
       where: {
-        id: Number(id),
+        id: Number(id || 0),
       },
       select: {
         id: true,
@@ -306,7 +306,7 @@ export class TariffService {
 
     const result = await this.prisma.tariff.update({
       where: {
-        id: Number(id),
+        id: Number(id || 0),
       },
       data: {
         tariff_invoice_sent: {
@@ -318,7 +318,7 @@ export class TariffService {
         update_date_num: nowAt.unix(),
         update_by_account: {
           connect: {
-            id: Number(userId),
+            id: Number(userId || 0),
           },
         },
       },
@@ -363,15 +363,15 @@ export class TariffService {
   }
 
   async tariffChargeReportFindAll(payload: any, userId: any) {
-    const { month_year_charge, id, limit, offset } = payload;
-    const limit_ = Number(limit);
-    const offset_ = Number(offset);
+    const { month_year_charge, id, limit, offset } = payload || {};
+    const limit_ = Number(limit || 0);
+    const offset_ = Number(offset || 0);
 
     const group = await this.prisma.group.findFirst({
       where: {
         account_manage: {
           some: {
-            account_id: Number(userId),
+            account_id: Number(userId || 0),
           },
         },
       },
@@ -506,16 +506,16 @@ export class TariffService {
   }
 
   async chargeFindAll(payload: any, userId: any) {
-    const { id, contractCode, comodity, limit, offset } = payload;
-    const limit_ = Number(limit);
-    const offset_ = Number(offset);
+    const { id, contractCode, comodity, limit, offset } = payload || {};
+    const limit_ = Number(limit || 0);
+    const offset_ = Number(offset || 0);
     const contractCodeArr = (contractCode && JSON.parse(contractCode)) || [];
 
     const group = await this.prisma.group.findFirst({
       where: {
         account_manage: {
           some: {
-            account_id: Number(userId),
+            account_id: Number(userId || 0),
           },
         },
       },
@@ -544,9 +544,9 @@ export class TariffService {
           },
         }),
         ...(comodity && {
-          OR: [{ comonity_type: Number(comodity) }, { comonity_type: null }],
+          OR: [{ comonity_type: Number(comodity || 0) }, { comonity_type: null }],
         }),
-        tariff_id: Number(id),
+        tariff_id: Number(id || 0),
       },
       skip: Number(offset_),
       take: Number(limit_),
@@ -628,9 +628,9 @@ export class TariffService {
           },
         }),
         ...(comodity && {
-          OR: [{ comonity_type: Number(comodity) }, { comonity_type: null }],
+          OR: [{ comonity_type: Number(comodity || 0) }, { comonity_type: null }],
         }),
-        tariff_id: Number(id),
+        tariff_id: Number(id || 0),
       },
     });
     return {
@@ -640,11 +640,11 @@ export class TariffService {
   }
 
   async chargeView(payload: any, userId: any) {
-    const { id } = payload;
+    const { id } = payload || {};
 
     const results = await this.prisma.tariff_view_date.findMany({
       where: {
-        tariff_charge_id: Number(id),
+        tariff_charge_id: Number(id || 0),
       },
       include: {
         tariff_charge: {
@@ -694,7 +694,7 @@ export class TariffService {
     } else {
       const result = await this.prisma.tariff_charge.findFirst({
         where: {
-          id: Number(id),
+          id: Number(id || 0),
         },
         include: {
           create_by_account: {
@@ -728,14 +728,14 @@ export class TariffService {
   }
 
   async comments(payload: any, userId: any) {
-    const { id, comment } = payload;
+    const { id, comment } = payload || {};
     const nowAt = getTodayNowAdd7();
 
     const result = await this.prisma.tariff_comment.create({
       data: {
         tariff: {
           connect: {
-            id: Number(id),
+            id: Number(id || 0),
           },
         },
         comment: comment || null,
@@ -743,7 +743,7 @@ export class TariffService {
         create_date_num: nowAt.unix(),
         create_by_account: {
           connect: {
-            id: Number(userId),
+            id: Number(userId || 0),
           },
         },
       },
@@ -751,12 +751,12 @@ export class TariffService {
 
     await this.prisma.tariff.updateMany({
       where: {
-        id: Number(id),
+        id: Number(id || 0),
       },
       data: {
         update_date: nowAt.toDate(),
         update_date_num: nowAt.unix(),
-        update_by: Number(userId),
+        update_by: Number(userId || 0),
       },
     });
 
@@ -764,13 +764,13 @@ export class TariffService {
   }
 
   async runtariff(payload: any, userId: any) {
-    const { month_year, shipper_id } = payload;
+    const { month_year, shipper_id } = payload || {};
     const todayStart = getYearStartAdd7().toDate();
     const todayEnd = getYearEndAdd7().toDate();
 
     const shipperMaster = await this.prisma.group.findFirst({
       where: {
-        id: Number(shipper_id),
+        id: Number(shipper_id || 0),
       },
       select: {
         id: true,
@@ -1947,7 +1947,7 @@ export class TariffService {
             const tariffChargeDataA = {
               tariff: {
                 connect: {
-                  id: Number(tariffA?.id),
+                  id: Number(tariffA?.id || 0),
                 },
               },
               tariff_type_charge: {
@@ -1957,12 +1957,12 @@ export class TariffService {
               },
               contract_code: {
                 connect: {
-                  id: Number(e?.id),
+                  id: Number(e?.id || 0),
                 },
               },
               term_type: {
                 connect: {
-                  id: Number(e?.term_type_id),
+                  id: Number(e?.term_type_id || 0),
                 },
               },
               quantity_operator: null,
@@ -1978,7 +1978,7 @@ export class TariffService {
               create_date_num: nowAt.unix(),
               create_by_account: {
                 connect: {
-                  id: Number(userId),
+                  id: Number(userId || 0),
                 },
               },
               tariff_view_date: {
@@ -1988,7 +1988,7 @@ export class TariffService {
                   create_date_num: nowAt.unix(),
                   create_by_account: {
                     connect: {
-                      id: Number(userId),
+                      id: Number(userId || 0),
                     },
                   },
                 },
@@ -1997,7 +1997,7 @@ export class TariffService {
             const tariffChargeDataB = {
               tariff: {
                 connect: {
-                  id: Number(tariffB?.id),
+                  id: Number(tariffB?.id || 0),
                 },
               },
               tariff_type_charge: {
@@ -2007,12 +2007,12 @@ export class TariffService {
               },
               contract_code: {
                 connect: {
-                  id: Number(e?.id),
+                  id: Number(e?.id || 0),
                 },
               },
               term_type: {
                 connect: {
-                  id: Number(e?.term_type_id),
+                  id: Number(e?.term_type_id || 0),
                 },
               },
               quantity_operator: null,
@@ -2028,7 +2028,7 @@ export class TariffService {
               create_date_num: nowAt.unix(),
               create_by_account: {
                 connect: {
-                  id: Number(userId),
+                  id: Number(userId || 0),
                 },
               },
               tariff_view_date: {
@@ -2038,7 +2038,7 @@ export class TariffService {
                   create_date_num: nowAt.unix(),
                   create_by_account: {
                     connect: {
-                      id: Number(userId),
+                      id: Number(userId || 0),
                     },
                   },
                 },
@@ -2071,7 +2071,7 @@ export class TariffService {
             return {
               tariff: {
                 connect: {
-                  id: Number(tariffA?.id),
+                  id: Number(tariffA?.id || 0),
                 },
               },
               tariff_type_charge: {
@@ -2082,13 +2082,13 @@ export class TariffService {
               ...(e?.contract_code_id && {
                 contract_code: {
                   connect: {
-                    id: Number(e?.contract_code_id),
+                    id: Number(e?.contract_code_id || 0),
                   },
                 },
               }),
               term_type: {
                 connect: {
-                  id: Number(e?.term_type_id),
+                  id: Number(e?.term_type_id || 0),
                 },
               },
               quantity_operator: null,
@@ -2104,7 +2104,7 @@ export class TariffService {
               create_date_num: nowAt.unix(),
               create_by_account: {
                 connect: {
-                  id: Number(userId),
+                  id: Number(userId || 0),
                 },
               },
               comonity_type: e?.type === 'comodityByContract' ? 1 : 2,
@@ -2115,7 +2115,7 @@ export class TariffService {
                   create_date_num: nowAt.unix(),
                   create_by_account: {
                     connect: {
-                      id: Number(userId),
+                      id: Number(userId || 0),
                     },
                   },
                 },
@@ -2143,7 +2143,7 @@ export class TariffService {
             return {
               tariff: {
                 connect: {
-                  id: Number(tariffB?.id),
+                  id: Number(tariffB?.id || 0),
                 },
               },
               tariff_type_charge: {
@@ -2154,13 +2154,13 @@ export class TariffService {
               ...(e?.contract_code_id && {
                 contract_code: {
                   connect: {
-                    id: Number(e?.contract_code_id),
+                    id: Number(e?.contract_code_id || 0),
                   },
                 },
               }),
               term_type: {
                 connect: {
-                  id: Number(e?.term_type_id),
+                  id: Number(e?.term_type_id || 0),
                 },
               },
               quantity_operator: null,
@@ -2176,7 +2176,7 @@ export class TariffService {
               create_date_num: nowAt.unix(),
               create_by_account: {
                 connect: {
-                  id: Number(userId),
+                  id: Number(userId || 0),
                 },
               },
               comonity_type: e?.type === 'comodityByContract' ? 1 : 2,
@@ -2187,7 +2187,7 @@ export class TariffService {
                   create_date_num: nowAt.unix(),
                   create_by_account: {
                     connect: {
-                      id: Number(userId),
+                      id: Number(userId || 0),
                     },
                   },
                 },
@@ -2212,7 +2212,7 @@ export class TariffService {
               return {
                 tariff: {
                   connect: {
-                    id: Number(tariffA?.id),
+                    id: Number(tariffA?.id || 0),
                   },
                 },
                 tariff_type_charge: {
@@ -2236,7 +2236,7 @@ export class TariffService {
                 create_date_num: nowAt.unix(),
                 create_by_account: {
                   connect: {
-                    id: Number(userId),
+                    id: Number(userId || 0),
                   },
                 },
                 tariff_view_date: {
@@ -2246,7 +2246,7 @@ export class TariffService {
                     create_date_num: nowAt.unix(),
                     create_by_account: {
                       connect: {
-                        id: Number(userId),
+                        id: Number(userId || 0),
                       },
                     },
                   },
@@ -2268,7 +2268,7 @@ export class TariffService {
               return {
                 tariff: {
                   connect: {
-                    id: Number(tariffB?.id),
+                    id: Number(tariffB?.id || 0),
                   },
                 },
                 tariff_type_charge: {
@@ -2292,7 +2292,7 @@ export class TariffService {
                 create_date_num: nowAt.unix(),
                 create_by_account: {
                   connect: {
-                    id: Number(userId),
+                    id: Number(userId || 0),
                   },
                 },
                 tariff_view_date: {
@@ -2302,7 +2302,7 @@ export class TariffService {
                     create_date_num: nowAt.unix(),
                     create_by_account: {
                       connect: {
-                        id: Number(userId),
+                        id: Number(userId || 0),
                       },
                     },
                   },
@@ -2328,7 +2328,7 @@ export class TariffService {
               return {
                 tariff: {
                   connect: {
-                    id: Number(tariffA?.id),
+                    id: Number(tariffA?.id || 0),
                   },
                 },
                 tariff_type_charge: {
@@ -2352,7 +2352,7 @@ export class TariffService {
                 create_date_num: nowAt.unix(),
                 create_by_account: {
                   connect: {
-                    id: Number(userId),
+                    id: Number(userId || 0),
                   },
                 },
                 tariff_view_date: {
@@ -2362,7 +2362,7 @@ export class TariffService {
                     create_date_num: nowAt.unix(),
                     create_by_account: {
                       connect: {
-                        id: Number(userId),
+                        id: Number(userId || 0),
                       },
                     },
                   },
@@ -2384,7 +2384,7 @@ export class TariffService {
               return {
                 tariff: {
                   connect: {
-                    id: Number(tariffB?.id),
+                    id: Number(tariffB?.id || 0),
                   },
                 },
                 tariff_type_charge: {
@@ -2408,7 +2408,7 @@ export class TariffService {
                 create_date_num: nowAt.unix(),
                 create_by_account: {
                   connect: {
-                    id: Number(userId),
+                    id: Number(userId || 0),
                   },
                 },
                 tariff_view_date: {
@@ -2418,7 +2418,7 @@ export class TariffService {
                     create_date_num: nowAt.unix(),
                     create_by_account: {
                       connect: {
-                        id: Number(userId),
+                        id: Number(userId || 0),
                       },
                     },
                   },
@@ -2448,7 +2448,7 @@ export class TariffService {
             return {
               tariff: {
                 connect: {
-                  id: Number(tariffA?.id),
+                  id: Number(tariffA?.id || 0),
                 },
               },
               tariff_type_charge: {
@@ -2459,14 +2459,14 @@ export class TariffService {
               ...(e?.id && {
                 contract_code: {
                   connect: {
-                    id: Number(e?.id),
+                    id: Number(e?.id || 0),
                   },
                 },
               }),
               ...(e?.term_type_id && {
                 term_type: {
                   connect: {
-                    id: Number(e?.term_type_id),
+                    id: Number(e?.term_type_id || 0),
                   },
                 },
               }),
@@ -2483,7 +2483,7 @@ export class TariffService {
               create_date_num: nowAt.unix(),
               create_by_account: {
                 connect: {
-                  id: Number(userId),
+                  id: Number(userId || 0),
                 },
               },
               tariff_view_date: {
@@ -2493,7 +2493,7 @@ export class TariffService {
                   create_date_num: nowAt.unix(),
                   create_by_account: {
                     connect: {
-                      id: Number(userId),
+                      id: Number(userId || 0),
                     },
                   },
                 },
@@ -2518,7 +2518,7 @@ export class TariffService {
             return {
               tariff: {
                 connect: {
-                  id: Number(tariffA?.id),
+                  id: Number(tariffA?.id || 0),
                 },
               },
               tariff_type_charge: {
@@ -2529,14 +2529,14 @@ export class TariffService {
               ...(e?.id && {
                 contract_code: {
                   connect: {
-                    id: Number(e?.id),
+                    id: Number(e?.id || 0),
                   },
                 },
               }),
               ...(e?.term_type_id && {
                 term_type: {
                   connect: {
-                    id: Number(e?.term_type_id),
+                    id: Number(e?.term_type_id || 0),
                   },
                 },
               }),
@@ -2553,7 +2553,7 @@ export class TariffService {
               create_date_num: nowAt.unix(),
               create_by_account: {
                 connect: {
-                  id: Number(userId),
+                  id: Number(userId || 0),
                 },
               },
               tariff_view_date: {
@@ -2563,7 +2563,7 @@ export class TariffService {
                   create_date_num: nowAt.unix(),
                   create_by_account: {
                     connect: {
-                      id: Number(userId),
+                      id: Number(userId || 0),
                     },
                   },
                 },
@@ -2592,7 +2592,7 @@ export class TariffService {
             return {
               tariff: {
                 connect: {
-                  id: Number(tariffB?.id),
+                  id: Number(tariffB?.id || 0),
                 },
               },
               tariff_type_charge: {
@@ -2603,14 +2603,14 @@ export class TariffService {
               ...(e?.id && {
                 contract_code: {
                   connect: {
-                    id: Number(e?.id),
+                    id: Number(e?.id || 0),
                   },
                 },
               }),
               ...(e?.term_type_id && {
                 term_type: {
                   connect: {
-                    id: Number(e?.term_type_id),
+                    id: Number(e?.term_type_id || 0),
                   },
                 },
               }),
@@ -2627,7 +2627,7 @@ export class TariffService {
               create_date_num: nowAt.unix(),
               create_by_account: {
                 connect: {
-                  id: Number(userId),
+                  id: Number(userId || 0),
                 },
               },
               tariff_view_date: {
@@ -2637,7 +2637,7 @@ export class TariffService {
                   create_date_num: nowAt.unix(),
                   create_by_account: {
                     connect: {
-                      id: Number(userId),
+                      id: Number(userId || 0),
                     },
                   },
                 },
@@ -2662,7 +2662,7 @@ export class TariffService {
             return {
               tariff: {
                 connect: {
-                  id: Number(tariffB?.id),
+                  id: Number(tariffB?.id || 0),
                 },
               },
               tariff_type_charge: {
@@ -2673,14 +2673,14 @@ export class TariffService {
               ...(e?.id && {
                 contract_code: {
                   connect: {
-                    id: Number(e?.id),
+                    id: Number(e?.id || 0),
                   },
                 },
               }),
               ...(e?.term_type_id && {
                 term_type: {
                   connect: {
-                    id: Number(e?.term_type_id),
+                    id: Number(e?.term_type_id || 0),
                   },
                 },
               }),
@@ -2697,7 +2697,7 @@ export class TariffService {
               create_date_num: nowAt.unix(),
               create_by_account: {
                 connect: {
-                  id: Number(userId),
+                  id: Number(userId || 0),
                 },
               },
               tariff_view_date: {
@@ -2707,7 +2707,7 @@ export class TariffService {
                   create_date_num: nowAt.unix(),
                   create_by_account: {
                     connect: {
-                      id: Number(userId),
+                      id: Number(userId || 0),
                     },
                   },
                 },
@@ -2730,7 +2730,7 @@ export class TariffService {
             return {
               tariff: {
                 connect: {
-                  id: Number(tariffA?.id),
+                  id: Number(tariffA?.id || 0),
                 },
               },
               tariff_type_charge: {
@@ -2751,7 +2751,7 @@ export class TariffService {
               create_date_num: nowAt.unix(),
               create_by_account: {
                 connect: {
-                  id: Number(userId),
+                  id: Number(userId || 0),
                 },
               },
             };
@@ -2768,7 +2768,7 @@ export class TariffService {
             return {
               tariff: {
                 connect: {
-                  id: Number(tariffB?.id),
+                  id: Number(tariffB?.id || 0),
                 },
               },
               tariff_type_charge: {
@@ -2789,7 +2789,7 @@ export class TariffService {
               create_date_num: nowAt.unix(),
               create_by_account: {
                 connect: {
-                  id: Number(userId),
+                  id: Number(userId || 0),
                 },
               },
             };
@@ -2863,13 +2863,13 @@ export class TariffService {
   // เอา amount operator- amount compare
   // ถ้าไม่มี operator ก็ใช้ amount
   async bacCalc(id: any, source: any, userId: any) {
-    const ids = Number(id);
+    const ids = Number(id || 0);
     const nowAt = getTodayNowAdd7();
 
     const findTariffUse = async (ids: any, tx: any) => {
       const results = await tx.tariff.findFirst({
         where: {
-          id: Number(ids),
+          id: Number(ids || 0),
         },
         include: {
           tariff_charge: true,
@@ -2912,7 +2912,7 @@ export class TariffService {
     const updateUse = {
       update_date: nowAt.toDate(),
       update_date_num: nowAt.unix(),
-      update_by: Number(userId),
+      update_by: Number(userId || 0),
     };
     const result = await this.prisma.$transaction(
       async (prisma) => {
@@ -2920,7 +2920,7 @@ export class TariffService {
           const { id: idC, ...tariffCharge } = tariff_charge[i];
           await prisma.tariff_charge.updateMany({
             where: {
-              id: Number(idC),
+              id: Number(idC || 0),
             },
             data: {
               ...tariffCharge,
@@ -2930,7 +2930,7 @@ export class TariffService {
         }
         await prisma.tariff.updateMany({
           where: {
-            id: Number(tariff_id),
+            id: Number(tariff_id || 0),
           },
           data: {
             ...updateUse,
@@ -2941,19 +2941,19 @@ export class TariffService {
           data: {
             tariff: {
               connect: {
-                id: Number(tariff_id),
+                id: Number(tariff_id || 0),
               },
             },
             compare_with: {
               connect: {
-                id: Number(findTariff?.id),
+                id: Number(findTariff?.id || 0),
               },
             },
             create_date: nowAt.toDate(),
             create_date_num: nowAt.unix(),
             create_by_account: {
               connect: {
-                id: Number(userId),
+                id: Number(userId || 0),
               },
             },
           },
@@ -3020,7 +3020,7 @@ export class TariffService {
   }
 
   async selectContract(payload: any, userId: any) {
-    const { month_year, shipper_id, type_charge_id } = payload;
+    const { month_year, shipper_id, type_charge_id } = payload || {};
     const todayStartMY = getTodayStartYYYYMMDDDfaultAdd7(month_year).toDate();
     const todayEndMY = getTodayNowAdd7(month_year).toDate();
     const contract_code = await this.prisma.contract_code.findMany({
@@ -3088,13 +3088,13 @@ export class TariffService {
   }
 
   async selectTariffId(payload: any, userId: any) {
-    const { month_year, shipper_id, type_charge_id } = payload;
+    const { month_year, shipper_id, type_charge_id } = payload || {};
     const todayStart = getTodayStartYYYYMMDDDfaultAdd7(month_year).toDate();
     const todayEnd = getTodayEndYYYYMMDDDfaultAdd7(month_year).toDate();
 
     const results = await this.prisma.tariff.findMany({
       where: {
-        shipper_id: shipper_id,
+        shipper_id: Number(shipper_id || 0),
         AND: [
           {
             month_year_charge: {
@@ -3114,17 +3114,17 @@ export class TariffService {
   }
 
   async genData(payload: any, userId: any) {
-    const { month_year, shipper_id, tariff_type_charge_id, type_id } = payload;
+    const { month_year, shipper_id, tariff_type_charge_id, type_id } = payload || {};
     const todayStart = getTodayStartYYYYMMDDDfaultAdd7(month_year).toDate();
     const todayEnd = getTodayEndYYYYMMDDDfaultAdd7(month_year).toDate();
 
     const results = await this.prisma.tariff_charge.findMany({
       where: {
-        tariff_type_charge_id: Number(tariff_type_charge_id),
+        tariff_type_charge_id: Number(tariff_type_charge_id || 0),
         tariff: {
           shipper_id: shipper_id,
           ...(type_id && {
-            id: Number(type_id),
+            id: Number(type_id || 0),
           }),
           AND: [
             {
@@ -3163,7 +3163,7 @@ export class TariffService {
   async findTariffCreditDebitNote(id: any, userId: any) {
     const results = await this.prisma.tariff_credit_debit_note.findFirst({
       where: {
-        id: Number(id),
+        id: Number(id || 0),
       },
       include: {
         shipper: true,
@@ -3215,7 +3215,7 @@ export class TariffService {
     const results = await this.prisma.tariff_credit_debit_note_detail.findFirst(
       {
         where: {
-          id: Number(id),
+          id: Number(id || 0),
         },
         include: {
           contract_code: true,
@@ -3253,14 +3253,14 @@ export class TariffService {
       offset,
     } = payload;
 
-    const limit_ = Number(limit);
-    const offset_ = Number(offset);
+    const limit_ = Number(limit || 0);
+    const offset_ = Number(offset || 0);
 
     const group = await this.prisma.group.findFirst({
       where: {
         account_manage: {
           some: {
-            account_id: Number(userId),
+            account_id: Number(userId || 0),
           },
         },
       },
@@ -3302,14 +3302,14 @@ export class TariffService {
           ),
         }),
         ...(tariff_type_charge_id && {
-          tariff_type_charge_id: Number(tariff_type_charge_id),
+          tariff_type_charge_id: Number(tariff_type_charge_id || 0),
         }),
         cndn_id: {
           contains: cndn_id,
         },
         // cndn_id,
       },
-      skip: Number(offset_),
+      skip: Number(offset_ || 0),
       take: Number(limit_),
       include: {
         shipper: true,
@@ -3385,7 +3385,7 @@ export class TariffService {
           ),
         }),
         ...(tariff_type_charge_id && {
-          tariff_type_charge_id: Number(tariff_type_charge_id),
+          tariff_type_charge_id: Number(tariff_type_charge_id || 0),
         }),
         cndn_id: {
           contains: cndn_id,
@@ -3413,7 +3413,7 @@ export class TariffService {
 
     const nowAt = getTodayNowAdd7();
     const shipperName = await this.prisma.group.findFirst({
-      where: { id: Number(shipper_id) },
+      where: { id: Number(shipper_id || 0) },
       select: { name: true },
     });
     console.log('month_year_charge : ', month_year_charge);
@@ -3441,26 +3441,26 @@ export class TariffService {
             data: {
               shipper: {
                 connect: {
-                  id: Number(shipper_id),
+                  id: Number(shipper_id || 0),
                 },
               },
               month_year_charge: getTodayNowAdd7(month_year_charge).toDate(),
               cndn_id: cndn_id,
               tariff_credit_debit_note_type: {
                 connect: {
-                  id: Number(tariff_credit_debit_note_type_id),
+                  id: Number(tariff_credit_debit_note_type_id || 0),
                 },
               },
               tariff_type_charge: {
                 connect: {
-                  id: Number(tariff_type_charge_id),
+                  id: Number(tariff_type_charge_id || 0),
                 },
               },
               create_date: nowAt.toDate(),
               create_date_num: nowAt.unix(),
               create_by_account: {
                 connect: {
-                  id: Number(userId),
+                  id: Number(userId || 0),
                 },
               },
             },
@@ -3472,17 +3472,17 @@ export class TariffService {
               data: {
                 tariff_credit_debit_note: {
                   connect: {
-                    id: Number(createTariffCredibitDebitNote?.id),
+                    id: Number(createTariffCredibitDebitNote?.id || 0),
                   },
                 },
                 term_type: {
                   connect: {
-                    id: Number(detail[i]?.term_type),
+                    id: Number(detail[i]?.term_type || 0),
                   },
                 },
                 contract_code: {
                   connect: {
-                    id: Number(detail[i]?.contract_code_id),
+                    id: Number(detail[i]?.contract_code_id || 0),
                   },
                 },
                 quantity: detail[i]?.quantity || null,
@@ -3494,7 +3494,7 @@ export class TariffService {
                 create_date_num: nowAt.unix(),
                 create_by_account: {
                   connect: {
-                    id: Number(userId),
+                    id: Number(userId || 0),
                   },
                 },
               },
@@ -3575,7 +3575,7 @@ export class TariffService {
 
   // edit
   async edit(id: any, payload: any, userId: any) {
-    const { cndn_id, detail, comments } = payload;
+    const { cndn_id, detail, comments } = payload || {};
 
     const nowAt = getTodayNowAdd7();
 
@@ -3695,7 +3695,7 @@ export class TariffService {
   }
 
   async tariffCreditDebitNoteComments(payload: any, userId: any) {
-    const { id, comment } = payload;
+    const { id, comment } = payload || {};
     const nowAt = getTodayNowAdd7();
 
     const result = await this.prisma.tariff_credit_debit_note_comment.create({

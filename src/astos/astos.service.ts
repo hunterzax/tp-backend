@@ -33,12 +33,12 @@ export class AstosService {
 
   // ===== PUT UPDATE STATUS =====
   async execute_updateStatus_eod(payload: { request_number: any; execute_timestamp: any; finish_timestamp: any; status: string; msg?: string; }) {
-    const { request_number, execute_timestamp, finish_timestamp, status, msg } = payload;
+    const { request_number, execute_timestamp, finish_timestamp, status, msg } = payload || {};
     const nowAt = getTodayNow();
     try {
       const updateUnique = {
-        request_number_id: Number(request_number),
-        execute_timestamp: Number(execute_timestamp)
+        request_number_id: Number(request_number || 0),
+        execute_timestamp: Number(execute_timestamp || 0)
       };
       const updateInfo = { finish_timestamp, status, ...(msg != null ? { msg } : {}) };
       const find = await this.repo.findExecuteEod(updateUnique);
@@ -47,7 +47,7 @@ export class AstosService {
         console.log(`[DEBUG] update eod status: ${execute_timestamp} ${status}`)
         if (status === 'OK') {
           console.log(`[DEBUG] status is ok`)
-          await this.repo.updateReviewStatus(Number(execute_timestamp));
+          await this.repo.updateReviewStatus(Number(execute_timestamp || 0));
           const message = `The allocation and balancing process for all shippers and the following period of time: {${getTodayNow(find?.start_date).format('DD/MM/YYYY')} to ${getTodayNow(find?.end_date).format('DD/MM/YYYY')}} {has finished OK} {(process executed on ${nowAt.format('DD/MM/YYYY')})}.`;
 
           return { request_number, execute_timestamp, finish_timestamp, status_code: 200 };
@@ -69,12 +69,12 @@ export class AstosService {
   }
 
   async execute_updateStatus_intraday(payload: { request_number: any; execute_timestamp: any; finish_timestamp: any; status: string; msg?: string; }) {
-    const { request_number, execute_timestamp, finish_timestamp, status, msg } = payload;
+    const { request_number, execute_timestamp, finish_timestamp, status, msg } = payload || {};
     const nowAt = getTodayNow();
     try {
       const updateUnique = {
-        request_number_id: Number(request_number),
-        execute_timestamp: Number(execute_timestamp)
+        request_number_id: Number(request_number || 0),
+        execute_timestamp: Number(execute_timestamp || 0)
       };
       const updateInfo = { finish_timestamp, status, ...(msg != null ? { msg } : {}) };
       const find = await this.repo.findExecuteIntraday(updateUnique);
@@ -103,7 +103,7 @@ export class AstosService {
 
   // ===== GET DATA =====
   async eviden_contract(payload: any) {
-    const { start_date, end_date, skip, limit } = payload;
+    const { start_date, end_date, skip, limit } = payload || {};
 
     const dayStart = getTodayStartAdd7(start_date).toDate();
     const dayEnd = getTodayStartAdd7(end_date).toDate();
@@ -124,7 +124,7 @@ export class AstosService {
   }
 
   async eviden_contract_capacity(payload: any) {
-    const { start_date, end_date, skip, limit } = payload;
+    const { start_date, end_date, skip, limit } = payload || {};
 
     const dayStart = getTodayStartAdd7(start_date).toDate();
     const dayEnd = getTodayStartAdd7(end_date).toDate();
@@ -241,7 +241,7 @@ export class AstosService {
   }
 
   async eviden_nomination_eod(payload: any) {
-    const { start_date, end_date, skip, limit } = payload;
+    const { start_date, end_date, skip, limit } = payload || {};
 
     // Build day list (ISO yyyy-mm-dd in UTC+7)
     const startISO = getTodayStartAdd7(start_date).format('YYYY-MM-DD');
@@ -401,7 +401,7 @@ export class AstosService {
       data: any[];
     }>
   }> {
-    const { gas_day, start_hour, end_hour } = payload;
+    const { gas_day, start_hour, end_hour } = payload || {};
     const { fromH, toH } = this.utils.normalizeHourWindow(start_hour, end_hour);
 
     const reqFrom = Math.max(1, fromH ?? 1);
@@ -592,9 +592,9 @@ export class AstosService {
         const perHour = item.valume_mmscfh2;  // MMBTU/H
 
         let valueH: number | null = null;
-        if (has(perHour) && !has(perDay)) valueH = Number(perHour);
-        else if (!has(perHour) && has(perDay)) valueH = Number(perDay) / 24;
-        else if (has(perHour) && has(perDay)) valueH = Number(perHour);
+        if (has(perHour) && !has(perDay)) valueH = Number(perHour || 0);
+        else if (!has(perHour) && has(perDay)) valueH = Number(perDay || 0) / 24;
+        else if (has(perHour) && has(perDay)) valueH = Number(perHour || 0);
         else continue;
 
         if (Number.isNaN(valueH)) continue;
@@ -699,7 +699,7 @@ export class AstosService {
     const byHourPoint = new Map<string, Set<string>>(); // `${day}|${hour}|${point}` -> set(shipper)
     for (const [k] of baseIndex.entries()) {
       const [day, hourStr, shipper, point] = k.split('|');
-      const hour = Number(hourStr);
+      const hour = Number(hourStr || 0);
       if (hour < buildFrom || hour > buildTo) continue;
       const hp = `${day}|${hour}|${point}`;
       if (!byHourPoint.has(hp)) byHourPoint.set(hp, new Set());
@@ -719,7 +719,7 @@ export class AstosService {
 
   async daily_adjustment_summary(payload: any): Promise<{ gas_day: string; gas_hour: number; contract: string; shipper: string; data: any[] }[]> {
     const { byHourPoint, orderedAdjCodes, hasAdjKey, baseIndex, deviders, shipperPointAdj, groups } = await this.prepare_daily_adjustment_data(payload);
-    const { gas_day } = payload;
+    const { gas_day } = payload || {};
     const targets = new Map<string, number>(); // gas_day|hour|point -> valueH
 
     // console.log('prorate adjust to hour')
@@ -801,7 +801,7 @@ export class AstosService {
     // Now process per (day,hour,point), adj by adj
     for (const [hp, shippers] of byHourPoint.entries()) {
       const [day, hourStr, point] = hp.split('|');
-      const hour = Number(hourStr);
+      const hour = Number(hourStr || 0);
 
       for (const adjCode of orderedAdjCodes) {
         // Which shippers at this point have this adj?
@@ -919,7 +919,7 @@ export class AstosService {
   }
 
   async eviden_nomination_intraday(payload: any) {
-    const { gas_day, start_hour, end_hour, skip, limit } = payload;
+    const { gas_day, start_hour, end_hour, skip, limit } = payload || {};
     const { fromH, toH } = this.utils.normalizeHourWindow(start_hour, end_hour);
 
     const reqFrom = Math.max(1, fromH ?? 1);

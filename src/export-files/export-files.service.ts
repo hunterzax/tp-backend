@@ -557,7 +557,7 @@ export class ExportFilesService {
 
   // Dam
   async epDamTsoGroup(response: Response, payload: any) {
-    const { id, filter } = payload;
+    const { id, filter } = payload || {};
     const idArray = id;
     const resData = await this.prisma.group.findMany({
       include: {
@@ -636,7 +636,7 @@ export class ExportFilesService {
   }
 
   async epDamShippersGroup(response: Response, payload: any) {
-    const { id, filter } = payload;
+    const { id, filter } = payload || {};
     const idArray = id;
     const resData = await this.prisma.group.findMany({
       include: {
@@ -736,7 +736,7 @@ export class ExportFilesService {
   }
 
   async epDamOtherGroup(response: Response, payload: any) {
-    const { id, filter } = payload;
+    const { id, filter } = payload || {};
     const idArray = id;
     const resData = await this.prisma.group.findMany({
       include: {
@@ -813,7 +813,7 @@ export class ExportFilesService {
   }
 
   async epDamUsers(response: Response, payload: any) {
-    const { id, filter } = payload;
+    const { id, filter } = payload || {};
     const idArray = id;
     const resData = await this.prisma.account.findMany({
       where: {
@@ -997,7 +997,7 @@ export class ExportFilesService {
   }
 
   async epDamRoles(response: Response, payload: any) {
-    const { id, filter } = payload;
+    const { id, filter } = payload || {};
     const idArray = id;
     const resData = await this.prisma.role.findMany({
       include: {
@@ -1076,7 +1076,7 @@ export class ExportFilesService {
   }
 
   async epDamLoginManagementTool(response: Response, payload: any) {
-    const { id, filter } = payload;
+    const { id, filter } = payload || {};
     const idArray = id;
     const resData = await this.prisma.system_login.findMany({
       include: {
@@ -1189,7 +1189,7 @@ export class ExportFilesService {
   }
 
   async epDamDivision(response: Response, payload: any) {
-    const { id, filter } = payload;
+    const { id, filter } = payload || {};
     const idArray = id;
     const resData = await this.prisma.division.findMany({
       include: {
@@ -1253,7 +1253,7 @@ export class ExportFilesService {
 
 
   async epDamAuditLog(response: Response, payload: any) {
-    const { id, filter } = payload;
+    const { id, filter } = payload || {};
     const idArray = id;
     const resData = await this.prisma.history.findMany({
       where: {
@@ -1308,7 +1308,7 @@ export class ExportFilesService {
   }
 
   async epDamZone(response: Response, payload: any) {
-    const { id, filter } = payload;
+    const { id, filter } = payload || {};
     const idArray = id;
     const resData = await this.prisma.zone.findMany({
       where: {
@@ -1386,7 +1386,7 @@ export class ExportFilesService {
   }
 
   async epDamArea(response: Response, payload: any) {
-    const { id, filter } = payload;
+    const { id, filter } = payload || {};
     const idArray = id;
     const resData = await this.prisma.area.findMany({
       where: {
@@ -1473,7 +1473,7 @@ export class ExportFilesService {
   }
 
   async epDamCustomer(response: Response, payload: any) {
-    const { id, filter } = payload;
+    const { id, filter } = payload || {};
     const idArray = id;
     const resData = await this.prisma.customer_type.findMany({
       where: {
@@ -1550,7 +1550,7 @@ export class ExportFilesService {
   }
 
   async epDamContractPoint(response: Response, payload: any) {
-    const { id, filter } = payload;
+    const { id, filter } = payload || {};
     const idArray = id;
     const resData = await this.prisma.contract_point.findMany({
       where: {
@@ -1662,7 +1662,7 @@ export class ExportFilesService {
   }
 
   async epDamNominationPoint(response: Response, payload: any) {
-    const { id, filter } = payload;
+    const { id, filter } = payload || {};
     const idArray = id;
     const resData = await this.prisma.nomination_point.findMany({
       where: {
@@ -1748,7 +1748,7 @@ export class ExportFilesService {
   }
 
   async epDamMeteredPoint(response: Response, payload: any) {
-    const { id, filter } = payload;
+    const { id, filter } = payload || {};
     const idArray = id;
     const resData = await this.prisma.metering_point.findMany({
       where: {
@@ -1824,7 +1824,7 @@ export class ExportFilesService {
   }
 
   async epDamConceptPoint(response: Response, payload: any) {
-    const { id, filter } = payload;
+    const { id, filter } = payload || {};
     const idArray = id;
     const resData = await this.prisma.concept_point.findMany({
       where: {
@@ -1887,7 +1887,7 @@ export class ExportFilesService {
   }
 
   async epDamNonTpaPoint(response: Response, payload: any) {
-    const { id, filter } = payload;
+    const { id, filter } = payload || {};
     const idArray = id;
     const resData = await this.prisma.non_tpa_point.findMany({
       where: {
@@ -1953,7 +1953,7 @@ export class ExportFilesService {
   }
 
   async epDamConfigMasterPath(response: Response, payload: any) {
-    const { id, filter } = payload;
+    const { id, filter } = payload || {};
     const idArray = id;
     const resData = await this.prisma.config_master_path.findMany({
       where: {
@@ -2042,7 +2042,7 @@ export class ExportFilesService {
   }
 
   async epDamModeBaseZoneInventory(response: Response, payload: any) {
-    const { id, filter } = payload;
+    const { id, filter } = payload || {};
     const idArray = id;
     const resData = await this.prisma.mode_zone_base_inventory.findMany({
       where: {
@@ -2123,7 +2123,7 @@ export class ExportFilesService {
   }
 
   async epDamCapacityRightTemplate(response: Response, payload: any) {
-    const { id, filter } = payload;
+    const { id, filter } = payload || {};
     const idArray = id;
     const resData = await this.prisma.booking_template.findMany({
       where: {
@@ -2212,7 +2212,7 @@ export class ExportFilesService {
   }
 
   async epDamPlanningDeadline(response: Response, payload: any) {
-    const { id, filter } = payload;
+    const { id, filter } = payload || {};
     const idArray = id;
     const resData = await this.prisma.planning_deadline.findMany({
       where: {
@@ -2277,7 +2277,7 @@ export class ExportFilesService {
   }
 
   async epDamNominationDeadline(response: Response, payload: any) {
-    const { id, filter } = payload;
+    const { id, filter } = payload || {};
     const idArray = id;
     const resData = await this.prisma.new_nomination_deadline.findMany({
       where: {
@@ -2345,7 +2345,7 @@ export class ExportFilesService {
   }
 
   async epDamEmailNotificationManagement(response: Response, payload: any) {
-    const { id, filter } = payload;
+    const { id, filter } = payload || {};
     const idArray = id;
     const resData = await this.prisma.email_notification_management.findMany({
       where: {
@@ -2405,7 +2405,7 @@ export class ExportFilesService {
   }
 
   async epDamEmailGroupForEvent(response: Response, payload: any) {
-    const { id, filter } = payload;
+    const { id, filter } = payload || {};
     const idArray = id;
     const resData = await this.prisma.edit_email_group_for_event.findMany({
       where: {
@@ -2490,7 +2490,7 @@ export class ExportFilesService {
   }
 
   async epDamSystemParameter(response: Response, payload: any) {
-    const { id, filter } = payload;
+    const { id, filter } = payload || {};
     const idArray = id;
     const resData = await this.prisma.system_parameter.findMany({
       where: {
@@ -2558,7 +2558,7 @@ export class ExportFilesService {
 
   // ยังไม่มี
   // async epDamhvForOperationFlowAndInstructedFlow(response: Response, payload: any) {
-  //   const { id, filter } = payload;
+  //   const { id, filter } = payload || {};
   //   const idArray = id;
   //   const resData = await this.prisma.system_parameter.findMany({
   //     where: {
@@ -2624,7 +2624,7 @@ export class ExportFilesService {
   // }
 
   async epDamConfigModeZoneBaseInventory(response: Response, payload: any) {
-    const { id, filter } = payload;
+    const { id, filter } = payload || {};
     const idArray = id;
     const resData = await this.prisma.config_mode_zone_base_inventory.findMany({
       where: {
@@ -2684,7 +2684,7 @@ export class ExportFilesService {
   }
 
   async epDamUserGuide(response: Response, payload: any) {
-    const { id, filter } = payload;
+    const { id, filter } = payload || {};
     const idArray = id;
     const resData = await this.prisma.user_guide.findMany({
       where: {
@@ -2766,7 +2766,7 @@ export class ExportFilesService {
   }
 
   async epDamMeteringCheckingCondition(response: Response, payload: any) {
-    const { id, filter } = payload;
+    const { id, filter } = payload || {};
     const idArray = id;
     const resData = await this.prisma.check_condition.findMany({
       where: {
@@ -2827,7 +2827,7 @@ export class ExportFilesService {
   }
 
   async epDamCapacityPublicationRemarks(response: Response, payload: any) {
-    const { id, filter } = payload;
+    const { id, filter } = payload || {};
     const idArray = id;
     const resData = await this.prisma.capacity_publication_remark.findMany({
       where: {
@@ -2909,7 +2909,7 @@ export class ExportFilesService {
   }
 
   async epDamAnnouncement(response: Response, payload: any) {
-    const { id, filter } = payload;
+    const { id, filter } = payload || {};
     const idArray = id;
     const resData = await this.prisma.announcement.findMany({
       where: {
@@ -2972,7 +2972,7 @@ export class ExportFilesService {
   }
 
   async epDamTermsAndConditions(response: Response, payload: any) {
-    const { id, filter } = payload;
+    const { id, filter } = payload || {};
     const idArray = id;
     const resData = await this.prisma.t_and_c.findMany({
       where: {
@@ -3034,7 +3034,7 @@ export class ExportFilesService {
   }
 
   async epDamAllocationMode(response: Response, payload: any) {
-    const { id, filter } = payload;
+    const { id, filter } = payload || {};
     const idArray = id;
     const resData = await this.prisma.allocation_mode.findMany({
       where: {
@@ -3104,7 +3104,7 @@ export class ExportFilesService {
     response: Response,
     payload: any,
   ) {
-    const { id, filter } = payload;
+    const { id, filter } = payload || {};
     const idArray = id;
     const resData =
       await this.prisma.hv_for_peration_flow_and_instructed_flow.findMany({
@@ -3178,7 +3178,7 @@ export class ExportFilesService {
   // ********************
   // Capacity
   async epCapacityPublicationYear(response: Response, payload: any) {
-    const { filter, startYear, endYear } = payload;
+    const { filter, startYear, endYear } = payload || {};
     const resData = await this.capacityPublicationService.getYearly(
       startYear,
       endYear,
@@ -3234,7 +3234,7 @@ export class ExportFilesService {
   }
 
   async epCapacityPublicationMonth(response: Response, payload: any) {
-    const { filter, startMonth, endMonth } = payload;
+    const { filter, startMonth, endMonth } = payload || {};
     // let { startMonth, endMonth } = payload;
     // let filter = [
     //   // "Zone",
@@ -3337,7 +3337,7 @@ export class ExportFilesService {
   }
 
   async epCapacityPublicationDay(response: Response, payload: any) {
-    const { filter, date } = payload;
+    const { filter, date } = payload || {};
     const areaAll = await this.prisma.area.findMany({
       include: {
         entry_exit: {
@@ -3424,7 +3424,7 @@ export class ExportFilesService {
   }
 
   async epCapacityPublicationDetail(response: Response, payload: any) {
-    const { id, filter } = payload;
+    const { id, filter } = payload || {};
     const idArray = id;
     const resData = await this.prisma.capacity_publication_detail.findMany({
       where: {
@@ -3485,7 +3485,7 @@ export class ExportFilesService {
   }
 
   async epCapacityCapacityContractManagement(response: Response, payload: any) {
-    const { id, filter } = payload;
+    const { id, filter } = payload || {};
     const idArray = id;
     const resData = await this.prisma.contract_code.findMany({
       where: {
@@ -3675,7 +3675,7 @@ export class ExportFilesService {
   }
 
   async epCapacityCapacityContractList(response: Response, payload: any) {
-    const { id, filter } = payload;
+    const { id, filter } = payload || {};
     const idArray = id;
     const resData = await this.prisma.contract_code.findMany({
       where: {
@@ -3865,7 +3865,7 @@ export class ExportFilesService {
   }
 
   async epCapacityReleaseCapacitySubmission(response: Response, payload: any) {
-    const { id, filter, contractCode } = payload;
+    const { id, filter, contractCode } = payload || {};
 
     const getData: any = await this.releaseCapacitySubmissionService.findAll({
       contract_code_id: contractCode,
@@ -3917,7 +3917,7 @@ export class ExportFilesService {
   }
 
   async epCapacityReleaseCapacityManagement(response: Response, payload: any) {
-    const { id, filter } = payload;
+    const { id, filter } = payload || {};
     const idArray = id;
     const resData = await this.prisma.release_capacity_submission.findMany({
       where: {
@@ -4070,7 +4070,7 @@ export class ExportFilesService {
     payload: any,
   ) {
     console.log(payload);
-    const { data, filter } = payload;
+    const { data, filter } = payload || {};
     const sortedResData = data.sort(
       (a, b) => data.indexOf(a[0]) - data.indexOf(b[0]),
     );
@@ -4182,7 +4182,7 @@ export class ExportFilesService {
   }
 
   async epCapacityReleaseUIOLISummary(response: Response, payload: any) {
-    const { id, filter } = payload;
+    const { id, filter } = payload || {};
     const idArray = id;
     const resData = await this.prisma.release_summary.findMany({
       where: {
@@ -4745,7 +4745,7 @@ export class ExportFilesService {
     response: Response,
     payload: any,
   ) {
-    const { id, filter } = payload;
+    const { id, filter } = payload || {};
     const idArray = id;
     const resData = await this.prisma.reserve_balancing_gas_contract.findMany({
       where: {
@@ -4885,7 +4885,7 @@ export class ExportFilesService {
   }
 
   async epCapacityPathManagement(response: Response, payload: any) {
-    const { id, filter } = payload;
+    const { id, filter } = payload || {};
     const idArray = id;
     console.log('[...(idArray || []).map((idN: any) => Number(idN))] : ', [
       ...(idArray || []).map((idN: any) => Number(idN)),
@@ -4968,7 +4968,7 @@ export class ExportFilesService {
   }
 
   async epCapacityViewPathManagement(response: Response, payload: any) {
-    const { id, filter, idSub } = payload;
+    const { id, filter, idSub } = payload || {};
 
     // const groupPath = await this.pathManagementService.groupPath()
     // console.log('groupPath : ', groupPath);
@@ -5035,7 +5035,7 @@ export class ExportFilesService {
     response: Response,
     payload: any,
   ) {
-    const { id, filter } = payload;
+    const { id, filter } = payload || {};
     const idArray = id;
     const resData =
       await this.prisma.planning_file_submission_template.findMany({
@@ -5123,7 +5123,7 @@ export class ExportFilesService {
   }
 
   async epPlanningQueryShippersPlanningFiles(response: Response, payload: any) {
-    const { id, filter } = payload;
+    const { id, filter } = payload || {};
     const idArray = id;
     const resData = await this.prisma.query_shipper_planning_files.findMany({
       where: {
@@ -5227,7 +5227,7 @@ export class ExportFilesService {
   }
 
   async epPlanningNewPoint(response: Response, payload: any) {
-    const { id, filter } = payload;
+    const { id, filter } = payload || {};
     const idArray = id;
     const resData = await this.prisma.newpoint.findMany({
       where: {
@@ -5347,7 +5347,7 @@ export class ExportFilesService {
   }
 
   async epNominationUploadTemplateForShipper(response: Response, payload: any) {
-    const { id, filter } = payload;
+    const { id, filter } = payload || {};
     const idArray = id;
     const resData = await this.prisma.upload_template_for_shipper.findMany({
       where: {
@@ -5503,7 +5503,7 @@ export class ExportFilesService {
     response: Response,
     payload: any,
   ) {
-    const { id, filter } = payload;
+    const { id, filter } = payload || {};
     const idArray = id;
 
     const resData = await this.prisma.query_shipper_nomination_file.findMany({
@@ -5762,7 +5762,7 @@ export class ExportFilesService {
   // friday
   // saturday
   async epNominationShipperNominationReport(response: Response, payload: any) {
-    const { id, key, day, filter } = payload;
+    const { id, key, day, filter } = payload || {};
     // ถ้าใส่ key 2 ให้ ใส่มาด้วย // sunday // monday // tuesday // wednesday // thursday // friday // saturday
     const idArray = id;
     const resData1 =
@@ -5918,7 +5918,7 @@ export class ExportFilesService {
   }
 
   async epNominationDailyManagement(response: Response, payload: any) {
-    const { id, filter } = payload;
+    const { id, filter } = payload || {};
     const idArray = id;
 
     const resData = await this.prisma.query_shipper_nomination_file.findMany({
@@ -6085,7 +6085,7 @@ export class ExportFilesService {
   }
 
   async epNominationWeeklyManagement(response: Response, payload: any) {
-    const { id, filter } = payload;
+    const { id, filter } = payload || {};
     const idArray = id;
 
     const resData = await this.prisma.query_shipper_nomination_file.findMany({
@@ -6252,7 +6252,7 @@ export class ExportFilesService {
   }
 
   async epNominationDailyAdjustment(response: Response, payload: any) {
-    const { id, filter } = payload;
+    const { id, filter } = payload || {};
     const idArray = id;
 
     const resData = await this.prisma.daily_adjustment.findMany({
@@ -6403,7 +6403,7 @@ export class ExportFilesService {
   }
 
   async epNominationQualityEvaluation(response: Response, payload: any) {
-    const { gasday, type, filter } = payload;
+    const { gasday, type, filter } = payload || {};
 
     const resData = await this.qualityEvaluationService.findAll();
     const restype = type === 1 ? resData?.newDaily : resData?.newWeekly;
@@ -6504,7 +6504,7 @@ export class ExportFilesService {
   }
 
   async epNominationQualityPlanning(response: Response, payload: any) {
-    const { gasday, type, filter } = payload;
+    const { gasday, type, filter } = payload || {};
 
     const resData = await this.qualityPlanningService.findAll();
     const restype =
@@ -6722,7 +6722,7 @@ export class ExportFilesService {
   }
 
   async epNominationSummaryNominationReport(response: Response, payload: any) {
-    const { key, gas_day_text, filter } = payload;
+    const { key, gas_day_text, filter } = payload || {};
 
     // dataType['nomination']['daily']['MMSCFD']
     // dataType['nomination']['daily']['MMBTUD']
@@ -7437,8 +7437,8 @@ export class ExportFilesService {
   }
 
   async epNominationNominationDashboard(response: Response, payload: any) {
-    const { gas_day, key, filter } = payload;
-    // const { key, filter } = payload;
+    const { gas_day, key, filter } = payload || {};
+    // const { key, filter } = payload || {};
     // const gas_day = "2025-09-28"
     //
     const resData = await this.nominationDashboardService.findAll(
@@ -7496,7 +7496,7 @@ export class ExportFilesService {
   }
 
   async epNominationParkingAllocation(response: Response, payload: any) {
-    const { gas_day, filter } = payload;
+    const { gas_day, filter } = payload || {};
     // ParkingAllocationService
 
     const resData = await this.parkingAllocationService.findAll({ gas_day });
@@ -7610,7 +7610,7 @@ export class ExportFilesService {
   }
 
   async epMeretingMeteringManagement(response: Response, payload: any) {
-    const { share, start_date, end_date, filter } = payload;
+    const { share, start_date, end_date, filter } = payload || {};
     const resData = await this.meteringManagementService.getDataLogic(
       {
         share,
@@ -7662,7 +7662,7 @@ export class ExportFilesService {
     response: Response,
     payload: any,
   ) {
-    const { bodys, filter } = payload;
+    const { bodys, filter } = payload || {};
     // bodys?.limit,bodys?.offset,bodys?.startDate,bodys?.endDate
     const resData =
       await this.meteringManagementService.meteringRetrievingLimit(
@@ -7710,7 +7710,7 @@ export class ExportFilesService {
     response: Response,
     payload: any,
   ) {
-    const { bodys, filter } = payload;
+    const { bodys, filter } = payload || {};
     const resData =
       await this.meteringManagementService.meteringRetrievingMasterCheckLimit(
         bodys?.limit,
@@ -7741,7 +7741,7 @@ export class ExportFilesService {
   }
 
   async epAllocationAllocationReview(response: Response, payload: any) {
-    const { bodys, filter } = payload;
+    const { bodys, filter } = payload || {};
 
     const resData = await this.allocationService.allcationOnceId(bodys, null);
     // console.log("resData : ", resData);
@@ -7802,7 +7802,7 @@ export class ExportFilesService {
   }
 
   async epAllocationAllocationQuery(response: Response, payload: any) {
-    const { bodys, filter } = payload;
+    const { bodys, filter } = payload || {};
     // allocationQuery
     const resData = await this.allocationService.allcationOnceIdQuery(
       bodys,
@@ -8676,7 +8676,7 @@ export class ExportFilesService {
     payload: any,
     userId: any,
   ) {
-    const { bodys, filter } = payload;
+    const { bodys, filter } = payload || {};
     console.log('---- -');
     const resData =
       await this.allocationService.allocationMonthlyReportDownload();
@@ -8722,7 +8722,7 @@ export class ExportFilesService {
   }
 
   async epAllocationCurtailmentsAllocation(response: Response, payload: any) {
-    const { bodys, filter } = payload;
+    const { bodys, filter } = payload || {};
     const resData = await this.allocationService.curtailmentsAllocation(
       { type: bodys?.type },
       null,
@@ -8765,7 +8765,7 @@ export class ExportFilesService {
     response: Response,
     payload: any,
   ) {
-    const { id, filter } = payload;
+    const { id, filter } = payload || {};
     const idArray = id;
     const resData = await this.balancingService.intradayAccImbalanceInventory();
     const fil = resData.filter((f: any) => {
@@ -8833,7 +8833,7 @@ export class ExportFilesService {
   }
 
   async epBalancingAdjustmentDailyImbalance(response: Response, payload: any) {
-    const { bodys, filter } = payload;
+    const { bodys, filter } = payload || {};
 
     // const idArray = id;
     const resData = await this.balancingService.adjustmentDailyImbalance(
@@ -8911,7 +8911,7 @@ export class ExportFilesService {
     response: Response,
     payload: any,
   ) {
-    const { bodys, filter } = payload;
+    const { bodys, filter } = payload || {};
 
     // const idArray = id;
     const resData = await this.balancingService.adjustAccumulatedImbalance(
@@ -8998,7 +8998,7 @@ export class ExportFilesService {
   }
 
   async epBalancingVentCommissioningOtherGas(response: Response, payload: any) {
-    const { id, filter } = payload;
+    const { id, filter } = payload || {};
 
     const idArray = id;
     const resData = await this.balancingService.ventCommissioningOtherGas();
@@ -9418,7 +9418,7 @@ export class ExportFilesService {
 
   // ...
   async epBalancingBalanceReport(response: Response, payload: any) {
-    const { bodys, filter } = payload;
+    const { bodys, filter } = payload || {};
 
     // const idArray = id;
     const resData: any = await this.balancingService.balancReport(bodys, null);
@@ -10120,7 +10120,7 @@ export class ExportFilesService {
     response: Response,
     payload: any,
   ) {
-    const { bodys, filter } = payload;
+    const { bodys, filter } = payload || {};
 
     const resData: any =
       await this.balancingService.intradayAccImbalanceInventoryOriginal(
@@ -10211,7 +10211,7 @@ export class ExportFilesService {
     userId: any,
   ) {
     // const userId = 99999
-    const { bodys, filter } = payload;
+    const { bodys, filter } = payload || {};
     const resData: any = await this.balancingService.balanceIntradayDashboard(
       bodys,
       userId,
@@ -11331,7 +11331,7 @@ export class ExportFilesService {
     payload: any,
     userId: any,
   ) {
-    const { bodys, filter } = payload;
+    const { bodys, filter } = payload || {};
     const resData: any = await this.balancingService.balanceIntradayDashboard(
       bodys,
       userId,
@@ -12112,7 +12112,7 @@ export class ExportFilesService {
   }
 
   async epBalancingIntradayBaseInentory(response: Response, payload: any) {
-    const { bodys, filter } = payload;
+    const { bodys, filter } = payload || {};
 
     const resData = await this.balancingService.intradayBaseInentoryFromWebService(
       bodys,
@@ -12301,7 +12301,7 @@ export class ExportFilesService {
     response: Response,
     payload: any,
   ) {
-    const { bodys, filter } = payload;
+    const { bodys, filter } = payload || {};
 
     // const resData = await this.balancingService.intradayBaseInentoryShipper(
     //   bodys,
@@ -12494,7 +12494,7 @@ export class ExportFilesService {
     userId: any,
   ) {
     // const userId = 99999
-    const { bodys, filter } = payload;
+    const { bodys, filter } = payload || {};
     const resData: any =
       await this.balancingService.instructedOperationFlowShippers(
         bodys,
@@ -12897,7 +12897,7 @@ export class ExportFilesService {
     payload: any,
     userId: any,
   ) {
-    const { bodys, filter } = payload;
+    const { bodys, filter } = payload || {};
     //
     const resData: any = await this.balancingService.intradayBalancingReport(
       bodys,
@@ -13631,7 +13631,7 @@ export class ExportFilesService {
   }
 
   async epMeretingMeteringMeteringChecking(response: Response, payload: any) {
-    const { gasDay, filter } = payload;
+    const { gasDay, filter } = payload || {};
     // console.log('gasDay : ', gasDay);
     // console.log('filter : ', filter);
     const resData = await this.meteringManagementService.meteringChecking({
@@ -13849,7 +13849,7 @@ export class ExportFilesService {
   }
 
   async epAllocationAllocationManagement(response: Response, payload: any) {
-    const { bodys, filter } = payload;
+    const { bodys, filter } = payload || {};
     console.log('bodys : ', bodys);
 
     // bodys?.idAr
@@ -14202,7 +14202,7 @@ export class ExportFilesService {
     userType?: any,
     shipperId?: any,
   ) {
-    const { bodys, filter } = payload;
+    const { bodys, filter } = payload || {};
     console.log('bodys : ', bodys);
     console.log('userId : ', userId);
     console.log('userType : ', userType);
@@ -14651,7 +14651,7 @@ export class ExportFilesService {
     userId: any,
   ) {
     // const userId = 99999
-    const { bodys, filter } = payload;
+    const { bodys, filter } = payload || {};
     // const resData: any =
     //   await this.balancingService.intradayAccImbalanceDashboard(bodys, userId);
     const resData: any =
@@ -15144,7 +15144,7 @@ export class ExportFilesService {
     payload: any,
     userId: any,
   ) {
-    const { bodys, filter } = payload;
+    const { bodys, filter } = payload || {};
     console.log('---- -');
     const resData =
       await this.balancingService.balancingMonthlyReportDownload();
@@ -15192,7 +15192,7 @@ export class ExportFilesService {
 
   // new
   async epAllocationAllocationReport(response: Response, payload: any) {
-    const { bodys, filter } = payload;
+    const { bodys, filter } = payload || {};
 
     const resData = await this.allocationService.allocationReport(bodys, 99999);
     const idArray = bodys?.idAr;
@@ -15612,7 +15612,7 @@ export class ExportFilesService {
 
   // http://10.100.101.15:8010/master/demoHtml
   async offspecGas(response: Response, payload: any, userId: any) {
-    const { bodys, filter } = payload;
+    const { bodys, filter } = payload || {};
     const resData: any = await this.eventService.offspecGasAll(bodys, userId);
 
     // userId
@@ -15827,7 +15827,7 @@ export class ExportFilesService {
   };
 
   async emergencyDifficultDay(response: Response, payload: any, userId: any) {
-    const { bodys, filter } = payload;
+    const { bodys, filter } = payload || {};
     const resData: any = await this.eventService.emerAll(bodys, userId);
 
     // userId
@@ -16133,7 +16133,7 @@ export class ExportFilesService {
   }
   // 
   async ofo(response: Response, payload: any, userId: any) {
-    const { bodys, filter } = payload;
+    const { bodys, filter } = payload || {};
     console.log('...bodys : ', bodys);
     const resData: any = await this.eventService.ofoAll(bodys, userId);
     console.log('...resData : ', resData);
@@ -16351,7 +16351,7 @@ export class ExportFilesService {
 
   // Tariff
   async tariffChargeReport(response: Response, payload: any, userId: any) {
-    const { bodys, filter } = payload;
+    const { bodys, filter } = payload || {};
     const resData: any = await this.tariffService.tariffChargeReportFindAll(
       bodys,
       userId,
@@ -16512,7 +16512,7 @@ export class ExportFilesService {
   }
 
   async tariffCreditDebitNote(response: Response, payload: any, userId: any) {
-    const { bodys, filter } = payload;
+    const { bodys, filter } = payload || {};
     const resData: any = await this.tariffService.findAllTariffCreditDebitNote(
       bodys,
       userId,
@@ -16649,7 +16649,7 @@ export class ExportFilesService {
     payload: any,
     userId: any,
   ) {
-    const { bodys, filter } = payload;
+    const { bodys, filter } = payload || {};
     if (bodys?.tariff_type_charge_id !== 1) {
       throw new Error('Error tariff_type_charge_id.');
     }
@@ -16836,7 +16836,7 @@ export class ExportFilesService {
     payload: any,
     userId: any,
   ) {
-    const { bodys, filter } = payload;
+    const { bodys, filter } = payload || {};
     if (bodys?.tariff_type_charge_id !== 2) {
       throw new Error('Error tariff_type_charge_id.');
     }
@@ -16921,7 +16921,7 @@ export class ExportFilesService {
     payload: any,
     userId: any,
   ) {
-    const { bodys, filter } = payload;
+    const { bodys, filter } = payload || {};
     if (bodys?.tariff_type_charge_id !== 2) {
       throw new Error('Error tariff_type_charge_id.');
     }
@@ -16967,7 +16967,7 @@ export class ExportFilesService {
     payload: any,
     userId: any,
   ) {
-    const { bodys, filter } = payload;
+    const { bodys, filter } = payload || {};
     if (bodys?.tariff_type_charge_id !== 2) {
       throw new Error('Error tariff_type_charge_id.');
     }
@@ -17275,7 +17275,7 @@ export class ExportFilesService {
     payload: any,
     userId: any,
   ) {
-    const { bodys, filter } = payload;
+    const { bodys, filter } = payload || {};
     if (bodys?.tariff_type_charge_id !== 5 && bodys?.tariff_type_charge_id !== 6) {
       throw new Error('Error tariff_type_charge_id.');
     }

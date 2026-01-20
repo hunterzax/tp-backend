@@ -250,7 +250,7 @@ export class MeteringManagementService {
     //   where: {
     //     del_flag: null,
     //     type: 'retrieving',
-    //     metered_run_number_id: Number(metered_run_number_id),
+    //     metered_run_number_id: Number(metered_run_number_id || 0),
     //     // gas_day: { gte: dayjs(startDate, "YYYY-MM-DD").toDate(), lte: dayjs(endDate, "YYYY-MM-DD").toDate() }
     //   },
     //   orderBy: { id: 'desc' },
@@ -284,7 +284,7 @@ export class MeteringManagementService {
 
     if (metered_run_number_id) {
       andWhere.push({
-        metered_run_number_id: Number(metered_run_number_id),
+        metered_run_number_id: Number(metered_run_number_id || 0),
       })
     }
 
@@ -318,8 +318,8 @@ export class MeteringManagementService {
       },
       include: { metered_run_number: true },
       orderBy: { id: 'desc' },
-      skip: Number(offset_),
-      take: Number(limit_),
+      skip: Number(offset_ || 0),
+      take: Number(limit_ || 0),
     })
     // const resData = metered_run_number_id ? await this.prisma.metered_retrieving.findMany({
     //   where: {
@@ -383,8 +383,8 @@ export class MeteringManagementService {
       total: total,
       // data: filteredStartEnd,
       data: newResData,
-      limit: Number(limit),
-      offset: Number(offset),
+      limit: Number(limit || 0),
+      offset: Number(offset || 0),
     };
   }
 
@@ -395,17 +395,17 @@ export class MeteringManagementService {
   ) {
     // 1. Query ข้อมูลหลัก
     const resData = metered_run_number_id ? await this.prisma.metered_retrieving.findMany({
-      where: { del_flag: null, type: 'mastering data check', metered_run_number_id: Number(metered_run_number_id), },
+      where: { del_flag: null, type: 'mastering data check', metered_run_number_id: Number(metered_run_number_id || 0), },
       include: { metered_run_number: true },
       orderBy: { id: 'desc' },
-      skip: Number(offset),
-      take: Number(limit),
+      skip: Number(offset || 0),
+      take: Number(limit || 0),
     }) : await this.prisma.metered_retrieving.findMany({
       where: { del_flag: null, type: 'mastering data check' },
       include: { metered_run_number: true },
       orderBy: { id: 'desc' },
-      skip: Number(offset),
-      take: Number(limit),
+      skip: Number(offset || 0),
+      take: Number(limit || 0),
     });
 
     // Avoid logging full database records in logs
@@ -414,7 +414,7 @@ export class MeteringManagementService {
     }
     // 2. Query นับ total
     const total = metered_run_number_id ? await this.prisma.metered_retrieving.count({
-      where: { del_flag: null, type: 'mastering data check', metered_run_number_id: Number(metered_run_number_id) },
+      where: { del_flag: null, type: 'mastering data check', metered_run_number_id: Number(metered_run_number_id || 0) },
     }) : await this.prisma.metered_retrieving.count({
       where: { del_flag: null, type: 'mastering data check' },
     });
@@ -430,8 +430,8 @@ export class MeteringManagementService {
     return {
       total,
       data: newResData,
-      limit: Number(limit),
-      offset: Number(offset),
+      limit: Number(limit || 0),
+      offset: Number(offset || 0),
     };
   }
 
@@ -857,7 +857,7 @@ export class MeteringManagementService {
   }
 
   async genExcelTemplateFinalMeter(payload: any) {
-    const { gasDay } = payload;
+    const { gasDay } = payload || {};
     const data = [
       [], // Row 0
       [
@@ -1147,10 +1147,10 @@ export class MeteringManagementService {
         // Required field is missing: Point_ID / Register Timestamp / Energy.
         const newValue = valueCol.map((e: any) => {
           const headerRow = Object.keys(headerCol).map((obj: any) => {
-            if (Number(obj) >= 2) {
+            if (Number(obj || 0) >= 2) {
               const value = e[obj];
               if (value !== undefined && value !== null) {
-                if (Number(value) < 0) {
+                if (Number(value || 0) < 0) {
                   console.log('เจอติดลบ');
                   throw new HttpException(
                     {
@@ -1162,7 +1162,7 @@ export class MeteringManagementService {
                 }
               }
             }
-            if (Number(obj) === 1) {
+            if (Number(obj || 0) === 1) {
               if (!e[obj]) { // https://app.clickup.com/t/86eub6d6p
                 throw new HttpException(
                   {
@@ -1261,7 +1261,7 @@ export class MeteringManagementService {
           // newData.data[i]?.WI?.value
           if (
             !!newData.data[i]?.VOLUME?.value &&
-            Number(newData.data[i]?.VOLUME?.value) < 0
+            Number(newData.data[i]?.VOLUME?.value || 0) < 0
           ) {
             throw new HttpException(
               {
@@ -1272,7 +1272,7 @@ export class MeteringManagementService {
             );
           } else if (
             !!newData.data[i]?.ENERGY?.value &&
-            Number(newData.data[i]?.ENERGY?.value) < 0
+            Number(newData.data[i]?.ENERGY?.value || 0) < 0
           ) {
             throw new HttpException(
               {
@@ -1283,7 +1283,7 @@ export class MeteringManagementService {
             );
           } else if (
             !!newData.data[i]?.HV?.value &&
-            Number(newData.data[i]?.HV?.value) < 0
+            Number(newData.data[i]?.HV?.value || 0) < 0
           ) {
             throw new HttpException(
               {
@@ -1294,7 +1294,7 @@ export class MeteringManagementService {
             );
           } else if (
             !!newData.data[i]?.WI?.value &&
-            Number(newData.data[i]?.WI?.value) < 0
+            Number(newData.data[i]?.WI?.value || 0) < 0
           ) {
             throw new HttpException(
               {
@@ -1411,7 +1411,7 @@ export class MeteringManagementService {
               return f?.metered_point_name === reply?.data[i]?.meteringPointId;
             });
             if (findMeterDam) {
-              if (Number(reply?.data[i]?.energy) <= 0) {
+              if (Number(reply?.data[i]?.energy || 0) <= 0) {
                 // มี แต่ energy 0
                 console.log('มี แต่ energy 0 : ', reply?.data[i]?.energy);
                 logsData.push({
@@ -1550,7 +1550,7 @@ export class MeteringManagementService {
 
   // registerTimestamp
   async meteringChecking(payload: any) {
-    const { gasDay } = payload;
+    const { gasDay } = payload || {};
     // "gasDay": "2025-03-30",
     // console.log('gasDay : ', gasDay);
     const gDay = gasDay ? gasDay : getTodayNow().format('YYYY-MM-DD');
@@ -1868,13 +1868,13 @@ export class MeteringManagementService {
           const checkH1andhH2 =
             h_step_h1?.gasDay !== h_step_h2?.gasDay ? true : false; // true 0 คือ ข้ามวัน
           const hourM =
-            (!!h_step_main?.energy && Number(h_step_main?.energy)) || 0;
+            (!!h_step_main?.energy && Number(h_step_main?.energy || 0)) || 0;
           const hourH1 = checkMandH1
             ? 0
-            : (!!h_step_h1?.energy && Number(h_step_h1?.energy)) || 0;
+            : (!!h_step_h1?.energy && Number(h_step_h1?.energy || 0)) || 0;
           const hourH2 = checkH1andhH2
             ? 0
-            : (!!h_step_h2?.energy && Number(h_step_h2?.energy)) || 0;
+            : (!!h_step_h2?.energy && Number(h_step_h2?.energy || 0)) || 0;
 
           const nhourM = hNumber(
             dayjs(h_step_main?.registerTimestamp)
@@ -2063,7 +2063,7 @@ export class MeteringManagementService {
   // }
 
   async procressMetered(payload: any, userId: any) {
-    const { startDate, endDate } = payload;
+    const { startDate, endDate } = payload || {};
 
     const newDate = dayjs()
     const todayStart = dayjs().startOf('day').toDate();
@@ -2168,7 +2168,7 @@ export class MeteringManagementService {
           return f?.metered_point_name === reply?.data[i]?.meteringPointId;
         });
         if (findMeterDam) {
-          if (Number(reply?.data[i]?.energy) <= 0) {
+          if (Number(reply?.data[i]?.energy || 0) <= 0) {
             // มี แต่ energy 0
             logsData.push({
               metered_run_number_id: metered_run_number?.id,
@@ -2305,7 +2305,7 @@ export class MeteringManagementService {
 
     if (metered_run_number_id) {
       andWhere.push({
-        metered_run_number_id: Number(metered_run_number_id),
+        metered_run_number_id: Number(metered_run_number_id || 0),
       })
     }
 
@@ -2439,8 +2439,8 @@ export class MeteringManagementService {
       total,
       // data: newResData.slice(Number(offset), Number(offset) + Number(limit)),
       data: newResData,
-      limit: Number(limit),
-      offset: Number(offset),
+      limit: Number(limit || 0),
+      offset: Number(offset || 0),
     };
   }
 
@@ -2664,10 +2664,10 @@ export class MeteringManagementService {
         // Required field is missing: Point_ID / Register Timestamp / Energy.
         const newValue = valueCol.map((e: any) => {
           const headerRow = Object.keys(headerCol).map((obj: any) => {
-            if (Number(obj) >= 2) {
+            if (Number(obj || 0) >= 2) {
               const value = e[obj];
               if (value !== undefined && value !== null) {
-                if (Number(value) < 0) {
+                if (Number(value || 0) < 0) {
                   console.log('เจอติดลบ');
                   throw new HttpException(
                     {
@@ -2679,7 +2679,7 @@ export class MeteringManagementService {
                 }
               }
             }
-            if (Number(obj) === 1) {
+            if (Number(obj || 0) === 1) {
               if (!e[obj]) { // https://app.clickup.com/t/86eub6d6p
                 throw new HttpException(
                   {
@@ -2779,7 +2779,7 @@ export class MeteringManagementService {
           // newData.data[i]?.WI?.value
           if (
             !!newData.data[i]?.VOLUME?.value &&
-            Number(newData.data[i]?.VOLUME?.value) < 0
+            Number(newData.data[i]?.VOLUME?.value || 0) < 0
           ) {
             throw new HttpException(
               {
@@ -2790,7 +2790,7 @@ export class MeteringManagementService {
             );
           } else if (
             !!newData.data[i]?.ENERGY?.value &&
-            Number(newData.data[i]?.ENERGY?.value) < 0
+            Number(newData.data[i]?.ENERGY?.value || 0) < 0
           ) {
             throw new HttpException(
               {
@@ -3042,7 +3042,7 @@ export class MeteringManagementService {
   }
 
   async procressMetered2(payload: any, userId: any) {
-    const { startDate, endDate } = payload;
+    const { startDate, endDate } = payload || {};
 
     const newDate = dayjs()
     const todayStart = dayjs().startOf('day').toDate();

@@ -44,7 +44,7 @@ export class ParkingAllocationService {
   }
   // parkAllocatedMMBTUD
   async findAll(payload: any) {
-    const { gas_day } = payload;
+    const { gas_day } = payload || {};
 
     const getUsePark = await this.getUsePark({ gas_day })
     const getUseParkD1 = await this.getUsePark({ gas_day: dayjs(gas_day, "YYYY-MM-DD").subtract(1, "day").format("YYYY-MM-DD") })
@@ -84,7 +84,7 @@ export class ParkingAllocationService {
   }
 
   async getUsePark(payload: any) {
-    const { gas_day } = payload;
+    const { gas_day } = payload || {};
 
     const todayStart = getTodayStartAdd7().toDate();
     const todayEnd = getTodayEndAdd7().toDate();
@@ -552,7 +552,7 @@ export class ParkingAllocationService {
           console.log('parkOnce : ', parkOnce);
           console.log('parkUseCaleSumAll : ', parkUseCaleSumAll);
           console.log(parkOnce / parkUseCaleSumAll);
-          parkAllocatedMMBTUD = parkOnce !== 0 ? Number((parkOnce / parkUseCaleSumAll) * Number(findAllocated?.total_parking_value)).toFixed(3) : 0;
+          parkAllocatedMMBTUD = parkOnce !== 0 ? Number((parkOnce / parkUseCaleSumAll) * Number(findAllocated?.total_parking_value || 0)).toFixed(3) : 0;
         } else if (parkOnce === 0) {
           parkAllocatedMMBTUD = 0;
         }
@@ -644,7 +644,7 @@ export class ParkingAllocationService {
   }
 
   async allocate(payload: any, userId: any) {
-    const { zone_id, gas_day, total_parking_value } = payload;
+    const { zone_id, gas_day, total_parking_value } = payload || {};
 
     let targetDate = dayjs(gas_day, 'DD/MM/YYYY').startOf('day');
     if (!targetDate.isValid()) {
@@ -654,7 +654,7 @@ export class ParkingAllocationService {
 
     const findAllocated = await this.prisma.park_allocated.findFirst({
       where: {
-        zone_id: Number(zone_id),
+        zone_id: Number(zone_id || 0),
         gas_day: {
           gte: targetDate.toDate(),
           lt: nextDate.toDate(),
@@ -670,7 +670,7 @@ export class ParkingAllocationService {
       }
       await this.prisma.park_allocated.updateMany({
         where: {
-          zone_id: Number(zone_id),
+          zone_id: Number(zone_id || 0),
           gas_day: gasDay.toDate(),
           // total_parking_value: String(total_parking_value.replace(/,/g, ''))
         },
@@ -684,7 +684,7 @@ export class ParkingAllocationService {
           flag_use: true,
           zone: {
             connect: {
-              id: Number(zone_id),
+              id: Number(zone_id || 0),
             },
           },
           total_parking_value: total_parking_value,
@@ -693,7 +693,7 @@ export class ParkingAllocationService {
           create_date_num: getTodayNowAdd7().unix(),
           create_by_account: {
             connect: {
-              id: Number(userId), // Prisma จะใช้ connect แทนการใช้ create_by โดยตรง
+              id: Number(userId || 0), // Prisma จะใช้ connect แทนการใช้ create_by โดยตรง
             },
           },
         },
@@ -710,7 +710,7 @@ export class ParkingAllocationService {
           flag_use: true,
           zone: {
             connect: {
-              id: Number(zone_id),
+              id: Number(zone_id || 0),
             },
           },
           total_parking_value: total_parking_value,
@@ -719,7 +719,7 @@ export class ParkingAllocationService {
           create_date_num: getTodayNowAdd7().unix(),
           create_by_account: {
             connect: {
-              id: Number(userId), // Prisma จะใช้ connect แทนการใช้ create_by โดยตรง
+              id: Number(userId || 0), // Prisma จะใช้ connect แทนการใช้ create_by โดยตรง
             },
           },
         },
@@ -765,11 +765,11 @@ export class ParkingAllocationService {
   }
 
   async parkDefault(payload: any) {
-    const { zone_id } = payload;
+    const { zone_id } = payload || {};
     const todayStart = getTodayStartAdd7().toDate();
     const todayEnd = getTodayEndAdd7().toDate();
     const zone = await this.prisma.zone.findFirst({
-      where: { id: Number(zone_id) },
+      where: { id: Number(zone_id || 0) },
     });
 
     if (zone?.name.toUpperCase() === 'EAST') {

@@ -60,7 +60,7 @@ export class SummaryNominationReportService {
   async findAll(payload: any) {
     console.log('****************************');
     // "gas_day_text": "18/05/2025",
-    const { gas_day_text } = payload;
+    const { gas_day_text } = payload || {};
     // console.log(getTodayNowDDMMYYYYDfaultAdd7("11/05/2025").toDate());
     const resData = await this.prisma.query_shipper_nomination_file.findMany({
       where: {
@@ -264,7 +264,7 @@ export class SummaryNominationReportService {
         );
 
         if (nomination_row_json.length > 0) {
-          nomination_row_json.map((nx: any) => {
+          nomination_row_json.forEach((nx: any) => {
             dailyWeeklyData.push({
               nomination_type_id: e?.nomination_type_id,
               nomination_code: e?.nomination_code,
@@ -287,7 +287,7 @@ export class SummaryNominationReportService {
               zone_text: nx['data_temp']['0'],
             });
 
-            return nx;
+            // return nx;
           });
         }
 

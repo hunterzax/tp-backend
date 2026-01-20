@@ -118,7 +118,7 @@ export class AllocationService {
   }
 
   async evidenApiAllocationEod(payload: any, callback?: (total_record: number) => void) {
-    const { start_date, end_date, skip, limit } = payload;
+    const { start_date, end_date, skip, limit } = payload || {};
 
     const agent = new https.Agent({
       rejectUnauthorized: true,
@@ -149,7 +149,7 @@ export class AllocationService {
       if (resEviden?.status === 200 && !!resEviden?.data) {
         if (Array.isArray(resEviden.data) && resEviden.data.length > 0) {
           let total_record = 0;
-          resEviden?.data?.map((resEvidenData: any) => {
+          resEviden?.data?.forEach((resEvidenData: any) => {
             if (
               resEvidenData?.data &&
               Array.isArray(resEvidenData.data) &&
@@ -190,7 +190,7 @@ export class AllocationService {
   }
 
   async evidenApiAllocationIntraday(payload: any, callback?: (total_record: number) => void) {
-    const { gas_day, start_hour, end_hour, skip, limit } = payload;
+    const { gas_day, start_hour, end_hour, skip, limit } = payload || {};
 
     const agent = new https.Agent({
       rejectUnauthorized: true,
@@ -223,7 +223,7 @@ export class AllocationService {
       if (resEviden?.status === 200 && !!resEviden?.data) {
         if (Array.isArray(resEviden.data) && resEviden.data.length > 0) {
           let total_record = undefined;
-          resEviden?.data?.map((resEvidenData: any) => {
+          resEviden?.data?.forEach((resEvidenData: any) => {
             if (
               resEvidenData?.data &&
               Array.isArray(resEvidenData.data) &&
@@ -261,7 +261,7 @@ export class AllocationService {
   }
 
   async evidenApiAllocationContractPoint(payload: any, callback?: (total_record: number) => void) {
-    const { start_date, end_date, skip, limit } = payload;
+    const { start_date, end_date, skip, limit } = payload || {};
 
     const agent = new https.Agent({
       rejectUnauthorized: true,
@@ -294,7 +294,7 @@ export class AllocationService {
       if (resEviden?.status === 200 && !!resEviden?.data) {
         if (Array.isArray(resEviden.data) && resEviden.data.length > 0) {
           let total_record = undefined;
-          resEviden?.data?.map((resEvidenData: any) => {
+          resEviden?.data?.forEach((resEvidenData: any) => {
             if (resEvidenData?.total_record) {
               try {
                 const totalRecord = Number(resEvidenData?.total_record);
@@ -340,7 +340,7 @@ export class AllocationService {
   }
 
   async evidenApiAllocationContractPointIntraday(payload: any, callback?: (total_record: number) => void) {
-    const { start_date, end_date, skip, limit } = payload;
+    const { start_date, end_date, skip, limit } = payload || {};
 
     const agent = new https.Agent({
       rejectUnauthorized: true,
@@ -375,7 +375,7 @@ export class AllocationService {
       if (resEviden?.status === 200 && !!resEviden?.data) {
         if (Array.isArray(resEviden.data) && resEviden.data.length > 0) {
           let total_record = undefined;
-          resEviden?.data?.map((resEvidenData: any) => {
+          resEviden?.data?.forEach((resEvidenData: any) => {
             if (resEvidenData?.total_record) {
               try {
                 const totalRecord = Number(resEvidenData?.total_record);
@@ -421,7 +421,7 @@ export class AllocationService {
   }
 
   async evidenApiAllocationContractPointByNom(payload: any, callback?: (total_record: number) => void) {
-    const { start_date, end_date, skip, limit } = payload;
+    const { start_date, end_date, skip, limit } = payload || {};
 
     const agent = new https.Agent({
       rejectUnauthorized: true,
@@ -454,7 +454,7 @@ export class AllocationService {
       if (resEviden?.status === 200 && !!resEviden?.data) {
         if (Array.isArray(resEviden.data) && resEviden.data.length > 0) {
           let total_record = undefined;
-          resEviden?.data?.map((resEvidenData: any) => {
+          resEviden?.data?.forEach((resEvidenData: any) => {
             if (resEvidenData?.total_record) {
               try {
                 const totalRecord = Number(resEvidenData?.total_record);
@@ -500,7 +500,7 @@ export class AllocationService {
   }
 
   async evidenApiAllocationContractPointIntradayByNom(payload: any, callback?: (total_record: number) => void) {
-    const { start_date, end_date, skip, limit } = payload;
+    const { start_date, end_date, skip, limit } = payload || {};
 
     const agent = new https.Agent({
       rejectUnauthorized: true,
@@ -535,7 +535,7 @@ export class AllocationService {
       if (resEviden?.status === 200 && !!resEviden?.data) {
         if (Array.isArray(resEviden.data) && resEviden.data.length > 0) {
           let total_record = undefined;
-          resEviden?.data?.map((resEvidenData: any) => {
+          resEviden?.data?.forEach((resEvidenData: any) => {
             if (resEvidenData?.total_record) {
               try {
                 const totalRecord = Number(resEvidenData?.total_record);
@@ -2987,7 +2987,7 @@ export class AllocationService {
       data: {
         request_number: {
           connect: {
-            id: Number(createNumberId), // Prisma จะใช้ connect แทนการใช้ create_by โดยตรง
+            id: Number(createNumberId || 0), // Use 0 or check beforehand. Providing fallback to avoid NaN, but connecting to 0 might fail if not exists.
           },
         },
         execute_timestamp: execute_timestamp,
@@ -5153,9 +5153,9 @@ export class AllocationService {
     const sheet =
       convertSheet?.find((f: any) => f?.sheet === 'Allocation Review')?.data ||
       [];
-    const shipperIdSheet = sheet[1]['0'];
-    const contractCodeSheet = sheet[1]['1'];
-    const headSheet = sheet[2];
+    const shipperIdSheet = (sheet && sheet.length > 1) ? sheet[1]['0'] : null;
+    const contractCodeSheet = (sheet && sheet.length > 1) ? sheet[1]['1'] : null;
+    const headSheet = (sheet && sheet.length > 2) ? sheet[2] : null;
     if (!headSheet || Object.keys(headSheet).length < 5 || !isMatch(headSheet['0'], 'Zone') || !isMatch(headSheet['1'], 'Area') || !isMatch(headSheet['2'], 'POINT_ID') || !isMatch(headSheet['3'], 'Unit') || !isMatch(headSheet['4'], 'Entry_Exit')) {
       throw new HttpException(
         {
@@ -6453,7 +6453,7 @@ export class AllocationService {
   }
 
   async selectNomination(payload: any, userId: any) {
-    const { gasDay, area, nominationPoint, unit, type } = payload;
+    const { gasDay, area, nominationPoint, unit, type } = payload || {};
 
     const todayStart = getTodayStartAdd7().toDate();
     const todayEnd = getTodayEndAdd7().toDate();
@@ -7933,7 +7933,7 @@ export class AllocationService {
       nomination_point_arr,
       shipper_arr,
       share,
-    } = payload;
+    } = payload || {};
 
     let startDate = start_date ? getTodayNowYYYYMMDDDfaultAdd7(start_date) : null;
     let endDate = end_date ? getTodayNowYYYYMMDDDfaultAdd7(end_date) : null;
@@ -7980,7 +7980,7 @@ export class AllocationService {
       );
 
     // ถ้าเรียกไปเกินวันที่มี eviden จะ error ต้องรอเขาแก้ก่อน
-    let startForEviden = startDate;
+    const startForEviden = startDate;
     let endForEviden = endDate;
     if (endForEviden.isAfter(today)) {
       endForEviden = today;
@@ -8218,7 +8218,7 @@ export class AllocationService {
         create_date: newDate.toDate(),
         create_by_account: {
           connect: {
-            id: Number(userId),
+            id: Number(userId || 0),
           },
         },
       },

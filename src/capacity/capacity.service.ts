@@ -245,6 +245,9 @@ export class CapacityService {
       ...this.transformedKeys([tempShortTerm[entryIndex + 2]])[0],
     };
     const periodKey = this.getKeyByValue(headEntry, 'Period');
+    if (!periodKey) {
+      console.warn('Period key not found in headEntry');
+    }
 
     const headerMainNotPeriod = this.filteredDataKeyNum(
       headEntry1,
@@ -291,6 +294,9 @@ export class CapacityService {
       ...this.transformedKeys([tempShortTerm[exitIndex + 2]])[0],
     };
     const periodKeyExit = this.getKeyByValue(headExit, 'Period');
+    if (!periodKeyExit) {
+      console.warn('Period key not found in headExit');
+    }
 
     const headerMainNotPeriodExit = this.filteredDataKeyNum(
       headExit1,
@@ -487,6 +493,8 @@ export class CapacityService {
 
   extendDates(data, shadowPeriod) {
     const clonedData = data ? this.safeParseJSON(JSON.stringify(data)) : null;
+
+    if (!data || data.length === 0) return clonedData;
 
     // หาวันที่มากที่สุดในข้อมูลเดิม
     const maxDate = dayjs(data[data.length - 1].date);

@@ -55,13 +55,13 @@ export class CapacityMiddleService {
     }
   }
 
-  genMD(startDate: string, endDate: string, mode: number): boolean {
+  genMD(startDate: string, endDate: string, mode: number): number | boolean {
     const starts = startDate ? getTodayNowDDMMYYYYAdd7(startDate) : null;
     const ends = endDate ? getTodayNowDDMMYYYYAdd7(endDate) : null;
     if (!starts || !ends) {
       return false;
     }
-    let diff;
+    let diff = 0;
     // คำนวณความแตกต่างตามโหมดที่กำหนด
     if (mode === 1) {
       diff = ends.diff(starts, 'day') + 1; // คำนวณต่างกันเป็นจำนวนวัน
@@ -83,6 +83,9 @@ export class CapacityMiddleService {
   ): boolean {
     const starts = startDate ? getTodayNowDDMMYYYYAdd7(startDate) : null;
     const ends = endDate ? getTodayNowDDMMYYYYAdd7(endDate) : null;
+
+    if (!starts || !ends) return false;
+
     let diff;
 
     // console.log('**** s ***');
@@ -171,6 +174,7 @@ export class CapacityMiddleService {
 
   generateExpectedDates = (start, end, mode, fixday, todayday) => {
     const dates = [];
+    if (!start || !end) return dates;
     let current = dayjs(start, 'DD/MM/YYYY');
     const endDay = dayjs(end, 'DD/MM/YYYY').subtract(1, 'day');
 
@@ -702,6 +706,7 @@ export class CapacityMiddleService {
   };
 
   transformDataArrNew(data: any[]): string[][] {
+    if (!data || !Array.isArray(data)) return [];
     // ค้นหาคีย์สูงสุดใน data เพื่อกำหนดความยาวสูงสุด
     const maxKeys = data.reduce((max, obj) => {
       const keys = Object.keys(obj).map(Number);
@@ -719,6 +724,7 @@ export class CapacityMiddleService {
   }
 
   extendDates(data, shadowPeriod, type) {
+    if (!data || data.length === 0) return [];
     const clonedData = this.safeParseJSON(JSON.stringify(data));
 
     // หาวันที่มากที่สุดในข้อมูลเดิม
@@ -761,6 +767,7 @@ export class CapacityMiddleService {
   }
 
   async uploadDateCapacityDate(updates: any) {
+    if (!updates || !Array.isArray(updates)) return false;
     //   const batchSize = 100;
 
     // for (let i = 0; i < updates.length; i += batchSize) {

@@ -47,7 +47,7 @@ export class AccountManageService {
     const loginLogs = await this.prisma.login_logs.create({
       data: {
         event: event,
-        account_id: Number(id),
+        account_id: Number(id || 0),
         create_date: getTodayNowAdd7().toDate(),
         create_date_num: getTodayNowAdd7().unix(),
         temps: temps,
@@ -144,7 +144,7 @@ export class AccountManageService {
           account_role: {
             some: {
               account_manage: {
-                account_id: Number(id),
+                account_id: Number(id || 0),
               },
             },
           },
@@ -171,7 +171,7 @@ export class AccountManageService {
         where: {
           account_manage: {
             some: {
-              account_id: Number(id),
+              account_id: Number(id || 0),
             },
           },
         },
@@ -195,7 +195,7 @@ export class AccountManageService {
 
       const account = await this.prisma.account.findUnique({
         where: {
-          id: Number(id),
+          id: Number(id || 0),
           account_manage: {
             some: {
               account_role: {
@@ -325,7 +325,7 @@ export class AccountManageService {
       if (error?.response?.error === 1) {
         const account = await this.prisma.account.findUnique({
           where: {
-            id: Number(id),
+            id: Number(id || 0),
           },
         });
         throw new HttpException(
@@ -379,7 +379,7 @@ export class AccountManageService {
   async accountLocalOnce(id: any) {
     const account = await this.prisma.account.findUnique({
       where: {
-        id: Number(id),
+        id: Number(id || 0),
       },
       include: {
         account_manage: {
@@ -432,7 +432,7 @@ export class AccountManageService {
     try {
       const account = await this.prisma.account.findUnique({
         where: {
-          id: Number(id),
+          id: Number(id || 0),
         },
         include: {
           account_manage: {
@@ -632,7 +632,7 @@ export class AccountManageService {
     try {
       const account = await this.prisma.account_manage.findFirst({
         where: {
-          account_id: Number(id),
+          account_id: Number(id || 0),
           // account_manage: {
           //   some: {
           //     mode_account_id: 2,
@@ -705,7 +705,7 @@ export class AccountManageService {
   async addPass(account_id: any, password: any, passwordHash: any) {
     const check = await this.prisma.account_password_check.findMany({
       where: {
-        account_id: Number(account_id),
+        account_id: Number(account_id || 0),
       },
       orderBy: {
         create_date: 'asc',
@@ -735,7 +735,7 @@ export class AccountManageService {
 
       await this.prisma.account_password_check.create({
         data: {
-          account_id: Number(account_id),
+          account_id: Number(account_id || 0),
           password: passwordHash,
           create_date: getTodayNowAdd7().toDate(),
         },
@@ -745,7 +745,7 @@ export class AccountManageService {
   }
 
   async accountReasonCreate(payload: any, userId: any) {
-    const { account_id, ...withPayload } = payload;
+    const { account_id, ...withPayload } = payload || {};
     const reasonCreate = await this.prisma.account_reason.create({
       data: {
         ...withPayload,
@@ -761,19 +761,19 @@ export class AccountManageService {
         create_date_num: getTodayNowAdd7().unix(),
         create_by_account: {
           connect: {
-            id: Number(userId), // Prisma จะใช้ connect แทนการใช้ create_by โดยตรง
+            id: Number(userId || 0), // Prisma จะใช้ connect แทนการใช้ create_by โดยตรง
           },
         },
       },
     });
     await this.prisma.account.update({
       where: {
-        id: Number(payload?.account_id),
+        id: Number(payload?.account_id || 0),
       },
       data: {
         status: payload?.status,
         update_date: getTodayNowAdd7().toDate(),
-        update_by: Number(userId),
+        update_by: Number(userId || 0),
         update_date_num: getTodayNowAdd7().unix(),
       },
     });
@@ -792,14 +792,14 @@ export class AccountManageService {
 
     const account = await this.prisma.account.update({
       where: {
-        id: Number(id),
+        id: Number(id || 0),
       },
       data: {
         ...passwords,
         password_gen_origin: pass,
         password_gen_flag: true,
         update_date: getTodayNowAdd7().toDate(),
-        update_by: Number(userId),
+        update_by: Number(userId || 0),
         update_date_num: getTodayNowAdd7().unix(),
         pass_gen_date: nowAt30,
         login_flag: null, //new https://app.clickup.com/t/86ernzz09
@@ -930,7 +930,7 @@ export class AccountManageService {
       where: {
         user_id: user_id,
         id: {
-          not: Number(id),
+          not: Number(id || 0),
         },
       },
     });
@@ -965,7 +965,7 @@ export class AccountManageService {
           start_date: start_date ? getTodayNowAdd7(start_date).toDate() : null,
           end_date: end_date ? getTodayNowAdd7(end_date).toDate() : null,
           create_date: getTodayNowAdd7().toDate(),
-          create_by: Number(userId),
+          create_by: Number(userId || 0),
           // create_by_account: {
           //   connect: {
           //     id: Number(userId),
@@ -1039,7 +1039,7 @@ export class AccountManageService {
           },
         },
         where: {
-          id: Number(id),
+          id: Number(id || 0),
         },
       });
       let pass = null;
@@ -1062,7 +1062,7 @@ export class AccountManageService {
 
         account = await this.prisma.account.update({
           where: {
-            id: Number(id),
+            id: Number(id || 0),
           },
           data: {
             ...dataWithout,
@@ -1073,7 +1073,7 @@ export class AccountManageService {
               : null,
             end_date: end_date ? getTodayNowAdd7(end_date).toDate() : null,
             update_date: getTodayNowAdd7().toDate(),
-            update_by: Number(userId),
+            update_by: Number(userId || 0),
             update_date_num: getTodayNowAdd7().unix(),
           },
         });
@@ -1112,7 +1112,7 @@ export class AccountManageService {
 
         account = await this.prisma.account.update({
           where: {
-            id: Number(id),
+            id: Number(id || 0),
           },
           data: {
             ...dataWithout,
@@ -1125,7 +1125,7 @@ export class AccountManageService {
               : null,
             end_date: end_date ? getTodayNowAdd7(end_date).toDate() : null,
             update_date: getTodayNowAdd7().toDate(),
-            update_by: Number(userId),
+            update_by: Number(userId || 0),
             update_date_num: getTodayNowAdd7().unix(),
           },
         });
@@ -1177,7 +1177,7 @@ export class AccountManageService {
         for (let i = 0; i < removedItems.length; i++) {
           await this.prisma.system_login_account.deleteMany({
             where: {
-              account_id: Number(id),
+              account_id: Number(id || 0),
               system_login: {
                 role_id: removedItems[i],
               },
@@ -1278,19 +1278,19 @@ export class AccountManageService {
 
   async signature(id: any, payload: any, userId: any, req: any) {
     try {
-      const { signature, mimetype } = payload;
+      const { signature, mimetype } = payload || {};
 
       const base64s = await this.convertUrlToBase64(signature, mimetype);
 
       const signatures = await this.prisma.account.update({
         where: {
-          id: Number(id),
+          id: Number(id || 0),
         },
         data: {
           signature: signature,
           signature_base_64: base64s,
           update_date: getTodayNowAdd7().toDate(),
-          update_by: Number(userId),
+          update_by: Number(userId || 0),
           update_date_num: getTodayNowAdd7().unix(),
         },
       });
@@ -1358,7 +1358,7 @@ export class AccountManageService {
         },
       },
       where: {
-        role_id: Number(id),
+        role_id: Number(id || 0),
       },
     });
     return systemLogin;
@@ -1440,7 +1440,7 @@ export class AccountManageService {
 
       const account = await this.prisma.account.update({
         where: {
-          id: Number(decoded?.sub),
+          id: Number(decoded?.sub || 0),
         },
         data: {
           password: password?.hash,
@@ -1450,7 +1450,7 @@ export class AccountManageService {
         },
       });
       return {
-        id: Number(decoded?.sub),
+        id: Number(decoded?.sub || 0),
         account: account,
       };
     } else {
@@ -1604,7 +1604,7 @@ export class AccountManageService {
     console.log('userId : ', userId);
     await this.prisma.account.update({
       where: {
-        id: Number(userId),
+        id: Number(userId || 0),
       },
       data: {
         login_flag: null,
@@ -1633,7 +1633,7 @@ export class AccountManageService {
 
     await this.prisma.account.update({
       where: {
-        id: Number(userId),
+        id: Number(userId || 0),
       },
       data: {
         login_flag: true,
@@ -1647,7 +1647,7 @@ export class AccountManageService {
     console.log('userId : ', userId);
     const ck = await this.prisma.account.findFirst({
       where: {
-        id: Number(userId),
+        id: Number(userId || 0),
       },
     });
     if (ck.listen_login_date === null) {
@@ -1657,7 +1657,7 @@ export class AccountManageService {
 
       await this.prisma.account.update({
         where: {
-          id: Number(userId),
+          id: Number(userId || 0),
         },
         data: {
           login_flag: true,

@@ -165,7 +165,7 @@ export class DailyAdjustmentService {
   }
   // heating_value
   async nominationPointData(payload: any) {
-    const { shipper_id, entry_exit_id, area_id, gas_day, time } = payload;
+    const { shipper_id, entry_exit_id, area_id, gas_day, time } = payload || {};
     const gasDayDate = new Date(gas_day);
     const todayStart = getTodayStartAdd7().toDate();
     const todayEnd = getTodayEndAdd7().toDate();
@@ -914,7 +914,7 @@ export class DailyAdjustmentService {
 
   // https://app.clickup.com/t/86eth5ywz
   async dailyAdjustmentSummary(payload: any, userId: any) {
-    const { checkAdjustment, startDate, endDate, contractCode } = payload;
+    const { checkAdjustment, startDate, endDate, contractCode } = payload || {};
 
     const todayStart = getTodayStartAdd7().toDate();
     const todayEnd = getTodayEndAdd7().toDate();
@@ -1161,7 +1161,7 @@ export class DailyAdjustmentService {
               24 || 0,
             H6:
               (Number(e['data_temp'][`${14 + i}`]?.trim()?.replace(/,/g, '')) /
-                24) |
+                24) ||
               0,
             H7:
               Number(e['data_temp'][`${14 + i}`]?.trim()?.replace(/,/g, '')) /
@@ -1672,7 +1672,7 @@ export class DailyAdjustmentService {
   }
 
   async dailyAdjustmentReportNow(payload: any, userId: any) {
-    const { checkAdjustment, startDate, endDate, contractCode } = payload;
+    const { checkAdjustment, startDate, endDate, contractCode } = payload || {};
 
     const todayStart = getTodayStartAdd7().toDate();
     const todayEnd = getTodayEndAdd7().toDate();
@@ -2894,7 +2894,7 @@ export class DailyAdjustmentService {
 
 
   async dailyAdjustmentReport(payload: any, userId: any) {
-    const { checkAdjustment, startDate, endDate, contractCode } = payload;
+    const { checkAdjustment, startDate, endDate, contractCode } = payload || {};
 
     const todayStart = getTodayStartAdd7().toDate();
     const todayEnd = getTodayEndAdd7().toDate();
@@ -4156,7 +4156,7 @@ export class DailyAdjustmentService {
    * @returns รายการข้อมูลการ nomination และปรับแต่งแบบสรุป
    */
   async dailyAdjustmentSummary2(payload: any, userId: any) {
-    const { checkAdjustment, startDate, endDate, contractCode } = payload;
+    const { checkAdjustment, startDate, endDate, contractCode } = payload || {};
 
     // แปลงวันที่เริ่มต้นและสิ้นสุดเป็น Dayjs object และ Date object
     const startDayjs = getTodayNowDDMMYYYYAdd7(startDate)
@@ -4683,7 +4683,7 @@ export class DailyAdjustmentService {
    * @returns รายงานที่จัดกลุ่มตาม nomination point พร้อมข้อมูลรายชั่วโมง
    */
   async dailyAdjustmentReport2(payload: any, userId: any) {
-    const { startDate, endDate } = payload;
+    const { startDate, endDate } = payload || {};
 
     // แปลงวันที่เริ่มต้นและสิ้นสุดเป็น dayjs object
     const startDayjs = getTodayNowDDMMYYYYAdd7(startDate);
